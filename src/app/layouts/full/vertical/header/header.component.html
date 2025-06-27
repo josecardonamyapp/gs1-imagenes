@@ -72,17 +72,17 @@
         <div class="d-flex align-items-center p-b-24 b-b-1 m-t-16">
           <img src="/assets/images/profile/user-1.jpg" class="rounded-circle" width="95" />
           <div class="m-l-16">
-            <h6 class="f-s-14 f-w-600 m-0">Mathew Anderson</h6>
-            <span class="f-s-14 d-block m-b-4">Designer</span>
+            <h6 class="f-s-14 f-w-600 m-0">{{userFirstName}}</h6>
+            <span class="f-s-14 d-block m-b-4">{{userOwnershipData}}</span>
             <span class="d-flex align-items-center">
               <i-tabler name="mail" class="icon-15 m-r-4"></i-tabler>
-              info&#64;modernize.com
+              {{email}}
             </span>
           </div>
         </div>
       </div>
       <div class="p-x-32">
-        @for(profile of profiledd; track profile) {
+        <!-- @for(profile of profiledd; track profile) {
         <a class="p-y-16 text-decoration-none d-block text-hover-primary" [routerLink]="[profile.link]">
           <div class="d-flex align-items-center">
             <button mat-mini-fab class="text-primary bg-light-primary shadow-none rounded">
@@ -97,7 +97,7 @@
             </div>
           </div>
         </a>
-        }
+        } -->
 
 
         <!-- upgrade -->
@@ -118,7 +118,7 @@
       </div>
 
       <div class="p-y-12 p-x-32">
-        <a [routerLink]="['/authentication/login']" mat-stroked-button color="primary" class="w-100">Logout</a>
+        <span (click)="logout()" mat-stroked-button color="primary" class="w-100">Logout</span>
       </div>
     </ng-scrollbar>
   </mat-menu>

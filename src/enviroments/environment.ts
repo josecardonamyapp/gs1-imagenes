@@ -1,6 +1,15 @@
 export const environment = {
   production: false,
-  cognitoUserPoolId: 'us-west-2_jYeORemMD',
-  cognitoAppClientId: '6p314jkkokstjdt5ik9486ti5s'
+  cognitoUserPoolId: 'us-east-1_gH4j6JXGp',
+  cognitoAppClientId: '2tpnahcifdd13tovle9in0t0o5',
+  // apiUrl: 'https://zfpeurj2g7.execute-api.us-east-1.amazonaws.com/dev/',
+  // domain: 'https://d38r2sovtqprvd.cloudfront.net/',
+  identityPoolId: 'us-east-1:92da8424-ad78-4843-852e-fa7183742e15',
+  cognitoDomain: 'gs1-imagenes.auth.us-east-1.amazoncognito.com',
+  cognitoRedirectSignIn: 'http://localhost:8200/',
+  cognitoRedirectSignOut: 'http://localhost:8200/',
+  cognitoResponseType: 'code',
+  apicadenas: 'http://apisync.syncfonia.com/',
+  // apiregistry: 'https://6d6j5r4cdl.execute-api.us-east-1.amazonaws.com/',
 }
 

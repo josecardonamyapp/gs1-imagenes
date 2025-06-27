@@ -16,6 +16,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { FeatherModule } from 'angular-feather';
+import { UserService } from 'src/app/services/user.service';
 
 
 interface notifications {
@@ -63,6 +64,10 @@ export class HeaderComponent {
   @Output() toggleCollapsed = new EventEmitter<void>();
 
   showFiller = false;
+  userOwnershipData="";
+  userFirstName="";
+  userLastName="";
+  email="";
 
   public selectedLanguage: any = {
     language: 'English',
@@ -98,11 +103,37 @@ export class HeaderComponent {
   constructor(
     private vsidenav: CoreService,
     public dialog: MatDialog,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private userService: UserService
   ) {
     translate.setDefaultLang('en');
   }
 
+  async ngOnInit() {
+    // this.loading = true;
+    await this.userService.socialSignInListener();
+
+    try {
+      const authenticated = await this.userService.isAuthenticatedUser();
+      const userattributes = await this.userService.getUserClaims();
+      if (userattributes) {
+        console.log(userattributes);
+        console.log(userattributes["custom:userOwnershipData"]);
+        console.log(userattributes["custom:userFirstName"]);
+        console.log(userattributes["custom:userLastName"]);
+        this.userOwnershipData = String(userattributes["custom:userOwnershipData"]);
+        this.userFirstName = String(userattributes["custom:userFirstName"]);
+        this.userLastName = String(userattributes["custom:userLastName"]);
+        this.email = String(userattributes["email"]);
+
+      
+      }
+    } catch (err) {
+      console.error('err:', err);
+    } finally {
+      // this.loading = false;
+    }
+  }
   openDialog() {
     const dialogRef = this.dialog.open(AppSearchDialogComponent);
 
@@ -111,10 +142,16 @@ export class HeaderComponent {
     });
   }
 
+
+  logout() {
+    this.userService.logout();
+  }
+
   changeLanguage(lang: any): void {
     this.translate.use(lang.code);
     this.selectedLanguage = lang;
   }
+
 
   notifications: notifications[] = [
     {

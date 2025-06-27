@@ -6,6 +6,7 @@ import { MaterialModule } from '../../../material.module';
 import { FeatherModule } from "angular-feather"
 
 import { CognitoServiceService } from 'src/app/services/auth/cognito-service.service';
+import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-login',
@@ -16,7 +17,10 @@ import { CognitoServiceService } from 'src/app/services/auth/cognito-service.ser
 export class AppLoginComponent {
   options = this.settings.getOptions();
 
-  constructor(private settings: CoreService, private authService: CognitoServiceService) { }
+  constructor(private settings: CoreService, private authService: CognitoServiceService,
+    private userService: UserService,
+    private router: Router,
+  ) { }
 
   form = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
@@ -27,6 +31,34 @@ export class AppLoginComponent {
     return this.form.controls;
   }
 
+
+  async ngOnInit() {
+    // this.loading = true;
+    await this.userService.socialSignInListener();
+
+    try {
+      const authenticated = await this.userService.isAuthenticatedUser();
+      const userattributes = await this.userService.getUserClaims();
+      if (userattributes) {
+        console.log(userattributes);
+        console.log(userattributes["custom:userOwnershipData"]);
+        console.log(userattributes["custom:userFirstName"]);
+        console.log(userattributes["custom:userLastName"]);
+      }
+
+
+      if (authenticated) {
+        this.router.navigate(['/dashboards/dashboard1']);
+      } else {
+        await this.onSubmit();
+      }
+    } catch (err) {
+      console.error('err:', err);
+    } finally {
+      // this.loading = false;
+    }
+  }
+
   submit() {
     if (this.form.valid) {
       this.authService.login(this.form.value.email, this.form.value.password)
@@ -35,4 +67,32 @@ export class AppLoginComponent {
     }
     // this.router.navigate(['/dashboards/dashboard1']);
   }
+
+
+  async onSubmit() {
+    // let corporation1 = {} as Corporation;
+
+
+    // this.corporation = corporation1;
+    const email = '';
+    const password = '';
+
+    console.log(this.userService.isAuthenticated());
+    this.userService.socialSignIn("auth0IdP", email, password).then(
+      (auth) => {
+        console.log(auth)
+        // this.loading = false;
+      }
+    ).catch(
+      (err) => {
+        console.log(err)
+        // this.loading = false;
+      }
+    ).finally(
+      () => {
+        // this.loading = false;
+      }
+    );
+  }
+
 }
