@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>Imagen generada con éxito</h2>
+
+<mat-dialog-content class="text-center">
+  <img [src]="data.processed_image_url"
+       [alt]="data.output_filename"
+       class="img-fluid rounded shadow-sm mb-3"
+       style="max-height: 200px; object-fit: contain;" />
+
+  <p class="small text-muted">{{ data.output_filename }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center" class="d-flex flex-column gap-2">
+  <button mat-stroked-button color="primary" (click)="copyLink()">
+    Copiar enlace
+  </button>
+
+  <a [href]="data.processed_image_url"
+     [download]="data.output_filename"
+     mat-raised-button
+     color="accent">
+    Descargar imagen
+  </a>
+
+  <button mat-button mat-dialog-close>Cerrar</button>
+</mat-dialog-actions>

@@ -37,7 +37,13 @@ const routes: Routes = [
             (m) => m.MformsModule
           ),
       },
-
+      {
+        path: 'product/:gtin',
+        loadChildren: () =>
+          import('./pages/productOne/productOne.module').then(
+            (m) => m.ProductOneModule
+          ),
+      },
     ],
     canActivate: [AuthGuard]
   },
@@ -67,7 +73,7 @@ const routes: Routes = [
   ],
   exports: [RouterModule],
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }
 
 // Instrucciones detalladas para agregar nuevas rutas:
 /*

@@ -14,5 +14,6 @@ import { FormsModule } from '@angular/forms';
     RouterModule.forChild(PagesRoutes),
     StarterComponent,
   ],
+  
 })
 export class PagesModule {}
