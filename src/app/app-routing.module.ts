@@ -30,18 +30,25 @@ const routes: Routes = [
             (m) => m.DashboardsModule
           ),
       },
-      {
-        path: 'mforms',
-        loadChildren: () =>
-          import('./pages/mforms/mforms.module').then(
-            (m) => m.MformsModule
-          ),
-      },
+      // {
+      //   path: 'mforms',
+      //   loadChildren: () =>
+      //     import('./pages/mforms/mforms.module').then(
+      //       (m) => m.MformsModule
+      //     ),
+      // },
       {
         path: 'product/:gtin',
         loadChildren: () =>
           import('./pages/productOne/productOne.module').then(
             (m) => m.ProductOneModule
+          ),
+      },
+      {
+        path: 'channels',
+        loadChildren: () =>
+          import('./pages/channels/channel.module').then(
+            (m) => m.ChannelModule
           ),
       },
     ],

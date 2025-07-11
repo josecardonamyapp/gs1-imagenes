@@ -20,7 +20,7 @@
   <!-- --------------------------------------------------------------- -->
   <!-- langugage Dropdown -->
   <!-- --------------------------------------------------------------- -->
-  <button  mat-icon-button class="m-r-5">
+  <button mat-icon-button class="m-r-5">
     <img [src]="selectedLanguage.icon" class="rounded-circle object-cover icon-20" />
   </button>
 
@@ -118,7 +118,11 @@
       </div>
 
       <div class="p-y-12 p-x-32">
-        <span (click)="logout()" mat-stroked-button color="primary" class="w-100">Logout</span>
+        <!-- <span (click)="logout()" mat-stroked-button color="primary" class="w-100">Logout</span> -->
+        <button mat-stroked-button color="primary" class="w-100" (click)="logout()">
+          <mat-icon class="me-2">logout</mat-icon>
+          Logout
+        </button>
       </div>
     </ng-scrollbar>
   </mat-menu>

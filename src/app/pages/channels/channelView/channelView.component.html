@@ -1,0 +1,59 @@
+<div class="container-fluid py-4">
+    <h2 class="mb-4 text-center">Configuración de Canales de Venta</h2>
+    <p class="text-center"><strong>Nombre:</strong> {{ channel.provider }} </p>
+
+    <div class="col-md-10">
+        <div class="card shadow-sm p-3">
+            <!-- <p class="text-muted small">Canales</p> -->
+
+            <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3">
+                <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel)">
+                    <span class="dimension-label-inside">
+                        {{ channel.width }} x {{ channel.height }} {{ channel.extension }}
+                    </span>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Width (Ancho)</mat-label>
+                                <input matInput type="number" [(ngModel)]="channel.width" />
+                                <span matSuffix>px</span>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Height (Largo)</mat-label>
+                                <input matInput type="number" [(ngModel)]="channel.height" />
+                                <span matSuffix>px</span>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Extension</mat-label>
+                                <input matInput type="text" [(ngModel)]="channel.extension" />
+                            </mat-form-field>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Density (DPI)</mat-label>
+                                <input matInput type="number" [(ngModel)]="channel.dpi" />
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Max Size</mat-label>
+                                <input matInput type="text" [(ngModel)]="channel.max_size" />
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

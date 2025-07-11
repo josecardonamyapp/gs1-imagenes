@@ -6,12 +6,12 @@ export const navItems: NavItem[] = [
   },
   {
     displayName: 'Inicio',
-    iconName: 'basket',
+    iconName: 'home',
     route: '/dashboards/dashboard1',
   },
   {
-    displayName: 'Formulario',
-    iconName: 'home',
-    route: '/mforms/index'
+    displayName: 'Canales',
+    iconName: 'photo-cog',
+    route: '/channels/channel'
   }
 ];

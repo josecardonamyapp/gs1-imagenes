@@ -48,9 +48,9 @@ Amplify.configure({
                 oauth: {
                     // esta línea activa el flujo hosted UI
                     domain: environment.cognitoDomain,
-                    scopes: ['openid', 'email', 'profile'],
+                    scopes: ['openid', 'email', 'profile', 'phone', 'aws.cognito.signin.user.admin'],
                     redirectSignIn: ['http://localhost:8200/'],
-                    redirectSignOut: ['http://localhost:8200/'],
+                    redirectSignOut: ["https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}"],
                     responseType: 'code' // o 'token'
                 }
             }
@@ -202,17 +202,17 @@ export class UserService {
                     const attributes = await fetchUserAttributes();
 
                     console.log('Atributos:', attributes);
+                    console.log('atributos user', user)
 
                     const sub = attributes.sub;
                     const email = attributes.email;
                     const name = attributes.name;
                     const picture = attributes.picture;
-
                     const theme = attributes['custom:theme'];
                     const firstName = attributes['custom:userFirstName'];
                     const lastName = attributes['custom:userLastName'];
                     const ownershipData = attributes['custom:userOwnershipData'];
-                    const siebelId = attributes['custom:userSiebelId'];
+                    // const siebelId = attributes['custom:userSiebelId'];
 
                     this.succedded = true;
 
@@ -221,7 +221,7 @@ export class UserService {
                         const corporation = {
                             corporationGLN,
                             corporationName: lastName,
-                            corporationSiebelId: siebelId,
+                            // corporationSiebelId: siebelId,
                             corporationCreationUser: corporationGLN,
                         };
 
@@ -244,14 +244,28 @@ export class UserService {
     async logout() {
         await this.signOut();
         // this.getAuthenticatedUser().signOut();
-        this.authStatusChanged.next(false);
+        // this.authStatusChanged.next(false);
+        // localStorage.clear();
+        // sessionStorage.clear();
+        window.location.href = `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}`;
+        // window.location.reload();
+        // await this.signOut();
         localStorage.clear();
-        window.location.reload();
+        sessionStorage.clear();
     }
 
     async signOut(): Promise<void> {
         try {
-            await signOut();
+            await signOut({
+                global: true,
+                // oauth: {
+                //     redirectUrl: "https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}"
+                // }
+            });
+
+            // luego fuerza logout a Auth0 también:
+            // window.location.href = `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}`;
+
             this.loggedIn = false;
         } catch (error) {
             console.error('Error during sign out:', error);

@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { FeatherModule } from 'angular-feather';
 import { UserService } from 'src/app/services/user.service';
-
+import { MatIconModule } from '@angular/material/icon';
 
 interface notifications {
   id: number;
@@ -51,7 +51,7 @@ interface quicklinks {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterModule, CommonModule, NgScrollbarModule, TablerIconsModule, MaterialModule, FeatherModule],
+  imports: [RouterModule, CommonModule, NgScrollbarModule, TablerIconsModule, MaterialModule, FeatherModule, MatIconModule ],
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None,
 })
