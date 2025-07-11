@@ -44,8 +44,9 @@
           </h4>
 
           <div class="mt-auto">
-            <button (click)="goToDetail(product.gtin)"  matButton="filled">
-              MÁS INFO
+            <button mat-button class="custom-orange-button" (click)="goToDetail(product.gtin)">
+              <strong class="gs1-subtitles">MÁS INFO</strong>
+              <span class="arrow-icon">→</span>
             </button>
           </div>
         </div>

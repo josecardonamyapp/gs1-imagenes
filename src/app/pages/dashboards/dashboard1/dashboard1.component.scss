@@ -88,3 +88,25 @@
 .col-12 {
   padding-bottom: 15px;
 }
+
+.custom-orange-button {
+  border: 1px solid #F15A29;
+  color: #F15A29;
+  background-color: transparent;
+  padding: 6px 16px;
+  font-weight: bold;
+  text-transform: none;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background-color: rgba(241, 90, 41, 0.08);
+  }
+
+  .arrow-icon {
+    font-size: 1.1em;
+  }
+}

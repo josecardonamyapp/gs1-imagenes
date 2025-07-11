@@ -57,13 +57,13 @@
   <!-- ============================================================== -->
   <!-- Main Content -->
   <!-- ============================================================== -->
-  <mat-sidenav-content class="contentWrapper" #content>
+  <mat-sidenav-content class="contentWrapper" #content >
     <!-- ============================================================== -->
     <!-- VerticalHeader -->
     <!-- ============================================================== -->
 
     <app-header [showToggle]="!isOver" (toggleCollapsed)="toggleCollapsed()"
-      (toggleMobileNav)="sidenav.toggle()"></app-header>
+      (toggleMobileNav)="sidenav.toggle()" style="background-color: white!important;"></app-header>
 
 
 
@@ -75,15 +75,15 @@
       <!-- Outlet -->
       <!-- ============================================================== -->
       <router-outlet></router-outlet>
-      <div class="customizerBtn">
+      <!-- <div class="customizerBtn">
         <button mat-fab color="primary" (click)="customizerRight.toggle()">
           <mat-icon>settings</mat-icon>
         </button>
-      </div>
+      </div> -->
     </main>
   </mat-sidenav-content>
 
-  <mat-sidenav #customizerRight mode="over" position="end">
+  <!-- <mat-sidenav #customizerRight mode="over" position="end">
     <app-customizer (optionsChange)="receiveOptions($event)"></app-customizer>
   </mat-sidenav>
-</mat-sidenav-container>
+</mat-sidenav-container> -->

@@ -11,6 +11,7 @@ export const environment = {
   cognitoResponseType: 'code',
   apicadenas: 'http://apisync.syncfonia.com/',
   api:"https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/",
+  domainUrl: "http://localhost:8200/"
   // apiregistry: 'https://6d6j5r4cdl.execute-api.us-east-1.amazonaws.com/',
 }
 

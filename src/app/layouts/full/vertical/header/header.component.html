@@ -1,4 +1,4 @@
-<mat-toolbar class="topbar">
+<mat-toolbar class="topbar" style="background-color: white!important;">
   <!-- --------------------------------------------------------------- -->
   <!-- Desktop Menu -->
   @if(showToggle) {
@@ -20,16 +20,16 @@
   <!-- --------------------------------------------------------------- -->
   <!-- langugage Dropdown -->
   <!-- --------------------------------------------------------------- -->
-  <button mat-icon-button class="m-r-5">
+  <!-- <button mat-icon-button class="m-r-5">
     <img [src]="selectedLanguage.icon" class="rounded-circle object-cover icon-20" />
-  </button>
+  </button> -->
 
   <!-- --------------------------------------------------------------- -->
   <!-- Notification Dropdown -->
   <!-- --------------------------------------------------------------- -->
-  <button mat-icon-button [matMenuTriggerFor]="notificationmenu" aria-label="Notifications">
+  <!-- <button mat-icon-button [matMenuTriggerFor]="notificationmenu" aria-label="Notifications">
     <i-feather class="d-flex icon-18" name="bell" matBadge="1" matBadgeSize="small" matBadgeColor="primary"></i-feather>
-  </button>
+  </button> -->
   <mat-menu #notificationmenu="matMenu" class="topbar-dd cardWithShadow">
     <div class="d-flex align-items-center p-x-32 p-y-16">
       <h6 class="f-s-16 f-w-600 m-0">Notifications</h6>

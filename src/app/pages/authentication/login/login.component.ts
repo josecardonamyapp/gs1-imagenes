@@ -33,9 +33,10 @@ export class AppLoginComponent {
 
 
   async ngOnInit() {
+
     // this.loading = true;
     await this.userService.socialSignInListener();
-
+      
     try {
       const authenticated = await this.userService.isAuthenticatedUser();
       const userattributes = await this.userService.getUserClaims();
@@ -50,6 +51,7 @@ export class AppLoginComponent {
       if (authenticated) {
         this.router.navigate(['/dashboards/dashboard1']);
       } else {
+      
         await this.onSubmit();
       }
     } catch (err) {

@@ -9,7 +9,8 @@ import { CoreService } from 'src/app/services/core.service';
       @if(options.theme === 'light') {
         <a href="/">
           <img
-            src="./assets/images/logos/logo-dark.svg"
+            src="./assets/images/logos/gs1Logo2.png"
+            style="height: auto;max-width:100%; width: auto; object-fit: contain;"
             class="align-middle m-2"
             alt="logo"
           />
@@ -18,7 +19,7 @@ import { CoreService } from 'src/app/services/core.service';
       @if(options.theme === 'dark') {
         <a href="/">
           <img
-            src="./assets/images/logos/logo-light.svg" 
+            src="./assets/images/logos/gs1Logo2.png" 
             class="align-middle m-2"
             alt="logo"
           />

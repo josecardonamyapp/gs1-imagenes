@@ -49,8 +49,8 @@ Amplify.configure({
                     // esta línea activa el flujo hosted UI
                     domain: environment.cognitoDomain,
                     scopes: ['openid', 'email', 'profile', 'phone', 'aws.cognito.signin.user.admin'],
-                    redirectSignIn: ['http://localhost:8200/'],
-                    redirectSignOut: ["https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}"],
+                    redirectSignIn: [environment.domainUrl],
+                    redirectSignOut: [environment.domainUrl],
                     responseType: 'code' // o 'token'
                 }
             }
@@ -242,29 +242,21 @@ export class UserService {
     }
 
     async logout() {
-        await this.signOut();
-        // this.getAuthenticatedUser().signOut();
-        // this.authStatusChanged.next(false);
-        // localStorage.clear();
-        // sessionStorage.clear();
-        window.location.href = `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}`;
-        // window.location.reload();
-        // await this.signOut();
-        localStorage.clear();
-        sessionStorage.clear();
+        await signOut({ global: true }); 
+        const logoutWin = window.open(
+            `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent(environment.domainUrl)}`,
+            '_blank'
+        );
+        setTimeout(() => {
+            logoutWin?.close();
+        }, 3000);
     }
 
     async signOut(): Promise<void> {
         try {
             await signOut({
                 global: true,
-                // oauth: {
-                //     redirectUrl: "https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}"
-                // }
             });
-
-            // luego fuerza logout a Auth0 también:
-            // window.location.href = `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent('http://localhost:8200/')}`;
 
             this.loggedIn = false;
         } catch (error) {
