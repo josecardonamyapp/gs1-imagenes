@@ -9,6 +9,7 @@ export interface ColumnConfig {
     label: string;
     action: string;
     icon?: string;
+    color?: string;
   }[];
 }
 
@@ -40,12 +41,23 @@ export const ChannelRableSettings: ColumnConfig[] = [
     //hidden: true // Oculta esta columna
   },
   {
+    key: 'adaptation_type',
+    label: 'Tipo Adaptación',
+    sortable: false,
+    type: 'text'
+  },
+  {
+    key: 'renaming_type',
+    label: 'Tipo Renombrado',
+    sortable: false,
+    type: 'text'
+  },
+  {
     key: 'actions',
     label: 'Acciones',
     type: 'actions',
     buttons: [
-      { label: 'Editar', action: 'edit', icon: 'edit' },
-      { label: 'Eliminar', action: 'delete', icon: 'delete' }
+      { label: 'Editar', action: 'edit', icon: 'edit', color: 'primary' }
     ]
   }
 ];

@@ -33,8 +33,8 @@
 
                 <mat-tab-group [(selectedIndex)]="selectedTab" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider">
-                        <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3">
-                            <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel)">
+                        <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
+                            <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel, channel.gln)">
                                 <span class="dimension-label-inside">
                                     {{ channel.width }} x {{ channel.height }} {{ channel.extension }}
                                 </span>
@@ -63,9 +63,40 @@
                                     </div>
                                     <div class="col">
                                         <div class="label">Max size</div>
-                                        <div class="value">{{ channel.max_size }}</div>
+                                        <div class="value">{{ channel.max_size_kb }}</div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="label">GLN</div>
+                                        <div class="value">{{ channel.gln }}</div>
                                     </div>
                                 </div>
+                                <div class="row text-center text-md-start mt-3">
+                                    <div class="col">
+                                        <div class="label">Tipo de adaptación</div>
+                                        <div class="value">{{ channel.adaptation_type }}</div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="label">Prefijo</div>
+                                        <div class="value">{{ channel.rename_base }}</div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="label">Separador</div>
+                                        <div class="value">{{ channel.rename_separator }}</div>
+                                    </div>
+
+                                </div>
+                                <div class="row text-center text-md-start mt-3">
+                                    <div class="col">
+                                        <div class="label">Inicio de secuencia</div>
+                                        <div class="value">{{ channel.rename_start_index }}</div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="label">Estructura de la carpeta</div>
+                                        <div class="value">{{ channel.folder_structure }}</div>
+                                    </div>
+
+                                </div>
+                                
                             </div>
                         </div>
                     </mat-tab>
@@ -86,16 +117,21 @@
                     con GTIN Canal.
                 </p>
 
-                <button mat-raised-button color="primary" class="w-100" [disabled]="isGenerating"
+                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating"
                     (click)="processImg()">
-                    Iniciar generación de link
+                    Iniciar procesamiento por lotes
+                </button>
+                <!--process image with no background color-->
+                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating"
+                    (click)="processImgNoBackground()">
+                    Procesar imágenes sin fondo
                 </button>
 
             </div>
         </div>
     </div>
 
-    <div class="mt-4 text-center">
+    <div class="mt-4 text-center" >
         <button mat-raised-button color="warn" (click)="goToReturn()">
             Volver
         </button>

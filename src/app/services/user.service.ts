@@ -105,7 +105,7 @@ export class UserService {
                 return null;
             }
 
-            // console.log('Claims del usuario:', claims);
+            // //('Claims del usuario:', claims);
 
             // return claims;
         } catch (error) {
@@ -174,7 +174,7 @@ export class UserService {
 
 
     async socialSignIn(provider: string, email: any, pasoo: any): Promise<void> {
-        console.log("provider", provider)
+        //("provider", provider)
         await signInWithRedirect({
             provider: { custom: 'auth0IdP' } // 👈 debe coincidir EXACTAMENTE con el nombre del IdP en Cognito
         });
@@ -194,15 +194,15 @@ export class UserService {
     socialSignInListener() {
         Hub.listen('auth', async ({ payload }) => {
             if (payload.event === 'signedIn') {
-                console.log('Evento signedIn:', payload);
+                //('Evento signedIn:', payload);
 
                 try {
                     // Espera a que el usuario esté disponible
                     const user = await getCurrentUser();
                     const attributes = await fetchUserAttributes();
 
-                    console.log('Atributos:', attributes);
-                    console.log('atributos user', user)
+                    //('Atributos:', attributes);
+                    //('atributos user', user)
 
                     const sub = attributes.sub;
                     const email = attributes.email;
@@ -225,7 +225,7 @@ export class UserService {
                             corporationCreationUser: corporationGLN,
                         };
 
-                        console.log('Corporation:', corporation);
+                        //('Corporation:', corporation);
                     }
                 } catch (err) {
                     console.error('Error al obtener usuario o atributos:', err);

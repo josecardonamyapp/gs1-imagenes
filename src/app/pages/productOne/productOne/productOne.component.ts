@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ProcessResultComponent } from '../productResult/productResult.component';
+import { JobConfirmationComponent } from '../job-confirmation/job-confirmation.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -83,7 +84,7 @@ export class ProductOneComponent {
                     if (this.product?.images?.length > 0) {
                         this.selectedImage = this.product.images[0].uniformresourceidentifier;
                     }
-
+                    //(this.product);
                 }
             }
         })
@@ -99,8 +100,10 @@ export class ProductOneComponent {
         })
     }
 
-    getPreviewStyle(format: any) {
+    getPreviewStyle(format: any, gln: string) {
+       
         this.selectedChannel = format;
+         this.product["gln"] = gln;
         if (!format?.width || !format?.height) return {};
 
         const maxBoxSize = 200;
@@ -126,18 +129,42 @@ export class ProductOneComponent {
     processImg() {
         this.isGenerating = true;
         const params = {
-            image_url: this.selectedImage,
+            images_url: this.product,
             channel_params: this.selectedChannel
         }
+
+        //(params)
+        
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
+                //(result)
                 this.isGenerating = false;
-                if (typeof (result) === 'object') {
-                    this.dialog.open(ProcessResultComponent, {
-                        data: JSON.parse(result.body),
-                        width: '400px'
-                    });
+
+                // Almacenar el job_id en localStorage
+                if (result && result.job_id) {
+                    const storedJobs = localStorage.getItem('processing_jobs');
+                    const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
+                    
+                    if (!jobIds.includes(result.job_id)) {
+                        jobIds.push(result.job_id);
+                        localStorage.setItem('processing_jobs', JSON.stringify(jobIds));
+                    }
                 }
+
+                // Crear modal de confirmación para ir a ver los jobs
+                const dialogRef = this.dialog.open(JobConfirmationComponent, {
+                    data: result,
+                    width: '500px',
+                    disableClose: true
+                });
+
+                // Manejar la respuesta del modal
+                dialogRef.afterClosed().subscribe(shouldRedirect => {
+                    if (shouldRedirect) {
+                        this.router.navigate(['/jobs']);
+                    }
+                });
+                
             },
             error: (error) => {
                 this.isGenerating = false;
@@ -145,7 +172,58 @@ export class ProductOneComponent {
             },
             complete: () => {
                 this.isGenerating = false;
-                console.log('processImg finished.');
+                //('processImg finished.');
+            }
+        })
+        
+    }
+
+    processImgNoBackground() {
+        this.isGenerating = true;
+        const params = {
+            images_url: this.product,
+            channel_params: this.selectedChannel,
+            no_background: true
+        }
+
+        this.productService.productProcessImg(params).subscribe({
+            next: (result: any) => {
+                //(result)
+                this.isGenerating = false;
+
+                // Almacenar el job_id en localStorage
+                if (result && result.job_id) {
+                    const storedJobs = localStorage.getItem('processing_jobs');
+                    const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
+                    
+                    if (!jobIds.includes(result.job_id)) {
+                        jobIds.push(result.job_id);
+                        localStorage.setItem('processing_jobs', JSON.stringify(jobIds));
+                    }
+                }
+
+                // Crear modal de confirmación para ir a ver los jobs
+                const dialogRef = this.dialog.open(JobConfirmationComponent, {
+                    data: result,
+                    width: '500px',
+                    disableClose: true
+                });
+
+                // Manejar la respuesta del modal
+                dialogRef.afterClosed().subscribe(shouldRedirect => {
+                    if (shouldRedirect) {
+                        this.router.navigate(['/jobs']);
+                    }
+                });
+                
+            },
+            error: (error) => {
+                this.isGenerating = false;
+                console.error('Error in processImg:', error);
+            },
+            complete: () => {
+                this.isGenerating = false;
+                //('processImg finished.');
             }
         })
     }

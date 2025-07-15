@@ -41,10 +41,10 @@ export class AppLoginComponent {
       const authenticated = await this.userService.isAuthenticatedUser();
       const userattributes = await this.userService.getUserClaims();
       if (userattributes) {
-        console.log(userattributes);
-        console.log(userattributes["custom:userOwnershipData"]);
-        console.log(userattributes["custom:userFirstName"]);
-        console.log(userattributes["custom:userLastName"]);
+        //(userattributes);
+        //(userattributes["custom:userOwnershipData"]);
+        //(userattributes["custom:userFirstName"]);
+        //(userattributes["custom:userLastName"]);
       }
 
 
@@ -65,7 +65,7 @@ export class AppLoginComponent {
     if (this.form.valid) {
       this.authService.login(this.form.value.email, this.form.value.password)
     } else {
-      console.log('Usuario incorrecto')
+      //('Usuario incorrecto')
     }
     // this.router.navigate(['/dashboards/dashboard1']);
   }
@@ -79,15 +79,15 @@ export class AppLoginComponent {
     const email = '';
     const password = '';
 
-    console.log(this.userService.isAuthenticated());
+    //(this.userService.isAuthenticated());
     this.userService.socialSignIn("auth0IdP", email, password).then(
       (auth) => {
-        console.log(auth)
+        //(auth)
         // this.loading = false;
       }
     ).catch(
       (err) => {
-        console.log(err)
+        //(err)
         // this.loading = false;
       }
     ).finally(

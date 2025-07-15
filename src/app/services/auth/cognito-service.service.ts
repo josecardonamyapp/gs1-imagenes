@@ -49,7 +49,7 @@ export class CognitoServiceService {
         this.router.navigate(["/mforms/index"])
       },
       onFailure: (error: any) => {
-        console.log({error})
+        //({error})
       }
     })
   }

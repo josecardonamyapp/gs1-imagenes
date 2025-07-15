@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../enviroments/environment';
+import { Channel } from '../model/channel';
 
 @Injectable({
     providedIn: 'root'
@@ -52,7 +53,19 @@ export class ProductService {
         return this.http.get('https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/transformation-channels');
     }
 
+    productCreateChannel(channel: Channel): Observable<any> {
+        return this.http.post('https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/transformation-channels', channel);
+    }
+
+    productUpdateChannel(channelId: number, channel: Channel): Observable<any> {
+        return this.http.put(`https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/transformation-channels/${channelId}`, channel);
+    }
+
     productProcessImg(params: any) {
-        return this.http.post('https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/process-image-with-channel', params);
+        return this.http.post('https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/process-multiple-images', params);
+    }
+
+    getJobStatus(jobId: string): Observable<any> {
+        return this.http.get(`https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/job-status/${jobId}`);
     }
 }

@@ -117,10 +117,6 @@ export class HeaderComponent {
       const authenticated = await this.userService.isAuthenticatedUser();
       const userattributes = await this.userService.getUserClaims();
       if (userattributes) {
-        console.log(userattributes);
-        console.log(userattributes["custom:userOwnershipData"]);
-        console.log(userattributes["custom:userFirstName"]);
-        console.log(userattributes["custom:userLastName"]);
         this.userOwnershipData = String(userattributes["custom:userOwnershipData"]);
         this.userFirstName = String(userattributes["custom:userFirstName"]);
         this.userLastName = String(userattributes["custom:userLastName"]);
@@ -138,7 +134,7 @@ export class HeaderComponent {
     const dialogRef = this.dialog.open(AppSearchDialogComponent);
 
     dialogRef.afterClosed().subscribe((result) => {
-      console.log(`Dialog result: ${result}`);
+
     });
   }
 

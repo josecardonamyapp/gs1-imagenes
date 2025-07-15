@@ -6,5 +6,11 @@ export interface Channel {
     height: number;
     extension: string;
     dpi: number;
-    max_size: string;
+    max_size_kb: number;
+    adaptation_type: string;
+    renaming_type: string;
+    rename_base: string;
+    rename_separator: string;
+    rename_start_index: number;
+    folder_structure: string;
 }

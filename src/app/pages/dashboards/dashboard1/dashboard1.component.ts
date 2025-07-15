@@ -82,7 +82,7 @@ export class AppDashboard1Component {
               this.products.push(obj);
             }
           });
-          console.log('final', this.products)
+          //('final', this.products)
         }
       }
     })

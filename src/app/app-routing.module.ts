@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
+import { JobStatusComponent } from './pages/job-status/job-status.component';
 
 import { AuthGuard } from './guards/auth/auth.guard';
 
@@ -50,6 +51,13 @@ const routes: Routes = [
           import('./pages/channels/channel.module').then(
             (m) => m.ChannelModule
           ),
+      },
+      {
+        path: 'jobs',
+        component: JobStatusComponent,
+        data: {
+          title: 'Estado de Jobs',
+        },
       },
     ],
     canActivate: [AuthGuard]

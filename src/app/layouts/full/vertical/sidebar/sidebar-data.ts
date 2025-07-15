@@ -13,5 +13,10 @@ export const navItems: NavItem[] = [
     displayName: 'Canales',
     iconName: 'photo-cog',
     route: '/channels/channel'
+  },
+  {
+    displayName: 'Mis procesamientos',
+    iconName: 'file-search',
+    route: '/jobs'
   }
 ];
