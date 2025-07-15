@@ -37,7 +37,6 @@ export class ProductOneComponent {
 
     selectedFormat = 'Sams';
     imagesPerGtin = 1;
-    regenerar = false;
 
     selectedTab = 0;
 

@@ -46,6 +46,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'product-catalog',
+        loadChildren: () =>
+          import('./pages/productProcessingView/productProcessingView.module').then(
+            (m) => m.ProductProcessingViewModule
+          ),
+      },
+      {
         path: 'channels',
         loadChildren: () =>
           import('./pages/channels/channel.module').then(

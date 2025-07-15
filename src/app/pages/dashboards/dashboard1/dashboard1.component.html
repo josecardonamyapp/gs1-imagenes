@@ -1,13 +1,39 @@
 <div class="container-fluid py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4 gap-3 flex-wrap">
+
+    <mat-form-field appearance="outline" class="flex-grow-1 w-100" style="max-width: 50%;">
+      <mat-label>Buscar por nombre o GTIN</mat-label>
+      <input matInput class="small-input" placeholder="Ej: Shampoo o 7500001234567" [(ngModel)]="searchText">
+      <button mat-icon-button matSuffix *ngIf="searchText" (click)="searchText=''" aria-label="Clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <div class="text-end my-3" *ngIf="selectedGtins.length  > 0">
+      <button mat-raised-button color="accent" (click)="processSelectedImages()">Procesar Seleccionadas ({{
+        selectedGtins.length }})</button>
+    </div>
+
+    <button mat-stroked-button color="warn" (click)="openGtinDialog()" style="white-space: nowrap;">
+      Buscar por lista de GTINs
+    </button>
+
+  </div>
+
+
+
   <div class="row g-4">
-    @for (product of products; track product.producName) {
+    @for (product of filteredProducts(); track product.producName) {
     <div class="col-12 col-sm-6 col-md-3">
-      <div class="card product-card  h-100 shadow border-0 rounded-3 bg-white text-start">
+      <div class="card product-card  h-100 shadow border-0 rounded-3 bg-white text-start"
+        [class.selected-image]="isGtinSelected(product.gtin)"
+        (click)="product.images?.length && toggleGtinSelection(product.gtin)"
+        [class.no-click]="!product.images?.length">
 
         <!-- <div class="carousel-counter text-center mb-4"> -->
         <div class="card-header text-center ">
           <span class="badge bg-light text-dark px-2 py-1 rounded">
-            <h3>{{ product.currentIndex+1 }} / {{ product.images.length }} imágenes</h3>
+            <h3>{{ product.images.length > 0 ? 1 : 0 }} / {{ product.images.length }} imágenes</h3>
           </span>
         </div>
 
@@ -17,15 +43,23 @@
           </button>
 
           <!-- <h3>{{ product.images.length }}</h3> -->
-          <ng-container *ngIf="product.images?.length > 0; else noImage">
+          <!-- <ng-container *ngIf="product.images?.length > 0; else noImage">
             <img [src]="product.images[product.currentIndex]?.uniformresourceidentifier" alt="{{ product.producName }}"
               loading="lazy" class="card-img-top p-3 mx-auto d-block mb-3"
               style="height: 180px; object-fit: contain; border-bottom: 1px solid #eee;" />
+          </ng-container> -->
+          <ng-container *ngIf="product.images?.length > 0; else noImage">
+            <div class="position-relative">
+              <img [src]="product.images[product.currentIndex]?.uniformresourceidentifier"
+                alt="{{ product.producName }}" loading="lazy" class="card-img-top p-3 mx-auto d-block mb-3"
+                style="height: 180px; object-fit: contain; border-bottom: 1px solid #eee;" />
+            </div>
           </ng-container>
 
           <ng-template #noImage>
-            <div class="placeholder-img">
-              <mat-icon>image_not_supported</mat-icon>
+            <div class="no-image-placeholder d-flex flex-column align-items-center justify-content-center">
+              <mat-icon color="warn" fontIcon="image_not_supported" style="font-size: 36px;"></mat-icon>
+              <span class="text-muted mt-2" style="font-size: 14px;">Sin imagen</span>
             </div>
           </ng-template>
 
@@ -53,5 +87,10 @@
       </div>
     </div>
     }
+  </div>
+
+  <div *ngIf="isGenerating" class="loading-overlay">
+    <mat-progress-spinner mode="indeterminate" color="primary" diameter="60" strokeWidth="5">
+    </mat-progress-spinner>
   </div>
 </div>
