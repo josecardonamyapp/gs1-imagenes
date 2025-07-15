@@ -8,10 +8,10 @@ import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProcessResultComponent } from '../productResult/productResult.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
-
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
     selector: 'app-productOne',
@@ -24,18 +24,18 @@ import { MatDialog } from '@angular/material/dialog';
         MatButton,
         MatProgressSpinnerModule,
         MatDialogModule,
-        ProcessResultComponent
+        MatFormFieldModule,
+        MatInputModule,
     ],
-    templateUrl: './productOne.component.html',
-    styleUrls: ['./productOne.component.scss']
+    templateUrl: './productProcessingView.component.html',
+    styleUrls: ['./productProcessingView.component.scss']
 })
-export class ProductOneComponent {
+export class productProcessingViewComponent {
     gtin: string | null = null;
-    product: any = {};
+    products: any[] = [];
     channels: any[] = [];
 
     selectedFormat = 'Sams';
-    imagesPerGtin = 1;
 
     selectedTab = 0;
 
@@ -43,6 +43,9 @@ export class ProductOneComponent {
     selectedChannel: {};
 
     isGenerating = false;
+
+    selectedGtin: any[] = [];
+    imagesPerGtin: number = 1;
 
 
     constructor(
@@ -53,7 +56,11 @@ export class ProductOneComponent {
     ) { }
 
     ngOnInit(): void {
-        this.gtin = this.route.snapshot.paramMap.get('gtin');
+        this.route.queryParams.subscribe(params => {
+            this.selectedGtin = Object.values(params);
+            console.log('params', this.selectedGtin);
+
+        });
         this.getPrductByGtin();
         this.getProductChannels();
     }
@@ -63,7 +70,7 @@ export class ProductOneComponent {
     }
 
     async getPrductByGtin() {
-        this.productService.productGetByGtin(this.gtin).subscribe({
+        this.productService.productGetByGtin(this.selectedGtin).subscribe({
             next: (result) => {
                 if (typeof (result) === 'object') {
 
@@ -75,13 +82,13 @@ export class ProductOneComponent {
                             currentIndex: 0
                         }
                         // if (element.referencedfileheader != null) {
-                        this.product = obj;
+                        this.products.push(obj);
                         // }
                     });
 
-                    if (this.product?.images?.length > 0) {
-                        this.selectedImage = this.product.images[0].uniformresourceidentifier;
-                    }
+                    // if (this.product?.images?.length > 0) {
+                    //     this.selectedImage = this.product.images[0].uniformresourceidentifier;
+                    // }
 
                 }
             }
@@ -123,29 +130,29 @@ export class ProductOneComponent {
     }
 
     processImg() {
-        this.isGenerating = true;
-        const params = {
-            image_url: this.selectedImage,
-            channel_params: this.selectedChannel
-        }
-        this.productService.productProcessImg(params).subscribe({
-            next: (result: any) => {
-                this.isGenerating = false;
-                if (typeof (result) === 'object') {
-                    this.dialog.open(ProcessResultComponent, {
-                        data: JSON.parse(result.body),
-                        width: '400px'
-                    });
-                }
-            },
-            error: (error) => {
-                this.isGenerating = false;
-                console.error('Error in processImg:', error);
-            },
-            complete: () => {
-                this.isGenerating = false;
-                console.log('processImg finished.');
-            }
-        })
+        // this.isGenerating = true;
+        // const params = {
+        //     image_url: this.selectedImage,
+        //     channel_params: this.selectedChannel
+        // }
+        // this.productService.productProcessImg(params).subscribe({
+        //     next: (result: any) => {
+        //         this.isGenerating = false;
+        //         if (typeof (result) === 'object') {
+        //             // this.dialog.open(ProcessResultComponent, {
+        //             //     data: JSON.parse(result.body),
+        //             //     width: '400px'
+        //             // });
+        //         }
+        //     },
+        //     error: (error) => {
+        //         this.isGenerating = false;
+        //         console.error('Error in processImg:', error);
+        //     },
+        //     complete: () => {
+        //         this.isGenerating = false;
+        //         console.log('processImg finished.');
+        //     }
+        // })
     }
 }
