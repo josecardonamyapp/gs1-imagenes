@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../enviroments/environment';
 import { Channel } from '../model/channel';
+import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
 
 @Injectable({
     providedIn: 'root'
@@ -28,24 +29,26 @@ export class ProductService {
     }
 
     productGetByGln(): Observable<any> {
+        const gln = localStorage.getItem('gln');
         const headers = new HttpHeaders({ Authorization: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4' });
         const modules = [
+            "gln="+gln, "&",
             "trade_item_modules[]=trade_item_description_information", "&",
             "trade_item_modules[]=trade_item_measurements", "&",
             "trade_item_modules[]=referenced_file_detail_information",
         ]
         const trade_item_modules = modules.join('');
-        return this.http.get('https://api.syncfonia.com/api/v1/products?page=1&page_size=300&gln=7508006176932&' + trade_item_modules + '', { headers });
+        return this.http.get('https://api.syncfonia.com/api/v1/products?page=1&page_size=300&' + trade_item_modules + '', { headers });
     }
 
     productGetByGtin(gtins: any): Observable<any> {
-        console.log('gtin consulta', gtins)
+        const gln: any = localStorage.getItem('gln');
         const headers = new HttpHeaders({ Authorization: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4' });
         let params = new HttpParams()
             .set('page', '1')
             .set('page_size', '300')
-            .set('gln', '7508006176932');
-            
+            .set('gln', gln);
+
         const modules = [
             "trade_item_description_information",
             "trade_item_measurements",

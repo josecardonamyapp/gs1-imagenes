@@ -13,6 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { GtinDialogComponent } from './dashboard1Filter/dashboard1Filter.component'; // Asegúrate de ajustar la ruta correcta
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-dashboard1',
   standalone: true,
@@ -26,7 +27,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatInputModule,
     MatButtonModule,
     MatProgressSpinnerModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatSnackBarModule
   ],
   templateUrl: './dashboard1.component.html',
   styleUrl: './dashboard1.component.scss'
@@ -44,7 +46,8 @@ export class AppDashboard1Component {
   constructor(
     private productService: ProductService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -55,7 +58,7 @@ export class AppDashboard1Component {
     this.isGenerating = true;
     this.productService.productGetByGln().subscribe({
       next: (result) => {
-        if (typeof (result) === 'object') {
+        if (typeof (result) === 'object' && result.data && result.data.entities?.attributes?.length) {
           this.isGenerating = false;
 
           result.data.entities.attributes.map((element: any) => {
@@ -65,11 +68,14 @@ export class AppDashboard1Component {
               images: (Array.isArray(element.referencedfileheader)) ? element.referencedfileheader : [],
               currentIndex: 0
             }
-            // if (element.referencedfileheader != null) {
-              this.products.push(obj);
-            // }
+            this.products.push(obj);
           });
-          //('final', this.products)
+        } else {
+          this.snackBar.open('No se encontraron productos relacionados al GLN', 'Cerrar', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'center'
+          });
         }
       },
       error: (error) => {
@@ -97,15 +103,28 @@ export class AppDashboard1Component {
           next: (result: any) => {
             this.isGenerating = false;
 
-            this.products = result.data.entities.attributes.map((element: any) => ({
-              gtin: element.gtin,
-              producName: element.tradeitemdescriptioninformation.descriptionshort,
-              images: Array.isArray(element.referencedfileheader) ? element.referencedfileheader : [],
-              currentIndex: 0,
-            }));
+            if (typeof (result) === 'object' && result.data && result.data.entities?.attributes?.length) {
+              this.products = result.data.entities.attributes.map((element: any) => ({
+                gtin: element.gtin,
+                producName: element.tradeitemdescriptioninformation.descriptionshort,
+                images: Array.isArray(element.referencedfileheader) ? element.referencedfileheader : [],
+                currentIndex: 0,
+              }));
+            } else {
+              this.snackBar.open('No se encontraron GTINs relacionados al GLN', 'Cerrar', {
+                duration: 3000,
+                verticalPosition: 'top',
+                horizontalPosition: 'center'
+              });
+            }
           },
           error: err => {
             this.isGenerating = false;
+            this.snackBar.open(err.error, 'Cerrar', {
+              duration: 3000,
+              verticalPosition: 'top',
+              horizontalPosition: 'center'
+            });
             console.error('Error al obtener productos por GTINs:', err);
           }
         });

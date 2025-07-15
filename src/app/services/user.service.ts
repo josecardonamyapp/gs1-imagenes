@@ -243,7 +243,7 @@ export class UserService {
     }
 
     async logout() {
-        await signOut({ global: true }); 
+        await signOut({ global: true });
         const logoutWin = window.open(
             `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent(environment.domainUrl)}`,
             '_blank'

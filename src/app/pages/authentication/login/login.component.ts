@@ -36,7 +36,7 @@ export class AppLoginComponent {
 
     // this.loading = true;
     await this.userService.socialSignInListener();
-      
+
     try {
       const authenticated = await this.userService.isAuthenticatedUser();
       const userattributes = await this.userService.getUserClaims();
@@ -45,13 +45,18 @@ export class AppLoginComponent {
         //(userattributes["custom:userOwnershipData"]);
         //(userattributes["custom:userFirstName"]);
         //(userattributes["custom:userLastName"]);
+
+        const gln: string = userattributes["custom:userOwnershipData"] as string;
+        const glnparts = gln.split('|');
+
+        localStorage.setItem('gln', glnparts[0]);
       }
 
 
       if (authenticated) {
         this.router.navigate(['/dashboards/dashboard1']);
       } else {
-      
+
         await this.onSubmit();
       }
     } catch (err) {
