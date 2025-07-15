@@ -117,12 +117,12 @@
                     con GTIN Canal.
                 </p>
 
-                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating"
+                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating || product.images.length === 0"
                     (click)="processImg()">
                     Iniciar procesamiento por lotes
                 </button>
                 <!--process image with no background color-->
-                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating"
+                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating || product.images.length === 0"
                     (click)="processImgNoBackground()">
                     Procesar imágenes sin fondo
                 </button>

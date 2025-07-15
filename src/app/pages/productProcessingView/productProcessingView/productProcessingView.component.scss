@@ -53,3 +53,21 @@
   padding: 4px 0 !important;
   min-height: 30px;
 }
+
+.btn-process-img {
+    margin-bottom: 25px !important;
+    text-align: center;
+}
+
+.product-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  background-color: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+}
