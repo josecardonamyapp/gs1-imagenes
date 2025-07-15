@@ -78,6 +78,12 @@
               <i-tabler name="mail" class="icon-15 m-r-4"></i-tabler>
               {{email}}
             </span>
+            <h6 class="f-s-14 d-block m-b-4"> ROLES:</h6>
+
+            @for(role of roles; track role) {
+            <span class="f-s-14 d-block m-b-4">&nbsp;&nbsp;{{role}}</span>
+
+            }
           </div>
         </div>
       </div>

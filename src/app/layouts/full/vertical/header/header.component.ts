@@ -51,7 +51,7 @@ interface quicklinks {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterModule, CommonModule, NgScrollbarModule, TablerIconsModule, MaterialModule, FeatherModule, MatIconModule ],
+  imports: [RouterModule, CommonModule, NgScrollbarModule, TablerIconsModule, MaterialModule, FeatherModule, MatIconModule],
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None,
 })
@@ -64,10 +64,11 @@ export class HeaderComponent {
   @Output() toggleCollapsed = new EventEmitter<void>();
 
   showFiller = false;
-  userOwnershipData="";
-  userFirstName="";
-  userLastName="";
-  email="";
+  userOwnershipData = "";
+  userFirstName = "";
+  userLastName = "";
+  email = "";
+  roles=[] as any;
 
   public selectedLanguage: any = {
     language: 'English',
@@ -117,12 +118,19 @@ export class HeaderComponent {
       const authenticated = await this.userService.isAuthenticatedUser();
       const userattributes = await this.userService.getUserClaims();
       if (userattributes) {
+        console.log(userattributes)
         this.userOwnershipData = String(userattributes["custom:userOwnershipData"]);
         this.userFirstName = String(userattributes["custom:userFirstName"]);
         this.userLastName = String(userattributes["custom:userLastName"]);
         this.email = String(userattributes["email"]);
+        const raw = String(userattributes["custom:userRole"]);
+        const roles = raw
+          .replace(/[\[\]\s]/g, '') 
+          .split(',');              
+        this.roles = roles;
+        console.log(roles);
 
-      
+
       }
     } catch (err) {
       console.error('err:', err);

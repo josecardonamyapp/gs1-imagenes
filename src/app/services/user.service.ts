@@ -203,7 +203,7 @@ export class UserService {
 
                     //('Atributos:', attributes);
                     //('atributos user', user)
-
+                    console.log(attributes);
                     const sub = attributes.sub;
                     const email = attributes.email;
                     const name = attributes.name;
@@ -212,6 +212,7 @@ export class UserService {
                     const firstName = attributes['custom:userFirstName'];
                     const lastName = attributes['custom:userLastName'];
                     const ownershipData = attributes['custom:userOwnershipData'];
+                    const role = attributes['custom:userRole'];
                     // const siebelId = attributes['custom:userSiebelId'];
 
                     this.succedded = true;
