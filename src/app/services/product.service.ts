@@ -89,4 +89,8 @@ export class ProductService {
     getJobStatus(jobId: string): Observable<any> {
         return this.http.get(`https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/job-status/${jobId}`);
     }
+
+    getJobDownloadUrl(jobId: string): Observable<any> {
+        return this.http.get(`https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/job-zip/${jobId}`);
+    }
 }

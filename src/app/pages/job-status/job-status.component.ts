@@ -65,7 +65,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     // Obtener job IDs del localStorage
     const storedJobs = localStorage.getItem('processing_jobs');
     const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
-    
+
     this.jobs = jobIds.map((id: string) => ({
       job_id: id,
       status: 'LOADING',
@@ -75,7 +75,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       processed_files: [],
       errors: []
     }));
-    
+
     //('Jobs cargados desde localStorage:', this.jobs);
   }
 
@@ -86,13 +86,13 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     let completedRequests = 0;
-    
+
     this.jobs.forEach((job, index) => {
       this.productService.getJobStatus(job.job_id).subscribe({
         next: (result: any) => {
           //(`Job ${job.job_id} resultado:`, result);
           this.jobs[index] = { ...this.jobs[index], ...result };
-          
+
           completedRequests++;
           if (completedRequests === this.jobs.length) {
             this.loading = false;
@@ -100,12 +100,12 @@ export class JobStatusComponent implements OnInit, OnDestroy {
         },
         error: (error: any) => {
           console.error(`Error consultando job ${job.job_id}:`, error);
-          this.jobs[index] = { 
-            ...this.jobs[index], 
+          this.jobs[index] = {
+            ...this.jobs[index],
             status: 'ERROR',
             status_description: 'Error al consultar el estado del trabajo'
           };
-          
+
           completedRequests++;
           if (completedRequests === this.jobs.length) {
             this.loading = false;
@@ -115,9 +115,25 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     });
   }
 
+  getDownloadUrl(job: any): string | null {
+    this.productService.getJobDownloadUrl(job.job_id).subscribe({
+      next: (result: any) => {
+        console.log(`Download URL para job ${job.job_id}:`, result);
+        let downloadUrl = result.zip_file_info.download_url;
+        navigator.clipboard.writeText(downloadUrl)
+
+        alert('URL copiado al portapapeles');
+      },
+      error: (error: any) => {
+        console.error(`Error obteniendo download URL para job ${job.job_id}:`, error);
+      }
+    });
+    return null;
+  }
+
   refreshJobStatus(job: any): void {
     job.status = 'LOADING';
-    
+
     this.productService.getJobStatus(job.job_id).subscribe({
       next: (result: any) => {
         //(`Job ${job.job_id} actualizado:`, result);
@@ -136,7 +152,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
   downloadSingleFile(url: string, filename: string): void {
     //('Descargando archivo:', filename);
-    
+
     fetch(url)
       .then(response => response.blob())
       .then(blob => {
@@ -162,59 +178,66 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
     job.downloading = true;
     //(`Iniciando descarga de ${job.processed_files.length} archivos para GTIN: ${job.gtin}`);
-    
+
     try {
       // Crear un nuevo ZIP
       const zip = new JSZip();
-      
+
       // Descargar todos los archivos de forma secuencial para evitar problemas
       for (const file of job.processed_files) {
         try {
           //(`Descargando: ${file.output_filename} desde ${file.s3_url}`);
-          
+
           // Usar HttpClient en lugar de fetch para manejar mejor el CORS
-          const blob = await firstValueFrom(this.http.get(file.s3_url, { 
+          const blob = await firstValueFrom(this.http.get(file.s3_url, {
             responseType: 'blob'
           }));
-          
+
           if (blob) {
             //(`Archivo ${file.output_filename} descargado. Tamaño: ${blob.size} bytes`);
-            
+
             // Agregar el archivo al ZIP con su nombre output_filename
             zip.file(file.output_filename, blob);
             //(`Archivo ${file.output_filename} agregado al ZIP`);
           } else {
             console.error(`Error: blob vacío para ${file.output_filename}`);
           }
-          
+
         } catch (error) {
           console.error(`Error descargando ${file.output_filename}:`, error);
         }
       }
-      
+
       //('Generando archivo ZIP...');
-      
+
       // Generar el ZIP
-      const zipBlob = await zip.generateAsync({ 
+      const zipBlob = await zip.generateAsync({
         type: 'blob',
         compression: 'DEFLATE',
         compressionOptions: { level: 6 }
       });
-      
+
       //(`ZIP generado. Tamaño: ${zipBlob.size} bytes`);
-      
+
       // Descargar el ZIP con el nombre del GTIN
       const zipFilename = `${job.gtin}.zip`;
       saveAs(zipBlob, zipFilename);
-      
+
       job.downloading = false;
       //(`ZIP ${zipFilename} descargado exitosamente con ${job.processed_files.length} archivos`);
-      
+
     } catch (error) {
       job.downloading = false;
       console.error('Error creando el ZIP:', error);
       alert('Error al crear el archivo ZIP: ' + error);
     }
+  }
+
+  getDownloadLink(job: any): string | null {
+    if (job.status === 'COMPLETED' && job.processed_files && job.processed_files.length > 0) {
+      return job.processed_files[0].s3_url; // Retornar el enlace del primer archivo procesado
+    }
+    return null;
   }
 
 
@@ -227,13 +250,15 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
       const filteredJobs = jobIds.filter((id: string) => id !== jobId);
       localStorage.setItem('processing_jobs', JSON.stringify(filteredJobs));
-      
+
       // Eliminar de la vista
       this.jobs = this.jobs.filter(job => job.job_id !== jobId);
-      
+
       //('Job eliminado:', jobId);
     }
   }
+
+
 
   getStatusChipColor(status: string): string {
     switch (status) {
@@ -244,4 +269,4 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       default: return 'basic';
     }
   }
-} 
+}
