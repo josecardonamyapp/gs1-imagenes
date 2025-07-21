@@ -7,6 +7,7 @@ import { FeatherModule } from "angular-feather"
 
 import { CognitoServiceService } from 'src/app/services/auth/cognito-service.service';
 import { UserService } from 'src/app/services/user.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-login',
@@ -20,6 +21,7 @@ export class AppLoginComponent {
   constructor(private settings: CoreService, private authService: CognitoServiceService,
     private userService: UserService,
     private router: Router,
+    private snackBar: MatSnackBar,
   ) { }
 
   form = new FormGroup({
@@ -41,15 +43,31 @@ export class AppLoginComponent {
       const authenticated = await this.userService.isAuthenticatedUser();
       const userattributes = await this.userService.getUserClaims();
       if (userattributes) {
-        //(userattributes);
-        //(userattributes["custom:userOwnershipData"]);
-        //(userattributes["custom:userFirstName"]);
-        //(userattributes["custom:userLastName"]);
 
         const gln: string = userattributes["custom:userOwnershipData"] as string;
         const glnparts = gln.split('|');
 
         localStorage.setItem('gln', glnparts[0]);
+
+        // roles
+        const rolesRaw = userattributes["custom:userRole"] as string;
+        const roles = rolesRaw
+          ? rolesRaw.replace(/^\[|\]$/g, '') 
+            .split(',') 
+            .map(role => role.trim()) 
+          : [];
+        localStorage.setItem('roles', JSON.stringify(roles));
+
+        const allowedRoles = ['systemadmin', 'admin'];
+        const hasAllowedRole = roles.some(role => allowedRoles.includes(role));
+        if (!hasAllowedRole) {
+          this.snackBar.open('Acceso denegado. Su cuenta no tiene permisos para acceder.', 'Cerrar', {
+            duration: 9000,
+            panelClass: ['snackbar-warn']
+          });
+          await this.userService.logout();
+          return;
+        }
       }
 
 

@@ -3,8 +3,6 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../enviroments/environment';
 import { Channel } from '../model/channel';
-import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
-
 @Injectable({
     providedIn: 'root'
 })
@@ -19,7 +17,9 @@ export class ProductService {
         });
     }
 
-    constructor(private http: HttpClient) { }
+    constructor(
+        private http: HttpClient,
+    ) { }
 
 
 
@@ -30,9 +30,14 @@ export class ProductService {
 
     productGetByGln(): Observable<any> {
         const gln = localStorage.getItem('gln');
+        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
         const headers = new HttpHeaders({ Authorization: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4' });
+
+        const allowedRoles = ['systemadmin'];
+        const hasAllowedRole = roles.some((role: any) => allowedRoles.includes(role));
+
         const modules = [
-            "gln="+gln, "&",
+            ...(!hasAllowedRole ? ["gln=" + gln, "&"] : []),
             "trade_item_modules[]=trade_item_description_information", "&",
             "trade_item_modules[]=trade_item_measurements", "&",
             "trade_item_modules[]=referenced_file_detail_information",
@@ -43,11 +48,19 @@ export class ProductService {
 
     productGetByGtin(gtins: any): Observable<any> {
         const gln: any = localStorage.getItem('gln');
+        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
         const headers = new HttpHeaders({ Authorization: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4' });
+
+        const allowedRoles = ['systemadmin'];
+        const hasAllowedRole = roles.some((role: any) => allowedRoles.includes(role));
+
         let params = new HttpParams()
             .set('page', '1')
             .set('page_size', '300')
-            .set('gln', gln);
+
+        if (!hasAllowedRole) {
+            params = params.set('gln', gln);
+        }
 
         const modules = [
             "trade_item_description_information",

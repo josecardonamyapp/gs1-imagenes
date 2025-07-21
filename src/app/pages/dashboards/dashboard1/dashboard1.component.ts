@@ -63,14 +63,15 @@ export class AppDashboard1Component {
 
           result.data.entities.attributes.map((element: any) => {
             const obj = {
-              gtin: element.gtin,
-              producName: element.tradeitemdescriptioninformation.descriptionshort,
-              images: (Array.isArray(element.referencedfileheader)) ? element.referencedfileheader : [],
+              gtin: element?.gtin ?? '',
+              producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
+              images: (Array.isArray(element?.referencedfileheader)) ? element.referencedfileheader : [],
               currentIndex: 0
             }
             this.products.push(obj);
           });
         } else {
+          this.isGenerating = false;
           this.snackBar.open('No se encontraron productos relacionados al GLN', 'Cerrar', {
             duration: 3000,
             verticalPosition: 'top',
@@ -96,7 +97,6 @@ export class AppDashboard1Component {
 
     dialogRef.afterClosed().subscribe((gtins: string[]) => {
       if (Array.isArray(gtins) && gtins.length > 0) {
-        console.log('gtins a consultar', gtins)
         this.isGenerating = true;
 
         this.productService.productGetByGtin(gtins).subscribe({
@@ -105,9 +105,9 @@ export class AppDashboard1Component {
 
             if (typeof (result) === 'object' && result.data && result.data.entities?.attributes?.length) {
               this.products = result.data.entities.attributes.map((element: any) => ({
-                gtin: element.gtin,
-                producName: element.tradeitemdescriptioninformation.descriptionshort,
-                images: Array.isArray(element.referencedfileheader) ? element.referencedfileheader : [],
+                gtin: element?.gtin ?? '',
+                producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
+                images: Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [],
                 currentIndex: 0,
               }));
             } else {
