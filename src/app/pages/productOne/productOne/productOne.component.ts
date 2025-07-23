@@ -100,9 +100,8 @@ export class ProductOneComponent {
     }
 
     getPreviewStyle(format: any, gln: string) {
-       
-        this.selectedChannel = format;
-         this.product["gln"] = gln;
+
+        this.product["gln"] = gln;
         if (!format?.width || !format?.height) return {};
 
         const maxBoxSize = 200;
@@ -125,6 +124,10 @@ export class ProductOneComponent {
         };
     }
 
+    getChannel(event: any) {
+        this.selectedChannel = this.channels[event.index]
+    }
+
     processImg() {
         this.isGenerating = true;
         const params = {
@@ -133,7 +136,7 @@ export class ProductOneComponent {
         }
 
         //(params)
-        
+
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 //(result)
@@ -143,7 +146,7 @@ export class ProductOneComponent {
                 if (result && result.job_id) {
                     const storedJobs = localStorage.getItem('processing_jobs');
                     const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
-                    
+
                     if (!jobIds.includes(result.job_id)) {
                         jobIds.push(result.job_id);
                         localStorage.setItem('processing_jobs', JSON.stringify(jobIds));
@@ -163,7 +166,7 @@ export class ProductOneComponent {
                         this.router.navigate(['/jobs']);
                     }
                 });
-                
+
             },
             error: (error) => {
                 this.isGenerating = false;
@@ -174,7 +177,7 @@ export class ProductOneComponent {
                 //('processImg finished.');
             }
         })
-        
+
     }
 
     processImgNoBackground() {
@@ -194,7 +197,7 @@ export class ProductOneComponent {
                 if (result && result.job_id) {
                     const storedJobs = localStorage.getItem('processing_jobs');
                     const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
-                    
+
                     if (!jobIds.includes(result.job_id)) {
                         jobIds.push(result.job_id);
                         localStorage.setItem('processing_jobs', JSON.stringify(jobIds));
@@ -214,7 +217,7 @@ export class ProductOneComponent {
                         this.router.navigate(['/jobs']);
                     }
                 });
-                
+
             },
             error: (error) => {
                 this.isGenerating = false;

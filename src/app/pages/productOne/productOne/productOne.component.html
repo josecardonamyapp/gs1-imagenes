@@ -31,7 +31,7 @@
             <div class="card shadow-sm p-3">
                 <p class="text-muted small">Canales</p>
 
-                <mat-tab-group [(selectedIndex)]="selectedTab" class="mb-3">
+                <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider">
                         <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
                             <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel, channel.gln)">
