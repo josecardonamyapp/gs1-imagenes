@@ -14,6 +14,8 @@ import { GtinDialogComponent } from './dashboard1Filter/dashboard1Filter.compone
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 @Component({
   selector: 'app-dashboard1',
   standalone: true,
@@ -42,6 +44,8 @@ export class AppDashboard1Component {
   gtinListInput: string = '';
   isGenerating = false;
   selectedGtins: string[] = [];
+  filtered: any[] = [];
+  searchSubject: Subject<string> = new Subject<string>();
 
   constructor(
     private productService: ProductService,
@@ -52,6 +56,15 @@ export class AppDashboard1Component {
 
   ngOnInit(): void {
     this.getPrductsAll();
+
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(searchTerm => {
+        this.filtered = this.products.filter(product =>
+          (product.producName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (product.gtin || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
   }
 
   async getPrductsAll() {
@@ -70,6 +83,7 @@ export class AppDashboard1Component {
             }
             this.products.push(obj);
           });
+          this.filtered = [...this.products];
         } else {
           this.isGenerating = false;
           this.snackBar.open('No se encontraron productos relacionados al GLN', 'Cerrar', {
@@ -110,6 +124,7 @@ export class AppDashboard1Component {
                 images: Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [],
                 currentIndex: 0,
               }));
+              this.filtered = [...this.products];
             } else {
               this.snackBar.open('No se encontraron GTINs relacionados al GLN', 'Cerrar', {
                 duration: 3000,
@@ -150,16 +165,37 @@ export class AppDashboard1Component {
     this.router.navigate(['/product', gtin]);
   }
 
-  filteredProducts() {
-    if (!this.searchText) return this.products;
+  onSearchChange(value: string) {
+    this.searchSubject.next(value);
+  }
 
+  clearSearch() {
+    this.searchText = '';
+    this.applyFilter();
+  }
+
+  applyFilter() {
     const query = this.searchText.toLowerCase();
-
-    return this.products.filter(p =>
+    this.filtered = this.products.filter(p =>
       p.producName?.toLowerCase().includes(query) ||
       p.gtin?.toLowerCase().includes(query)
     );
   }
+
+  trackByGtin(index: number, item: any): string {
+    return item.gtin;
+  }
+
+  // filteredProducts() {
+  //   if (!this.searchText) return this.products;
+
+  //   const query = this.searchText.toLowerCase();
+
+  //   return this.products.filter(p =>
+  //     p.producName?.toLowerCase().includes(query) ||
+  //     p.gtin?.toLowerCase().includes(query)
+  //   );
+  // }
 
 
   toggleGtinSelection(gtin: string): void {
@@ -174,6 +210,16 @@ export class AppDashboard1Component {
 
   isGtinSelected(gtin: string): boolean {
     return this.selectedGtins.includes(gtin);
+  }
+
+  selectAllGtins(): void {
+    this.selectedGtins = this.filtered
+      .filter(p => p.images?.length > 0)
+      .map(p => p.gtin);
+  }
+
+  clearAllGtins(): void {
+    this.selectedGtins = [];
   }
 
   processSelectedImages() {

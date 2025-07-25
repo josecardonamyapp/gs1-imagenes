@@ -33,11 +33,16 @@ export class ProductService {
         const roles = JSON.parse(localStorage.getItem('roles') || '[]');
         const headers = new HttpHeaders({ Authorization: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4' });
 
-        const allowedRoles = ['systemadmin'];
-        const hasAllowedRole = roles.some((role: any) => allowedRoles.includes(role));
+        const excludedRoles = ['systemadmin'];
+        // const hasAllowedRole = roles.some((role: any) => allowedRoles.includes(role));
+
+        const hasExcludedRole = roles.some(
+            (role: any) => typeof role === 'string' &&
+                (excludedRoles.includes(role.toLowerCase()) || role.toLowerCase().includes('retailer'))
+        );
 
         const modules = [
-            ...(!hasAllowedRole ? ["gln=" + gln, "&"] : []),
+            ...(!hasExcludedRole ? ["gln=" + gln, "&"] : []),
             "trade_item_modules[]=trade_item_description_information", "&",
             "trade_item_modules[]=trade_item_measurements", "&",
             "trade_item_modules[]=referenced_file_detail_information",
@@ -51,14 +56,20 @@ export class ProductService {
         const roles = JSON.parse(localStorage.getItem('roles') || '[]');
         const headers = new HttpHeaders({ Authorization: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4' });
 
-        const allowedRoles = ['systemadmin'];
-        const hasAllowedRole = roles.some((role: any) => allowedRoles.includes(role));
+        // const allowedRoles = ['systemadmin'];
+        // const hasAllowedRole = roles.some((role: any) => allowedRoles.includes(role));
+
+        const hasExcludedRole = roles.some(
+            (role: any) =>
+                typeof role === 'string' &&
+                (role.toLowerCase() === 'systemadmin' || role.toLowerCase().includes('retailer'))
+        );
 
         let params = new HttpParams()
             .set('page', '1')
             .set('page_size', '300')
 
-        if (!hasAllowedRole) {
+        if (!hasExcludedRole) {
             params = params.set('gln', gln);
         }
 

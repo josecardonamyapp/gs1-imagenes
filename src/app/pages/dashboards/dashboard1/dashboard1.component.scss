@@ -138,3 +138,23 @@
   text-align: center;
   color: #888;
 }
+
+.sticky-header {
+  position: sticky;
+  top: 64px;
+  z-index: 1000;
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 1.5rem;
+}
+
+::ng-deep .mat-form-field-appearance-outline .mat-form-field-wrapper {
+  padding: 0.25rem 0.75rem;
+  /* reduce padding vertical */
+}
+
+::ng-deep .mat-input-element {
+  font-size: 0.9rem;
+  padding: 0.25rem 0 !important;
+  height: 32px;
+}

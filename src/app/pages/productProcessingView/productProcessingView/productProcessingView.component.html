@@ -4,7 +4,7 @@
 
     <div class="row mb-5 pb-4">
 
-        <div class="col-md-4">
+        <div class="col-md-4" style="max-height: 700px; overflow-y: auto;">
             <div class="card product-card d-flex flex-row align-items-center p-3 shadow-sm mb-4"
                 *ngFor="let product of products">
                 <img *ngIf="product.images?.length" [src]="product.images[0]?.uniformresourceidentifier"

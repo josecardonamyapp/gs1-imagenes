@@ -52,14 +52,24 @@ export class AppLoginComponent {
         // roles
         const rolesRaw = userattributes["custom:userRole"] as string;
         const roles = rolesRaw
-          ? rolesRaw.replace(/^\[|\]$/g, '') 
-            .split(',') 
-            .map(role => role.trim()) 
+          ? rolesRaw.replace(/^\[|\]$/g, '')
+            .split(',')
+            .map(role => role.trim())
           : [];
         localStorage.setItem('roles', JSON.stringify(roles));
 
-        const allowedRoles = ['systemadmin', 'admin'];
-        const hasAllowedRole = roles.some(role => allowedRoles.includes(role));
+        // const allowedRoles = ['systemadmin', 'admin'];
+
+        const exactAllowedRoles = ['systemadmin', 'admin'];
+        const partialKeywords = ['retailer', 'premiummanufacturer'];
+
+        const hasAllowedRole = roles.some(
+          role =>
+            exactAllowedRoles.includes(role) ||
+            partialKeywords.some(keyword => role.includes(keyword))
+        );
+
+        // const hasAllowedRole = roles.some(role => allowedRoles.includes(role));
         if (!hasAllowedRole) {
           this.snackBar.open('Acceso denegado. Su cuenta no tiene permisos para acceder.', 'Cerrar', {
             duration: 9000,

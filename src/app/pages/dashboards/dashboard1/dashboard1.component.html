@@ -1,29 +1,36 @@
 <div class="container-fluid py-4">
-  <div class="d-flex align-items-center justify-content-between mb-4 gap-3 flex-wrap">
+  <div class="sticky-header bg-white py-3 px-2 shadow-sm z-index-1000 mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-4 gap-3 flex-wrap" style="padding: 5px;">
 
-    <mat-form-field appearance="outline" class="flex-grow-1 w-100" style="max-width: 50%;">
-      <mat-label>Buscar por nombre o GTIN</mat-label>
-      <input matInput class="small-input" placeholder="Ej: Shampoo o 7500001234567" [(ngModel)]="searchText">
-      <button mat-icon-button matSuffix *ngIf="searchText" (click)="searchText=''" aria-label="Clear">
-        <mat-icon>close</mat-icon>
+      <mat-form-field appearance="outline" class="flex-grow-1 w-100" style="max-width: 35%;">
+        <mat-label>Buscar por nombre o GTIN</mat-label>
+        <input matInput class="small-input" placeholder="Ej: Shampoo o 7500001234567" [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange($event)">
+        <button mat-icon-button matSuffix *ngIf="searchText" (click)="clearSearch()" aria-label="Clear">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <button mat-stroked-button color="primary" (click)="selectedGtins.length ? clearAllGtins() : selectAllGtins()">
+        {{ selectedGtins.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
       </button>
-    </mat-form-field>
 
-    <div class="text-end my-3" *ngIf="selectedGtins.length  > 0">
-      <button mat-raised-button color="accent" (click)="processSelectedImages()">Procesar Seleccionadas ({{
-        selectedGtins.length }})</button>
+      <div class="text-end my-3" *ngIf="selectedGtins.length  > 0">
+        <button mat-raised-button color="accent" (click)="processSelectedImages()">Procesar Seleccionadas ({{
+          selectedGtins.length }})</button>
+      </div>
+
+      <button mat-stroked-button color="warn" (click)="openGtinDialog()" style="white-space: nowrap;">
+        Buscar por lista de GTINs
+      </button>
+
     </div>
-
-    <button mat-stroked-button color="warn" (click)="openGtinDialog()" style="white-space: nowrap;">
-      Buscar por lista de GTINs
-    </button>
-
   </div>
 
 
 
   <div class="row g-4">
-    @for (product of filteredProducts(); track product.producName) {
+    @for (product of filtered; track product.gtin) {
     <div class="col-12 col-sm-6 col-md-3">
       <div class="card product-card  h-100 shadow border-0 rounded-3 bg-white text-start"
         [class.selected-image]="isGtinSelected(product.gtin)"
