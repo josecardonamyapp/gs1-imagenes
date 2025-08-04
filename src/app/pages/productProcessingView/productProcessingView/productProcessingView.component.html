@@ -24,10 +24,10 @@
             <div class="card shadow-sm p-3">
                 <p class="text-muted small">Canales</p>
 
-                <mat-tab-group [(selectedIndex)]="selectedTab" class="mb-3">
+                <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider">
                         <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3">
-                            <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel)">
+                            <div class="dimension-preview" [ngStyle]="channelStyles[channel.channelID]">
                                 <span class="dimension-label-inside">
                                     {{ channel.width }} x {{ channel.height }} {{ channel.extension }}
                                 </span>
@@ -112,6 +112,24 @@
                     </mat-form-field>
                 </div>
 
+                <!-- <div class="d-flex align-items-center gap-2 my-3">
+                    <label class="form-label m-0">Estructura de carpeta</label>
+                      <mat-select [(ngModel)]="selectedFolderStructure" class="w-100">
+                          <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
+                              {{ structure.label }}
+                          </mat-option>
+                      </mat-select>
+                </div> -->
+                <div class="col-sm-12">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-select [(ngModel)]="selectedFolderStructure">
+                      <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
+                            {{ structure.label }}
+                        </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
                 <p class="text-muted small">
                     El renombrado de archivos utilizará por default el GTIN. Si requiere personalización, cargue un XLS
                     con GTIN Canal.
@@ -119,7 +137,7 @@
 
                 <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating"
                     (click)="sendToProcess()">
-                    Iniciar procesamiento por lotes
+                    Iniciar procesamiento por lotess
                 </button>
 
                 <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating"

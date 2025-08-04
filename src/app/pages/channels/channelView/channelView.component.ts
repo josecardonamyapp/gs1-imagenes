@@ -42,6 +42,7 @@ export class ChannelViewComponent {
         height: 0,
         extension: '',
         dpi: 0,
+        background_color: '#FFFFFF', // Default white background
         max_size_kb: 0,
         adaptation_type: '',
         renaming_type: '',
@@ -62,6 +63,7 @@ export class ChannelViewComponent {
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(params => {
+          console.log(params)
             if (params && params['channelID']) {
                 this.isEditMode = true;
                 // Crear una copia del objeto para evitar propiedades read-only
@@ -73,6 +75,7 @@ export class ChannelViewComponent {
                     height: parseInt(params['height'] || '0'),
                     extension: params['extension'] || '',
                     dpi: parseInt(params['dpi'] || '0'),
+                    background_color: this.rgbToHex(params['background_color']) || '#FFFFFF', // Default white background
                     max_size_kb: parseInt(params['max_size_kb'] || '0'),
                     adaptation_type: params['adaptation_type'] || '',
                     renaming_type: params['renaming_type'] || '',
@@ -87,6 +90,26 @@ export class ChannelViewComponent {
                 //('Modo creación');
             }
         });
+    }
+
+    hexToRgb(hex: string): Array<number> {
+        // Eliminar el símbolo '#' si está presente
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+
+        return [r, g, b];
+
+    }
+
+    componentToHex(c: number): string {
+        const hex = c.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }
+
+    rgbToHex(backgroundColor: string): string {
+        const [r, g, b] = backgroundColor.split(',').map(Number);
+        return '#' + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
     }
 
     getPreviewStyle(format: any) {
@@ -162,7 +185,8 @@ export class ChannelViewComponent {
             height: parseInt(this.channel.height?.toString() || '0'),
             dpi: parseInt(this.channel.dpi?.toString() || '0'),
             max_size_kb: parseInt(this.channel.max_size_kb?.toString() || '0'),
-            rename_start_index: parseInt(this.channel.rename_start_index?.toString() || '0')
+            rename_start_index: parseInt(this.channel.rename_start_index?.toString() || '0'),
+            background_color: this.hexToRgb(this.channel.background_color).join(','), // Convert hex to RGB
         };
     }
 

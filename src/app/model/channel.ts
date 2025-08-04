@@ -7,6 +7,7 @@ export interface Channel {
     extension: string;
     dpi: number;
     max_size_kb: number;
+    background_color: string; // Optional property for background color
     adaptation_type: string;
     renaming_type: string;
     rename_base: string;

@@ -57,6 +57,9 @@ export class ProductOneComponent {
         this.gtin = this.route.snapshot.paramMap.get('gtin');
         this.getPrductByGtin();
         this.getProductChannels();
+        setTimeout(() => {
+          this.getChannel({ index: 0 });
+        }, 500);
     }
 
     goToReturn() {
@@ -136,7 +139,7 @@ export class ProductOneComponent {
         }
 
         //(params)
-
+        console.log('Processing image with channel:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 //(result)
@@ -188,6 +191,7 @@ export class ProductOneComponent {
             no_background: true
         }
 
+        console.log('Processing image with no background:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 //(result)

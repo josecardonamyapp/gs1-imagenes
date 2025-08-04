@@ -14,6 +14,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { JobConfirmationComponent } from '../../productOne/job-confirmation/job-confirmation.component';
 import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
 
 @Component({
     selector: 'app-productOne',
@@ -28,6 +30,8 @@ import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
         MatDialogModule,
         MatFormFieldModule,
         MatInputModule,
+        MatOption,
+        MatSelect
     ],
     templateUrl: './productProcessingView.component.html',
     styleUrls: ['./productProcessingView.component.scss']
@@ -36,6 +40,7 @@ export class productProcessingViewComponent {
     gtin: string | null = null;
     products: any[] = [];
     channels: any[] = [];
+    channelStyles: {[key: string]: any} = {};
 
     selectedFormat = 'Sams';
 
@@ -48,6 +53,14 @@ export class productProcessingViewComponent {
 
     selectedGtin: any[] = [];
     imagesPerGtin: number = 1;
+    // isMultipleProcessing: boolean = false;
+
+    selectedFolderStructure: number = 1; // Default to "Estructura por GTIN"
+
+    folderStructures = [
+      { label: 'Estructura por GTIN', value: 1 },
+      { label: 'Todo en una carpeta', value: 2 },
+    ]
 
 
     constructor(
@@ -65,6 +78,12 @@ export class productProcessingViewComponent {
         });
         this.getPrductByGtin();
         this.getProductChannels();
+
+        setTimeout(() => {
+            this.channels.forEach(channel => {
+              this.channelStyles[channel.channelID] = this.getPreviewStyle(channel);
+            });
+        }, 500);
     }
 
     goToReturn() {
@@ -100,6 +119,12 @@ export class productProcessingViewComponent {
         })
     }
 
+    getChannel(event: any) {
+      this.selectedChannel = this.channels[event.index]
+      // console.log('Selected channel:', this.channels[event.index]);
+      // console.log('Selected channel index:', this.selectedChannel);
+    }
+
     async getProductChannels() {
         this.productService.productGetChannels().subscribe({
             next: (result: any) => {
@@ -111,7 +136,6 @@ export class productProcessingViewComponent {
     }
 
     getPreviewStyle(format: any) {
-        this.selectedChannel = format;
         if (!format?.width || !format?.height) return {};
 
         const maxBoxSize = 200;
@@ -135,22 +159,34 @@ export class productProcessingViewComponent {
     }
 
     sendToProcess() {
-        this.products.forEach((product) => {
-            product.images = product.images.slice(0, this.imagesPerGtin);
-            console.log('process de tamaño', product)
+      let productList: any[] = JSON.parse(JSON.stringify(this.products));
 
-            this.processImg(product);
-        });
+      productList.forEach((product, index) => {
+          product.images = product.images.slice(0, this.imagesPerGtin);
+          console.log('amount of images per GTIN:', product.images.length);
+      });
+
+      console.log(productList.length, 'products to process');
+      this.processImg(productList);
+    }
+
+    getGtins() {
+      return this.products.map(product => product.gtin);
     }
 
     processImg(product: any) {
-        this.isGenerating = true;
+        // this.isGenerating = true;
+        // console.log('Processing image with channel:', this.selectedFolderStructure);
+        // console.log('Selected channel:', this.getGtins());
+        console.log('Selected folder structure:', this.selectedChannel);
         const params = {
             images_url: product,
-            channel_params: this.selectedChannel
+            channel_params: this.selectedChannel,
+            folder_structure: this.selectedFolderStructure,
+            is_multiple_processing: true
         }
 
-        //(params)
+        console.log('Processing image with params:', params);
 
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
