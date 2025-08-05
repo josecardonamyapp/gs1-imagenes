@@ -70,7 +70,7 @@ export class AppNavItemComponent implements OnChanges {
   onItemSelected(item: NavItem) {
     if (!item.children || !item.children.length) {
       this.router.navigate([item.route]);
-      
+
     }
     if (item.children && item.children.length) {
       this.expanded = !this.expanded;
@@ -81,18 +81,22 @@ export class AppNavItemComponent implements OnChanges {
       left: 0,
       behavior: 'smooth',
     });
-    if (!this.expanded){
-    if (window.innerWidth < 1024) {
-      this.notify.emit();
+    if (!this.expanded) {
+      if (window.innerWidth < 1024) {
+        this.notify.emit();
+      }
     }
-  }
   }
 
   onSubItemSelected(item: NavItem) {
-    if (!item.children || !item.children.length){
+    if (!item.children || !item.children.length) {
       if (this.expanded && window.innerWidth < 1024) {
         this.notify.emit();
       }
     }
+  }
+
+  getItemId(displayName: string): string {
+    return 'menu-' + displayName.toLowerCase().replace(/ /g, '-');
   }
 }

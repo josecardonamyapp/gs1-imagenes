@@ -1,7 +1,7 @@
-<div class="job-status-container">
+<div id="lista-procesamientos" class="job-status-container">
   <div class="header">
     <h2>Estado de Procesamiento de Imágenes</h2>
-    <button mat-raised-button color="primary" (click)="checkJobsStatus()" [disabled]="loading">
+    <button id="actualizar-procesamientos" mat-raised-button color="primary" (click)="checkJobsStatus()" [disabled]="loading">
       <mat-icon>refresh</mat-icon>
       Actualizar Todo
     </button>
@@ -140,7 +140,7 @@
     </div>
     <h3>No hay trabajos de procesamiento</h3>
     <p>Los trabajos de transformación de imágenes aparecerán aquí cuando proceses productos.</p>
-    <button mat-raised-button color="primary" routerLink="/dashboards/dashboard1">
+    <button id="procesar-productos" mat-raised-button color="primary" routerLink="/dashboards/dashboard1">
       <mat-icon>add</mat-icon>
       Procesar Productos
     </button>

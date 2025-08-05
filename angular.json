@@ -37,6 +37,7 @@
               "src/styles.scss",
               "src/assets/scss/style.scss",
               "node_modules/angular-calendar/css/angular-calendar.css",
+              "node_modules/driver.js/dist/driver.css"
             ],
             "scripts": []
           },

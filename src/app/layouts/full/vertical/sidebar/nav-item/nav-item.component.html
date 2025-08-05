@@ -10,7 +10,7 @@
       ? router.isActive(item.route, true)
       : false,
     expanded: expanded,
-  }" class="menu-list-item rounded-pill">
+  }" class="menu-list-item rounded-pill" [attr.id]="getItemId(item.displayName)">
   <i-tabler name="{{ item.iconName }}" class="routeIcon" matListItemIcon></i-tabler>
   <span class="hide-menu">{{ item.displayName | translate }}</span>
   @if(item.children && item.children.length) {
