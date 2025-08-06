@@ -209,15 +209,33 @@ export class AppDashboard1Component {
           this.isGenerating = false;
 
           result.data.entities.attributes.map((element: any) => {
+
+            const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
+
+            // Filtrar solo URLs que sean imágenes
+            const imageUrls = files.filter((file: any) => {
+              const url = file?.uniformresourceidentifier ?? '';
+              return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+            });
+
             const obj = {
               gtin: element?.gtin ?? '',
               producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
-              images: (Array.isArray(element?.referencedfileheader)) ? element.referencedfileheader : [],
+              images: imageUrls,
               currentIndex: 0
             }
-            this.products.push(obj);
+            if (obj.images.length) {
+              this.products.push(obj);
+            }
           });
           this.filtered = [...this.products];
+          if (this.filtered.length != result.data.entities.attributes.length) {
+            this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
+              duration: 3000,
+              verticalPosition: 'top',
+              horizontalPosition: 'center'
+            });
+          }
         } else {
           this.isGenerating = false;
           this.snackBar.open('No se encontraron productos relacionados al GLN', 'Cerrar', {
@@ -252,13 +270,35 @@ export class AppDashboard1Component {
             this.isGenerating = false;
 
             if (typeof (result) === 'object' && result.data && result.data.entities?.attributes?.length) {
-              this.products = result.data.entities.attributes.map((element: any) => ({
-                gtin: element?.gtin ?? '',
-                producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
-                images: Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [],
-                currentIndex: 0,
-              }));
+              this.products = result.data.entities.attributes.map((element: any) => {
+
+                const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
+
+                // Filtrar solo URLs que sean imágenes
+                const imageUrls = files.filter((file: any) => {
+                  const url = file?.uniformresourceidentifier ?? '';
+                  return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                });
+
+                if (!imageUrls.length) return null;
+
+                return {
+                  gtin: element?.gtin ?? '',
+                  producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
+                  images: Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [],
+                  currentIndex: 0,
+                }
+              })
+                .filter((product: any) => product !== null);
               this.filtered = [...this.products];
+
+              if (this.filtered.length != result.data.entities.attributes.length) {
+                this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
+                  duration: 3000,
+                  verticalPosition: 'top',
+                  horizontalPosition: 'center'
+                });
+              }
             } else {
               this.snackBar.open('No se encontraron GTINs relacionados al GLN', 'Cerrar', {
                 duration: 3000,

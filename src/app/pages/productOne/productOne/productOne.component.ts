@@ -40,7 +40,7 @@ export class ProductOneComponent {
 
     selectedTab = 0;
 
-    selectedImage: string = '';
+    selectedImage: string | null = null;
     selectedChannel: {};
 
     isGenerating = false;
@@ -58,7 +58,7 @@ export class ProductOneComponent {
         this.getPrductByGtin();
         this.getProductChannels();
         setTimeout(() => {
-          this.getChannel({ index: 0 });
+            this.getChannel({ index: 0 });
         }, 500);
     }
 
@@ -72,10 +72,19 @@ export class ProductOneComponent {
                 if (typeof (result) === 'object') {
 
                     result.data.entities.attributes.map((element: any) => {
+
+                        const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
+
+                        // Filtrar solo URLs que sean imágenes
+                        const imageUrls = files.filter((file: any) => {
+                            const url = file?.uniformresourceidentifier ?? '';
+                            return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                        });
+
                         const obj = {
                             gtin: element.gtin,
                             producName: element.tradeitemdescriptioninformation.descriptionshort,
-                            images: (Array.isArray(element.referencedfileheader)) ? element.referencedfileheader : [],
+                            images: imageUrls,
                             currentIndex: 0
                         }
                         // if (element.referencedfileheader != null) {
@@ -83,9 +92,9 @@ export class ProductOneComponent {
                         // }
                     });
 
-                    if (this.product?.images?.length > 0) {
-                        this.selectedImage = this.product.images[0].uniformresourceidentifier;
-                    }
+                    // if (this.product?.images?.length > 0) {
+                    //     this.selectedImage = this.product.images[0].uniformresourceidentifier;
+                    // }
                     //(this.product);
                 }
             }
@@ -131,10 +140,31 @@ export class ProductOneComponent {
         this.selectedChannel = this.channels[event.index]
     }
 
+    toggleImage(url: string) {
+        this.selectedImage = this.selectedImage === url ? null : url;
+        console.log('img seleccionada', this.selectedImage)
+    }
+
     processImg() {
         this.isGenerating = true;
+
+        let productToSend;
+
+        if (this.selectedImage) {
+            const selectedImgObj = this.product.images.find(
+                (img: any) => img.uniformresourceidentifier == this.selectedImage
+            );
+
+            productToSend = {
+                ...this.product,
+                images: selectedImgObj ? [selectedImgObj] : []
+            };
+        } else {
+            productToSend = this.product;
+        }
+
         const params = {
-            images_url: this.product,
+            images_url: productToSend,
             channel_params: this.selectedChannel
         }
 
@@ -185,8 +215,24 @@ export class ProductOneComponent {
 
     processImgNoBackground() {
         this.isGenerating = true;
+
+        let productToSend;
+
+        if (this.selectedImage) {
+            const selectedImgObj = this.product.images.find(
+                (img: any) => img.uniformresourceidentifier == this.selectedImage
+            );
+
+            productToSend = {
+                ...this.product,
+                images: selectedImgObj ? [selectedImgObj] : []
+            };
+        } else {
+            productToSend = this.product;
+        }
+
         const params = {
-            images_url: this.product,
+            images_url: productToSend,
             channel_params: this.selectedChannel,
             no_background: true
         }

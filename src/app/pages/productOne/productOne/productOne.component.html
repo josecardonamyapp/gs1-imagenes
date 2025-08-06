@@ -7,7 +7,7 @@
             <div class="d-flex">
                 <div class="thumbnail-list me-3">
                     <img *ngFor="let img of product.images" [src]="img.uniformresourceidentifier"
-                        (click)="selectedImage = img.uniformresourceidentifier"
+                        (click)="toggleImage(img.uniformresourceidentifier)"
                         [class.selected-thumbnail]="selectedImage === img.uniformresourceidentifier"
                         class="img-thumbnail thumbnail-img" alt="Miniatura" width="60" height="60" loading="lazy" />
                 </div>
@@ -19,8 +19,13 @@
                     </ng-container>
 
                     <ng-template #noImage>
-                        <div class="placeholder-img">
-                            <mat-icon>image_not_supported</mat-icon>
+                        <div class="placeholder-img text-muted text-center">
+                            <mat-icon style="font-size: 48px;">image_not_supported</mat-icon>
+                            <p class="mt-2">
+                                Si deseas procesar <strong>una sola imagen</strong>, selecciónala en la lista.<br />
+                                Si está seleccionada y deseas hacer un <strong>procesamiento masivo</strong>,
+                                deselecciónala.
+                            </p>
                         </div>
                     </ng-template>
                 </div>
@@ -33,7 +38,8 @@
 
                 <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider">
-                        <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
+                        <div
+                            class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
                             <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel, channel.gln)">
                                 <span class="dimension-label-inside">
                                     {{ channel.width }} x {{ channel.height }} {{ channel.extension }}
@@ -117,13 +123,14 @@
                     con GTIN Canal.
                 </p>
 
-                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating || product.images.length === 0"
-                    (click)="processImg()">
+                <button mat-raised-button color="primary" class="w-100 btn-process-img"
+                    [disabled]="isGenerating || product.images.length === 0" (click)="processImg()">
                     Iniciar procesamiento por lotes
                 </button>
+
                 <!--process image with no background color-->
-                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating || product.images.length === 0"
-                    (click)="processImgNoBackground()">
+                <button mat-raised-button color="primary" class="w-100 btn-process-img"
+                    [disabled]="isGenerating || product.images.length === 0" (click)="processImgNoBackground()">
                     Procesar imágenes sin fondo
                 </button>
 
@@ -131,7 +138,7 @@
         </div>
     </div>
 
-    <div class="mt-4 text-center" >
+    <div class="mt-4 text-center">
         <button mat-raised-button color="warn" (click)="goToReturn()">
             Volver
         </button>
