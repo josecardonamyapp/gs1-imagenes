@@ -12,7 +12,8 @@ import { ProcessResultComponent } from '../productResult/productResult.component
 import { JobConfirmationComponent } from '../job-confirmation/job-confirmation.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
-
+import { MatSelectModule } from '@angular/material/select';
+import { Channel } from 'src/app/model/channel';
 
 @Component({
     selector: 'app-productOne',
@@ -25,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
         MatButton,
         MatProgressSpinnerModule,
         MatDialogModule,
+        MatSelectModule,
         ProcessResultComponent
     ],
     templateUrl: './productOne.component.html',
@@ -32,7 +34,12 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class ProductOneComponent {
     gtin: string | null = null;
-    product: any = {};
+    product: any = {
+        gtin: '',
+        producName: '',
+        images: '',
+        currentIndex: 0
+    };
     channels: any[] = [];
 
     selectedFormat = 'Sams';
@@ -41,7 +48,7 @@ export class ProductOneComponent {
     selectedTab = 0;
 
     selectedImage: string | null = null;
-    selectedChannel: {};
+    selectedChannel = {} as Channel;
 
     isGenerating = false;
 
@@ -111,7 +118,7 @@ export class ProductOneComponent {
         })
     }
 
-    getPreviewStyle(format: any, gln: string) {
+    getPreviewStyle(format: any, gln: any) {
 
         this.product["gln"] = gln;
         if (!format?.width || !format?.height) return {};
@@ -137,7 +144,7 @@ export class ProductOneComponent {
     }
 
     getChannel(event: any) {
-        this.selectedChannel = this.channels[event.index]
+        this.selectedChannel = this.channels.find(channel => channel.provider === event.value);
     }
 
     toggleImage(url: string) {

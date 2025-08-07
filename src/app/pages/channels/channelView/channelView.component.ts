@@ -63,7 +63,7 @@ export class ChannelViewComponent {
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(params => {
-          console.log(params)
+            console.log(params)
             if (params && params['channelID']) {
                 this.isEditMode = true;
                 // Crear una copia del objeto para evitar propiedades read-only
@@ -195,7 +195,7 @@ export class ChannelViewComponent {
             next: (result: any) => {
                 this.isLoading = false;
                 this.showMessage('Canal creado exitosamente');
-                this.router.navigate(['/channels']);
+                this.router.navigate(['/channels/channel']);
             },
             error: (error) => {
                 this.isLoading = false;
@@ -212,7 +212,7 @@ export class ChannelViewComponent {
                 //('Respuesta del servidor:', result);
                 this.isLoading = false;
                 this.showMessage('Canal actualizado exitosamente');
-                this.router.navigate(['/channels']);
+                this.router.navigate(['/channels/channel']);
             },
             error: (error) => {
                 this.isLoading = false;
