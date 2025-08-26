@@ -40,8 +40,11 @@
 }
 
 .tiny-input {
-  width: 60px;
-  margin: 0;
+  width: 120px;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+  margin-left: 10px;
 }
 
 ::ng-deep .mat-form-field-wrapper {

@@ -24,239 +24,239 @@
     }
   }
 
-  .jobs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-    gap: 24px;
-    margin-bottom: 20px;
+  // .jobs-grid {
+  //   display: grid;
+  //   grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  //   gap: 24px;
+  //   margin-bottom: 20px;
 
-    .job-card {
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-      border-radius: 12px;
-      overflow: hidden;
+  //   .job-card {
+  //     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  //     border-radius: 12px;
+  //     overflow: hidden;
 
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      }
+  //     &:hover {
+  //       transform: translateY(-2px);
+  //       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  //     }
 
-      mat-card-header {
-        padding: 20px 20px 16px 20px;
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        border-bottom: 1px solid #dee2e6;
-      }
+  //     mat-card-header {
+  //       padding: 20px 20px 16px 20px;
+  //       background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  //       border-bottom: 1px solid #dee2e6;
+  //     }
 
-      mat-card-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 4px;
-      }
+  //     mat-card-title {
+  //       font-size: 18px;
+  //       font-weight: 600;
+  //       color: #333;
+  //       margin-bottom: 4px;
+  //     }
 
-      mat-card-subtitle {
-        color: #6c757d;
-        font-size: 14px;
-        font-weight: 500;
-      }
+  //     mat-card-subtitle {
+  //       color: #6c757d;
+  //       font-size: 14px;
+  //       font-weight: 500;
+  //     }
 
-      mat-card-content {
-        padding: 20px;
-      }
+  //     mat-card-content {
+  //       padding: 20px;
+  //     }
 
-      .job-info {
-        .status-section {
-          margin-bottom: 20px;
+  //     .job-info {
+  //       .status-section {
+  //         margin-bottom: 20px;
 
-          mat-chip-listbox {
-            margin-bottom: 16px;
-          }
+  //         mat-chip-listbox {
+  //           margin-bottom: 16px;
+  //         }
 
-          .progress-info {
-            mat-progress-bar {
-              height: 8px;
-              border-radius: 4px;
-              margin-bottom: 12px;
-            }
+  //         .progress-info {
+  //           mat-progress-bar {
+  //             height: 8px;
+  //             border-radius: 4px;
+  //             margin-bottom: 12px;
+  //           }
 
-            p {
-              margin: 4px 0;
-              font-size: 14px;
-              color: #6c757d;
-              text-align: center;
-            }
+  //           p {
+  //             margin: 4px 0;
+  //             font-size: 14px;
+  //             color: #6c757d;
+  //             text-align: center;
+  //           }
 
-            .progress-text {
-              font-weight: 600;
-              color: #495057;
-            }
-          }
-        }
+  //           .progress-text {
+  //             font-weight: 600;
+  //             color: #495057;
+  //           }
+  //         }
+  //       }
 
-        .job-details {
-          background: #f8f9fa;
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 20px;
+  //       .job-details {
+  //         background: #f8f9fa;
+  //         border-radius: 8px;
+  //         padding: 16px;
+  //         margin-bottom: 20px;
 
-          .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            
-            &:last-child {
-              margin-bottom: 0;
-            }
+  //         .detail-row {
+  //           display: flex;
+  //           justify-content: space-between;
+  //           margin-bottom: 8px;
 
-            strong {
-              color: #495057;
-              font-weight: 600;
-              flex: 0 0 auto;
-              margin-right: 12px;
-            }
+  //           &:last-child {
+  //             margin-bottom: 0;
+  //           }
 
-            span {
-              color: #6c757d;
-              text-align: right;
-              word-break: break-word;
-            }
+  //           strong {
+  //             color: #495057;
+  //             font-weight: 600;
+  //             flex: 0 0 auto;
+  //             margin-right: 12px;
+  //           }
 
-            .job-id {
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              background: #e9ecef;
-              padding: 2px 6px;
-              border-radius: 4px;
-            }
-          }
-        }
+  //           span {
+  //             color: #6c757d;
+  //             text-align: right;
+  //             word-break: break-word;
+  //           }
 
-        .processed-files {
-          margin-bottom: 20px;
+  //           .job-id {
+  //             font-family: 'Courier New', monospace;
+  //             font-size: 12px;
+  //             background: #e9ecef;
+  //             padding: 2px 6px;
+  //             border-radius: 4px;
+  //           }
+  //         }
+  //       }
 
-          h4 {
-            color: #495057;
-            margin: 0 0 12px 0;
-            font-size: 16px;
-            font-weight: 600;
-          }
+  //       .processed-files {
+  //         margin-bottom: 20px;
 
-          .files-list {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px;
-            max-height: 200px;
-            overflow-y: auto;
+  //         h4 {
+  //           color: #495057;
+  //           margin: 0 0 12px 0;
+  //           font-size: 16px;
+  //           font-weight: 600;
+  //         }
 
-            .file-item {
-              display: flex;
-              align-items: center;
-              padding: 8px;
-              margin-bottom: 8px;
-              background: white;
-              border-radius: 6px;
-              border: 1px solid #dee2e6;
+  //         .files-list {
+  //           background: #f8f9fa;
+  //           border-radius: 8px;
+  //           padding: 12px;
+  //           max-height: 200px;
+  //           overflow-y: auto;
 
-              &:last-child {
-                margin-bottom: 0;
-              }
+  //           .file-item {
+  //             display: flex;
+  //             align-items: center;
+  //             padding: 8px;
+  //             margin-bottom: 8px;
+  //             background: white;
+  //             border-radius: 6px;
+  //             border: 1px solid #dee2e6;
 
-              mat-icon {
-                color: #6c757d;
-                margin-right: 12px;
-                font-size: 20px;
-              }
+  //             &:last-child {
+  //               margin-bottom: 0;
+  //             }
 
-              .filename {
-                flex: 1;
-                font-size: 14px;
-                color: #495057;
-                font-family: 'Courier New', monospace;
-              }
+  //             mat-icon {
+  //               color: #6c757d;
+  //               margin-right: 12px;
+  //               font-size: 20px;
+  //             }
 
-              button {
-                margin-left: 8px;
-                width: 32px;
-                height: 32px;
-                line-height: 32px;
+  //             .filename {
+  //               flex: 1;
+  //               font-size: 14px;
+  //               color: #495057;
+  //               font-family: 'Courier New', monospace;
+  //             }
 
-                mat-icon {
-                  font-size: 18px;
-                  margin: 0;
-                }
-              }
-            }
-          }
-        }
+  //             button {
+  //               margin-left: 8px;
+  //               width: 32px;
+  //               height: 32px;
+  //               line-height: 32px;
 
-        .error-section {
-          margin-bottom: 20px;
+  //               mat-icon {
+  //                 font-size: 18px;
+  //                 margin: 0;
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
 
-          h4 {
-            color: #dc3545;
-            margin: 0 0 12px 0;
-            font-size: 16px;
-            font-weight: 600;
-          }
+  //       .error-section {
+  //         margin-bottom: 20px;
 
-          .error-list {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 8px;
-            padding: 12px;
+  //         h4 {
+  //           color: #dc3545;
+  //           margin: 0 0 12px 0;
+  //           font-size: 16px;
+  //           font-weight: 600;
+  //         }
 
-            .error-item {
-              display: flex;
-              align-items: flex-start;
-              padding: 8px;
-              margin-bottom: 8px;
-              background: white;
-              border-radius: 6px;
-              border: 1px solid #f5c6cb;
+  //         .error-list {
+  //           background: #f8d7da;
+  //           border: 1px solid #f5c6cb;
+  //           border-radius: 8px;
+  //           padding: 12px;
 
-              &:last-child {
-                margin-bottom: 0;
-              }
+  //           .error-item {
+  //             display: flex;
+  //             align-items: flex-start;
+  //             padding: 8px;
+  //             margin-bottom: 8px;
+  //             background: white;
+  //             border-radius: 6px;
+  //             border: 1px solid #f5c6cb;
 
-              mat-icon {
-                margin-right: 12px;
-                font-size: 20px;
-                margin-top: 2px;
-              }
+  //             &:last-child {
+  //               margin-bottom: 0;
+  //             }
 
-              span {
-                flex: 1;
-                font-size: 14px;
-                color: #721c24;
-                line-height: 1.4;
-              }
-            }
-          }
-        }
-      }
+  //             mat-icon {
+  //               margin-right: 12px;
+  //               font-size: 20px;
+  //               margin-top: 2px;
+  //             }
 
-      mat-card-actions {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding: 16px 20px 20px 20px;
-        background: #f8f9fa;
-        border-top: 1px solid #dee2e6;
+  //             span {
+  //               flex: 1;
+  //               font-size: 14px;
+  //               color: #721c24;
+  //               line-height: 1.4;
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
 
-        button {
-          flex: 1;
-          min-width: 120px;
-          height: 36px;
-          font-weight: 500;
-          border-radius: 18px;
+  //     mat-card-actions {
+  //       display: flex;
+  //       gap: 12px;
+  //       flex-wrap: wrap;
+  //       padding: 16px 20px 20px 20px;
+  //       background: #f8f9fa;
+  //       border-top: 1px solid #dee2e6;
 
-          mat-icon {
-            margin-right: 6px;
-            font-size: 18px;
-          }
-        }
-      }
-    }
-  }
+  //       button {
+  //         flex: 1;
+  //         min-width: 120px;
+  //         height: 36px;
+  //         font-weight: 500;
+  //         border-radius: 18px;
+
+  //         mat-icon {
+  //           margin-right: 6px;
+  //           font-size: 18px;
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
   .empty-state {
     text-align: center;
@@ -265,7 +265,7 @@
 
     .empty-icon {
       margin-bottom: 20px;
-      
+
       mat-icon {
         font-size: 64px;
         width: 64px;
@@ -344,38 +344,38 @@
       }
     }
 
-    .jobs-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
+    // .jobs-grid {
+    //   grid-template-columns: 1fr;
+    //   gap: 16px;
 
-      .job-card {
-        mat-card-content {
-          padding: 16px;
-        }
+    //   .job-card {
+    //     mat-card-content {
+    //       padding: 16px;
+    //     }
 
-        .job-info {
-          .job-details {
-            .detail-row {
-              flex-direction: column;
-              gap: 4px;
-              text-align: left;
-              
-              span {
-                text-align: left;
-              }
-            }
-          }
-        }
+    //     .job-info {
+    //       .job-details {
+    //         .detail-row {
+    //           flex-direction: column;
+    //           gap: 4px;
+    //           text-align: left;
 
-        mat-card-actions {
-          flex-direction: column;
-          
-          button {
-            width: 100%;
-          }
-        }
-      }
-    }
+    //           span {
+    //             text-align: left;
+    //           }
+    //         }
+    //       }
+    //     }
+
+    //     mat-card-actions {
+    //       flex-direction: column;
+
+    //       button {
+    //         width: 100%;
+    //       }
+    //     }
+    //   }
+    // }
 
     .empty-state {
       padding: 60px 16px;
@@ -405,4 +405,246 @@
       }
     }
   }
-} 
+}
+
+/* Layout por grupos: [img] [nombre+gtin] [actualizado+fecha] [status+%] [acciones] */
+.job-groups {
+  display: grid;
+  grid-template-columns: 56px 2fr 1.1fr 0.9fr 200px;
+  /* reparte el espacio */
+  column-gap: 24px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+/* 1) Imagen */
+.thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f6f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+/* 2) Nombre + GTIN */
+.info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-self: stretch;
+  /* ocupa su fr */
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gtin {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+/* 3) Actualizado + Fecha */
+.updated {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  justify-self: center;
+  align-items: center;
+  /* centrado en su celda */
+
+  .label {
+    font-weight: 700;
+    color: #6b7280;
+    line-height: 1;
+  }
+
+  .pill {
+    background: #eef2f7;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-weight: 600;
+    color: #4b5563;
+    white-space: nowrap;
+  }
+}
+
+/* 4) Status + % */
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-self: center;
+  /* centrado en su celda */
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: .3px;
+  background: #e9edf1;
+  color: #4b5563;
+  border: 1px solid transparent;
+
+  &.completed {
+    background: #e8f5ec;
+    color: #257a3e;
+    border-color: #bfe6ce;
+  }
+
+  &.processing {
+    background: #fff6e6;
+    color: #9a6b00;
+    border-color: #ffe0a6;
+  }
+
+  &.failed {
+    background: #fdeaea;
+    color: #b42318;
+    border-color: #f7c2be;
+  }
+}
+
+.pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  line-height: 1;
+}
+
+/* 5) Acciones */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
+  /* fija a la derecha */
+
+  .actions-select {
+    width: 160px;
+    margin: 0;
+  }
+
+  .mdc-notched-outline {
+    border-radius: 8px;
+  }
+}
+
+/* Progreso: barra fina que ocupa grupos 2–4 */
+.progress {
+  grid-column: 2 / 5;
+  /* info + updated + status */
+  margin-top: 4px;
+}
+
+.bar-xs {
+  height: 4px;
+}
+
+/* Tarjeta compacta */
+.job-card--compact {
+  padding: 0;
+  border-radius: 12px;
+}
+
+/* ================== Responsive ================== */
+
+/* <= 1200px: compacta un poco, sigue repartido */
+@media (max-width: 1200px) {
+  .job-groups {
+    grid-template-columns: 56px 1.6fr 1fr 0.9fr 180px;
+    column-gap: 16px;
+  }
+}
+
+/* <= 960px: 2 filas manteniendo balance y botón a la derecha */
+@media (max-width: 960px) {
+  .job-groups {
+    grid-template-columns: 56px 1fr 1fr auto;
+    grid-template-areas:
+      "thumb info    updated actions"
+      "thumb status  status  actions";
+    row-gap: 8px;
+  }
+
+  .thumb {
+    grid-area: thumb;
+  }
+
+  .info {
+    grid-area: info;
+  }
+
+  .updated {
+    grid-area: updated;
+    justify-self: start;
+  }
+
+  .status {
+    grid-area: status;
+    justify-self: start;
+  }
+
+  .actions {
+    grid-area: actions;
+  }
+
+  .progress {
+    grid-column: 2 / 4;
+  }
+
+  /* barra bajo info/updated/status */
+}
+
+/* <= 640px: súper compacto; sin imagen */
+@media (max-width: 640px) {
+  .job-groups {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "info    actions"
+      "updated status";
+  }
+
+  .thumb {
+    display: none;
+  }
+
+  .updated .label {
+    display: none;
+  }
+
+  /* ahorra espacio */
+  .actions .actions-select {
+    width: 140px;
+  }
+
+  .gtin {
+    font-weight: 500;
+  }
+
+  .progress {
+    grid-column: 1 / -1;
+  }
+
+  /* barra a todo lo ancho */
+}

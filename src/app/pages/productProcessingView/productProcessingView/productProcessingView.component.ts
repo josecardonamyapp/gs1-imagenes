@@ -12,6 +12,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { JobConfirmationComponent } from '../../productOne/job-confirmation/job-confirmation.component';
 import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
 import { MatOption } from '@angular/material/core';
@@ -31,7 +32,8 @@ import { Channel } from 'src/app/model/channel';
         MatFormFieldModule,
         MatInputModule,
         MatOption,
-        MatSelect
+        MatSelect,
+        MatAutocompleteModule
     ],
     templateUrl: './productProcessingView.component.html',
     styleUrls: ['./productProcessingView.component.scss']
@@ -52,7 +54,12 @@ export class productProcessingViewComponent {
     isGenerating = false;
 
     selectedGtin: any[] = [];
-    imagesPerGtin: number = 1;
+    imagesPerGtin: number | string = 1;
+    imagesOptions = [
+        { value: 1, label: '1' },
+        { value: 2, label: '2' },
+        { value: 'Todos', label: 'Todos' }
+    ];
     // isMultipleProcessing: boolean = false;
 
     selectedFolderStructure: number = 1; // Default to "Estructura por GTIN"
@@ -159,14 +166,24 @@ export class productProcessingViewComponent {
     sendToProcess() {
         let productList: any[] = JSON.parse(JSON.stringify(this.products));
 
-        productList.forEach((product, index) => {
-            product.images = product.images.slice(0, this.imagesPerGtin);
-            console.log('amount of images per GTIN:', product.images.length);
+        productList.forEach(product => {
+            let imagesPerGtinNum = Number(this.imagesPerGtin);
+
+            if (this.imagesPerGtin === 'Todos') {
+                product.images = [...product.images];
+            }
+            else if (!isNaN(imagesPerGtinNum) && imagesPerGtinNum > 0) {
+                product.images = product.images.slice(0, imagesPerGtinNum);
+            }
+            else {
+                product.images = [];
+            }
         });
 
-        console.log(productList.length, 'products to process');
+        console.log(`${productList.length} productos listos para procesar`);
         this.processImg(productList);
     }
+
 
     getGtins() {
         return this.products.map(product => product.gtin);
@@ -230,12 +247,29 @@ export class productProcessingViewComponent {
     }
 
     sendToProcessNoBackground() {
-        this.products.forEach((product) => {
-            product.images = product.images.slice(0, this.imagesPerGtin);
-            console.log('process sin fondo', product)
 
+        this.products.forEach(product => {
+            let imagesPerGtinNum = Number(this.imagesPerGtin);
+
+            if (this.imagesPerGtin === 'Todos') {
+                product.images = [...product.images];
+            }
+            else if (!isNaN(imagesPerGtinNum) && imagesPerGtinNum > 0) {
+                product.images = product.images.slice(0, imagesPerGtinNum);
+            }
+            else {
+                product.images = [];
+            }
+            
             this.processImgNoBackground(product);
         });
+
+        // this.products.forEach((product) => {
+        //     product.images = product.images.slice(0, this.imagesPerGtin);
+        //     console.log('process sin fondo', product)
+
+        //     this.processImgNoBackground(product);
+        // });
     }
 
     processImgNoBackground(product: any) {
