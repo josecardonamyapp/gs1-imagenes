@@ -11,6 +11,9 @@ import { ProductService } from '../../services/product.service';
 import { HttpClient } from '@angular/common/http';
 import { saveAs } from 'file-saver';
 import { firstValueFrom } from 'rxjs';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 const JSZip = require('jszip');
 
@@ -25,7 +28,10 @@ const JSZip = require('jszip');
     MatIconModule,
     MatProgressBarModule,
     MatChipsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatTooltipModule
   ],
   templateUrl: './job-status.component.html',
   styleUrls: ['./job-status.component.scss']
@@ -205,8 +211,9 @@ export class JobStatusComponent implements OnInit, OnDestroy {
           } else {
             console.error(`Error: blob vacío para ${file.output_filename}`);
           }
-
+          job.downloading = false;
         } catch (error) {
+          job.downloading = false;
           console.error(`Error descargando ${file.output_filename}:`, error);
         }
       }
@@ -272,4 +279,39 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       default: return 'basic';
     }
   }
+
+  statusClass(status: string | undefined) {
+    switch ((status || '').toUpperCase()) {
+      case 'COMPLETED': return 'completed';
+      case 'FAILED':
+      case 'ERROR': return 'failed';
+      case 'PROCESSING':
+      case 'IN_PROGRESS':
+      case 'LOADING': return 'processing';
+      default: return 'neutral';
+    }
+  }
+
+  getUpdatedAt(job: any): Date | string {
+    return job?.timing?.updated_at || job?.timing?.created_at || new Date();
+  }
+
+  /** Obtiene una miniatura: puedes ajustar estas fuentes según tu modelo */
+  getThumb(job: any): string | null {
+    // intenta con un campo de thumbnail propio
+    if (job?.thumbnailUrl) return job.thumbnailUrl;
+    // primera imagen procesada (si ya hay)
+    if (job?.processed_files?.length) return job.processed_files[0].s3_url;
+    // fallback (si guardas una imagen original)
+    if (job?.original_image_url) return job.original_image_url;
+    return null;
+  }
+
+  handleAction(action: string, job: any) {
+    if (action === 'refresh') { this.refreshJobStatus(job); }
+    if (action === 'download') { this.downloadAllFiles(job); }
+    if (action === 'link') { this.getDownloadUrl(job); }
+    if (action === 'delete') { this.removeJob(job.job_id); }
+  }
+
 }

@@ -7,7 +7,7 @@
             <div class="d-flex">
                 <div class="thumbnail-list me-3">
                     <img *ngFor="let img of product.images" [src]="img.uniformresourceidentifier"
-                        (click)="selectedImage = img.uniformresourceidentifier"
+                        (click)="toggleImage(img.uniformresourceidentifier)"
                         [class.selected-thumbnail]="selectedImage === img.uniformresourceidentifier"
                         class="img-thumbnail thumbnail-img" alt="Miniatura" width="60" height="60" loading="lazy" />
                 </div>
@@ -19,8 +19,13 @@
                     </ng-container>
 
                     <ng-template #noImage>
-                        <div class="placeholder-img">
-                            <mat-icon>image_not_supported</mat-icon>
+                        <div class="placeholder-img text-muted text-center">
+                            <mat-icon style="font-size: 48px;">image_not_supported</mat-icon>
+                            <p class="mt-2">
+                                Si deseas procesar <strong>una sola imagen</strong>, selecciónala en la lista.<br />
+                                Si está seleccionada y deseas hacer un <strong>procesamiento masivo</strong>,
+                                deselecciónala.
+                            </p>
                         </div>
                     </ng-template>
                 </div>
@@ -29,14 +34,24 @@
 
         <div class="col-md-6">
             <div class="card shadow-sm p-3">
-                <p class="text-muted small">Canales</p>
+                <!-- <p class="text-muted small">Canales</p> -->
 
-                <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
-                    <mat-tab *ngFor="let channel of channels" [label]="channel.provider">
-                        <div class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
-                            <div class="dimension-preview" [ngStyle]="getPreviewStyle(channel, channel.gln)">
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Canales</mat-label>
+                    <mat-select name="renaming_type" required
+                        (selectionChange)="getChannel($event)">
+                        <mat-option *ngFor="let channel of channels" [value]="channel.provider">
+                            {{ channel.provider }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
+                    <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
+                        <div  *ngIf="selectedChannel" class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
+                            <div class="dimension-preview" [ngStyle]="getPreviewStyle(selectedChannel, selectedChannel.gln)">
                                 <span class="dimension-label-inside">
-                                    {{ channel.width }} x {{ channel.height }} {{ channel.extension }}
+                                    {{ selectedChannel.width }} x {{ selectedChannel.height }} {{ selectedChannel.extension }}
                                 </span>
                             </div>
 
@@ -44,63 +59,63 @@
                                 <div class="row text-center text-md-start">
                                     <div class="col">
                                         <div class="label">Width (Ancho)</div>
-                                        <div class="value">{{ channel.width }}px</div>
+                                        <div class="value">{{ selectedChannel.width }}px</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">Height (Largo)</div>
-                                        <div class="value">{{ channel.height }}px</div>
+                                        <div class="value">{{ selectedChannel.height }}px</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">Extension</div>
-                                        <div class="value">{{ channel.extension }}</div>
+                                        <div class="value">{{ selectedChannel.extension }}</div>
                                     </div>
                                 </div>
 
                                 <div class="row text-center text-md-start mt-3">
                                     <div class="col">
                                         <div class="label">Density</div>
-                                        <div class="value">{{ channel.dpi }}</div>
+                                        <div class="value">{{ selectedChannel.dpi }}</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">Max size</div>
-                                        <div class="value">{{ channel.max_size_kb }}</div>
+                                        <div class="value">{{ selectedChannel.max_size_kb }}</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">GLN</div>
-                                        <div class="value">{{ channel.gln }}</div>
+                                        <div class="value">{{ selectedChannel.gln }}</div>
                                     </div>
                                 </div>
                                 <div class="row text-center text-md-start mt-3">
                                     <div class="col">
                                         <div class="label">Tipo de adaptación</div>
-                                        <div class="value">{{ channel.adaptation_type }}</div>
+                                        <div class="value">{{ selectedChannel.adaptation_type }}</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">Prefijo</div>
-                                        <div class="value">{{ channel.rename_base }}</div>
+                                        <div class="value">{{ selectedChannel.rename_base }}</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">Separador</div>
-                                        <div class="value">{{ channel.rename_separator }}</div>
+                                        <div class="value">{{ selectedChannel.rename_separator }}</div>
                                     </div>
 
                                 </div>
                                 <div class="row text-center text-md-start mt-3">
                                     <div class="col">
                                         <div class="label">Inicio de secuencia</div>
-                                        <div class="value">{{ channel.rename_start_index }}</div>
+                                        <div class="value">{{ selectedChannel.rename_start_index }}</div>
                                     </div>
                                     <div class="col">
                                         <div class="label">Estructura de la carpeta</div>
-                                        <div class="value">{{ channel.folder_structure }}</div>
+                                        <div class="value">{{ selectedChannel.folder_structure }}</div>
                                     </div>
 
                                 </div>
 
                             </div>
                         </div>
-                    </mat-tab>
-                </mat-tab-group>
+                    <!-- </mat-tab>
+                </mat-tab-group> -->
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Disponibilidad de fotos</label>
@@ -117,13 +132,14 @@
                     con GTIN Canal.
                 </p>
 
-                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating || product.images.length === 0"
-                    (click)="processImg()">
+                <button mat-raised-button color="primary" class="w-100 btn-process-img"
+                    [disabled]="isGenerating || product.images.length === 0" (click)="processImg()">
                     Iniciar procesamiento por lotes
                 </button>
+
                 <!--process image with no background color-->
-                <button mat-raised-button color="primary" class="w-100 btn-process-img" [disabled]="isGenerating || product.images.length === 0"
-                    (click)="processImgNoBackground()">
+                <button mat-raised-button color="primary" class="w-100 btn-process-img"
+                    [disabled]="isGenerating || product.images.length === 0" (click)="processImgNoBackground()">
                     Procesar imágenes sin fondo
                 </button>
 
@@ -131,7 +147,7 @@
         </div>
     </div>
 
-    <div class="mt-4 text-center" >
+    <div class="mt-4 text-center">
         <button mat-raised-button color="warn" (click)="goToReturn()">
             Volver
         </button>

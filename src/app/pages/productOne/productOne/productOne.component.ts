@@ -12,7 +12,8 @@ import { ProcessResultComponent } from '../productResult/productResult.component
 import { JobConfirmationComponent } from '../job-confirmation/job-confirmation.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
-
+import { MatSelectModule } from '@angular/material/select';
+import { Channel } from 'src/app/model/channel';
 
 @Component({
     selector: 'app-productOne',
@@ -25,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
         MatButton,
         MatProgressSpinnerModule,
         MatDialogModule,
+        MatSelectModule,
         ProcessResultComponent
     ],
     templateUrl: './productOne.component.html',
@@ -32,7 +34,12 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class ProductOneComponent {
     gtin: string | null = null;
-    product: any = {};
+    product: any = {
+        gtin: '',
+        producName: '',
+        images: '',
+        currentIndex: 0
+    };
     channels: any[] = [];
 
     selectedFormat = 'Sams';
@@ -40,8 +47,8 @@ export class ProductOneComponent {
 
     selectedTab = 0;
 
-    selectedImage: string = '';
-    selectedChannel: {};
+    selectedImage: string | null = null;
+    selectedChannel = {} as Channel;
 
     isGenerating = false;
 
@@ -58,7 +65,7 @@ export class ProductOneComponent {
         this.getPrductByGtin();
         this.getProductChannels();
         setTimeout(() => {
-          this.getChannel({ index: 0 });
+            this.getChannel({ index: 0 });
         }, 500);
     }
 
@@ -72,10 +79,19 @@ export class ProductOneComponent {
                 if (typeof (result) === 'object') {
 
                     result.data.entities.attributes.map((element: any) => {
+
+                        const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
+
+                        // Filtrar solo URLs que sean imágenes
+                        const imageUrls = files.filter((file: any) => {
+                            const url = file?.uniformresourceidentifier ?? '';
+                            return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                        });
+
                         const obj = {
                             gtin: element.gtin,
                             producName: element.tradeitemdescriptioninformation.descriptionshort,
-                            images: (Array.isArray(element.referencedfileheader)) ? element.referencedfileheader : [],
+                            images: imageUrls,
                             currentIndex: 0
                         }
                         // if (element.referencedfileheader != null) {
@@ -83,9 +99,9 @@ export class ProductOneComponent {
                         // }
                     });
 
-                    if (this.product?.images?.length > 0) {
-                        this.selectedImage = this.product.images[0].uniformresourceidentifier;
-                    }
+                    // if (this.product?.images?.length > 0) {
+                    //     this.selectedImage = this.product.images[0].uniformresourceidentifier;
+                    // }
                     //(this.product);
                 }
             }
@@ -102,7 +118,7 @@ export class ProductOneComponent {
         })
     }
 
-    getPreviewStyle(format: any, gln: string) {
+    getPreviewStyle(format: any, gln: any) {
 
         this.product["gln"] = gln;
         if (!format?.width || !format?.height) return {};
@@ -128,13 +144,34 @@ export class ProductOneComponent {
     }
 
     getChannel(event: any) {
-        this.selectedChannel = this.channels[event.index]
+        this.selectedChannel = this.channels.find(channel => channel.provider === event.value);
+    }
+
+    toggleImage(url: string) {
+        this.selectedImage = this.selectedImage === url ? null : url;
+        console.log('img seleccionada', this.selectedImage)
     }
 
     processImg() {
         this.isGenerating = true;
+
+        let productToSend;
+
+        if (this.selectedImage) {
+            const selectedImgObj = this.product.images.find(
+                (img: any) => img.uniformresourceidentifier == this.selectedImage
+            );
+
+            productToSend = {
+                ...this.product,
+                images: selectedImgObj ? [selectedImgObj] : []
+            };
+        } else {
+            productToSend = this.product;
+        }
+
         const params = {
-            images_url: this.product,
+            images_url: productToSend,
             channel_params: this.selectedChannel
         }
 
@@ -185,8 +222,24 @@ export class ProductOneComponent {
 
     processImgNoBackground() {
         this.isGenerating = true;
+
+        let productToSend;
+
+        if (this.selectedImage) {
+            const selectedImgObj = this.product.images.find(
+                (img: any) => img.uniformresourceidentifier == this.selectedImage
+            );
+
+            productToSend = {
+                ...this.product,
+                images: selectedImgObj ? [selectedImgObj] : []
+            };
+        } else {
+            productToSend = this.product;
+        }
+
         const params = {
-            images_url: this.product,
+            images_url: productToSend,
             channel_params: this.selectedChannel,
             no_background: true
         }

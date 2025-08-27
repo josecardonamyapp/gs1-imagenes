@@ -1,14 +1,15 @@
-<div class="job-status-container">
+<div id="lista-procesamientos" class="job-status-container">
   <div class="header">
     <h2>Estado de Procesamiento de Imágenes</h2>
-    <button mat-raised-button color="primary" (click)="checkJobsStatus()" [disabled]="loading">
+    <button id="actualizar-procesamientos" mat-raised-button color="primary" (click)="checkJobsStatus()"
+      [disabled]="loading">
       <mat-icon>refresh</mat-icon>
       Actualizar Todo
     </button>
   </div>
 
   <div class="jobs-grid" *ngIf="jobs.length > 0">
-    <mat-card *ngFor="let job of jobs" class="job-card">
+    <!-- <mat-card *ngFor="let job of jobs" class="job-card"> 
       <mat-card-header>
         <mat-card-title>{{ job.product_name || 'Procesando...' }}</mat-card-title>
         <mat-card-subtitle>GTIN: {{ job.gtin || 'N/A' }}</mat-card-subtitle>
@@ -63,10 +64,10 @@
               <strong>Descripción:</strong>
               <span>{{ job.status_description }}</span>
             </div>
-          </div>
+          </div> -->
 
-          <!-- Mostrar archivos procesados si están disponibles -->
-          <div class="processed-files" *ngIf="job.processed_files && job.processed_files.length > 0">
+    <!-- Mostrar archivos procesados si están disponibles -->
+    <!-- <div class="processed-files" *ngIf="job.processed_files && job.processed_files.length > 0">
             <h4>Archivos Procesados:</h4>
             <div class="files-list">
               <div class="file-item" *ngFor="let file of job.processed_files">
@@ -77,10 +78,10 @@
                 </button>
               </div>
             </div>
-          </div>
+          </div> -->
 
-          <!-- Mostrar errores si los hay -->
-          <div class="error-section" *ngIf="job.errors && job.errors.length > 0">
+    <!-- Mostrar errores si los hay -->
+    <!-- <div class="error-section" *ngIf="job.errors && job.errors.length > 0">
             <h4>Errores:</h4>
             <div class="error-list">
               <div class="error-item" *ngFor="let error of job.errors">
@@ -130,7 +131,62 @@
           Eliminar
         </button>
       </mat-card-actions>
+    </mat-card> -->
+
+    <mat-card *ngFor="let job of jobs" class="job-card job-card--compact">
+      <div class="job-groups">
+        <!-- 1) Imagen -->
+        <div class="group thumb" *ngIf="getThumb(job)">
+          <img [src]="getThumb(job)!" [alt]="job.product_name || 'Producto'" />
+        </div>
+
+        <!-- 2) Nombre + GTIN -->
+        <div class="group info">
+          <div class="title" [matTooltip]="job.product_name || 'Procesando…'">
+            {{ job.product_name || 'Procesando...' }}
+          </div>
+          <div class="gtin">GTIN: {{ job.gtin || 'N/A' }}</div>
+        </div>
+
+        <!-- 3) Actualizado + Fecha -->
+        <div class="group updated">
+          <span class="label">Actualizado:</span>
+          <span class="pill">{{ getUpdatedAt(job) | date:'M/d/yy, h:mm a' }}</span>
+        </div>
+
+        <!-- 4) Status + % -->
+        <div class="group status">
+          <span class="status-pill" [ngClass]="statusClass(job.status)">
+            {{ job.status }}
+          </span>
+          <span class="pct" *ngIf="job.progress">{{ job.progress.progress_percentage || 0 }}%</span>
+        </div>
+
+        <!-- 5) Acciones -->
+        <div *ngIf="job.status == 'COMPLETED'" class="group actions">
+          <mat-form-field appearance="outline" class="actions-select">
+            <mat-select placeholder="Acciones" (selectionChange)="handleAction($event.value, job)">
+              <mat-option value="refresh" [disabled]="job.status === 'LOADING'">Actualizar</mat-option>
+              <mat-option value="download"
+                [disabled]="job.status !== 'COMPLETED' || job.downloading || !(job.processed_files?.length)">
+                {{ job.downloading ? 'Descargando...' : 'Descargar Todos' }}
+              </mat-option>
+              <mat-option value="link" [disabled]="job.status === 'PROCESSING'">Generar link</mat-option>
+              <mat-option value="delete" [disabled]="job.status === 'PROCESSING'">Eliminar</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Progreso (opcional) ocupa grupos 2–4 -->
+        <!-- <div class="group progress" *ngIf="job.progress">
+      <mat-progress-bar mode="determinate"
+                        [value]="job.progress.progress_percentage || 0"
+                        class="bar-xs"></mat-progress-bar>
+    </div> -->
+      </div>
     </mat-card>
+
+
   </div>
 
   <!-- Estado vacío -->
@@ -140,7 +196,7 @@
     </div>
     <h3>No hay trabajos de procesamiento</h3>
     <p>Los trabajos de transformación de imágenes aparecerán aquí cuando proceses productos.</p>
-    <button mat-raised-button color="primary" routerLink="/dashboards/dashboard1">
+    <button id="procesar-productos" mat-raised-button color="primary" routerLink="/dashboards/dashboard1">
       <mat-icon>add</mat-icon>
       Procesar Productos
     </button>
