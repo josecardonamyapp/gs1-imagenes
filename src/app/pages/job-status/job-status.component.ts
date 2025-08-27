@@ -66,7 +66,10 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     const storedJobs = localStorage.getItem('processing_jobs');
     const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
 
-    this.jobs = jobIds.map((id: string) => ({
+    // Invertir el orden para mostrar los más recientes primero
+    const reversedJobIds = [...jobIds].reverse();
+
+    this.jobs = reversedJobIds.map((id: string) => ({
       job_id: id,
       status: 'LOADING',
       progress: { progress_percentage: 0, processed_images: 0, total_images: 0 },
