@@ -35,15 +35,14 @@
 
                 <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
-                <div *ngIf="selectedChannel"
-                    class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3">
+                <div *ngIf="selectedChannel" class="d-flex align-items-start gap-4 mb-3">
                     <div class="dimension-preview" [ngStyle]="channelStyles[selectedChannel.channelID]">
                         <span class="dimension-label-inside">
                             {{ selectedChannel.width }} x {{ selectedChannel.height }} {{ selectedChannel.extension }}
                         </span>
                     </div>
 
-                    <div class="dimension-meta">
+                    <!-- <div class="dimension-meta">
                         <div class="row text-center text-md-start">
                             <div class="col">
                                 <div class="label">Width (Ancho)</div>
@@ -99,7 +98,124 @@
                             </div>
 
                         </div>
+                    </div> -->
+
+                    <div class="dimension-meta flex-grow-1">
+                        <div class="row text-center text-md-start mt-3">
+                            <div class="col-md-4">
+                                <div class="label">Width (Ancho)</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.width"
+                                        placeholder="Width (px)">
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label">Height (Largo)</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.height"
+                                        placeholder="Height (px)">
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label">Extension</div>
+                                <!-- <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput [(ngModel)]="selectedChannel.extension" placeholder="Extension">
+                                </mat-form-field> -->
+                                <mat-form-field appearance="outline" class="w-100">
+                                    <mat-label>Extensión</mat-label>
+                                    <select matNativeControl [(ngModel)]="selectedChannel.extension" name="extension"
+                                        required>
+                                        <option value="jpg">jpg</option>
+                                        <option value="jpeg">jpeg</option>
+                                        <option value="png">png</option>
+                                        <option value="webp">webp</option>
+                                    </select>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row text-center text-md-start mt-3">
+                            <div class="col-md-4">
+                                <div class="label">Density</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.dpi" placeholder="DPI">
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label">Max size</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.max_size_kb"
+                                        placeholder="Max KB">
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label">GLN</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput [(ngModel)]="selectedChannel.gln" placeholder="GLN" disabled>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row text-center text-md-start mt-3">
+                            <div class="col-md-4">
+                                <div class="label">Tipo de adaptación</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput [(ngModel)]="selectedChannel.adaptation_type"
+                                        placeholder="Adaptación" disabled>
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label">Prefijo</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput [(ngModel)]="selectedChannel.rename_base" placeholder="Prefijo">
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label">Separador</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput [(ngModel)]="selectedChannel.rename_separator"
+                                        placeholder="Separador">
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="row text-center text-md-start mt-3">
+                            <div class="col-md-4">
+                                <div class="label">Inicio de secuencia</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.rename_start_index"
+                                        placeholder="Start Index">
+                                </mat-form-field>
+                            </div>
+                            <!-- <div class="col-md-4">
+                                <div class="label">Encarpetado</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput [(ngModel)]="selectedChannel.folder_structure"
+                                        placeholder="Folder structure" disabled>
+                                </mat-form-field>
+                            </div> -->
+                            <div class="col-md-4">
+                                <mat-form-field appearance="outline" class="w-100">
+                                    <mat-label>Color de Fondo</mat-label>
+                                    <input matInput type="color" [(ngModel)]="selectedChannel.background_color"
+                                        name="background_color" />
+
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <mat-form-field appearance="outline" class="w-100">
+                                    <div class="label">Encarpetado</div>
+                                    <mat-select [(ngModel)]="selectedChannel.folder_structure">
+                                        <mat-option *ngFor="let structure of folderStructures"
+                                            [value]="structure.value">
+                                            {{ structure.label }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
                     </div>
+
                 </div>
                 <!-- </mat-tab>
                 </mat-tab-group> -->
@@ -126,8 +242,8 @@
                     <label class="form-label m-0">Imágenes por GTIN</label>
 
                     <mat-form-field appearance="outline" class="tiny-input">
-                        <input matInput type="text" placeholder="Ingrese valor o seleccione"
-                            [(ngModel)]="imagesPerGtin" [matAutocomplete]="auto">
+                        <input matInput type="text" placeholder="Ingrese valor o seleccione" [(ngModel)]="imagesPerGtin"
+                            [matAutocomplete]="auto">
 
                         <mat-autocomplete #auto="matAutocomplete">
                             <mat-option *ngFor="let item of imagesOptions" [value]="item.value">
@@ -145,15 +261,6 @@
                               {{ structure.label }}
                           </mat-option>
                       </mat-select>
-                </div> -->
-                <!-- <div class="col-sm-12">
-                    <mat-form-field appearance="outline" class="w-100">
-                        <mat-select [(ngModel)]="selectedFolderStructure">
-                            <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
-                                {{ structure.label }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
                 </div> -->
 
                 <p class="text-muted small">
