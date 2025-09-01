@@ -39,12 +39,20 @@
                 <mat-form-field appearance="outline" class="w-100">
                     <mat-label>Canales</mat-label>
                     <mat-select name="renaming_type" required
-                        (selectionChange)="getChannel($event)">
-                        <mat-option *ngFor="let channel of channels" [value]="channel.provider">
+                                [(ngModel)]="selectedChannel"
+                                (selectionChange)="getChannel($event)">
+                        <mat-option *ngFor="let channel of channels" [value]="channel">
                             {{ channel.provider }}
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
+
+                <!-- Mensaje de error -->
+                <div *ngIf="showError" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <mat-icon class="me-2">error</mat-icon>
+                    {{ errorMessage }}
+                    <button type="button" class="btn-close" (click)="hideError()" aria-label="Close"></button>
+                </div>
 
                 <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
@@ -132,16 +140,111 @@
                     con GTIN Canal.
                 </p>
 
-                <button mat-raised-button color="primary" class="w-100 btn-process-img"
-                    [disabled]="isGenerating || product.images.length === 0" (click)="processImg()">
-                    Iniciar procesamiento por lotes
-                </button>
+                <!-- Botones de procesamiento -->
+                <div class="processing-buttons">
+                    <button mat-raised-button color="primary" class="w-100 btn-process-img mb-3"
+                        [disabled]="isGenerating || product.images.length === 0" (click)="processImg()">
+                        <mat-icon class="me-2">auto_fix_high</mat-icon>
+                        Iniciar procesamiento por lotes
+                    </button>
 
-                <!--process image with no background color-->
-                <button mat-raised-button color="primary" class="w-100 btn-process-img"
-                    [disabled]="isGenerating || product.images.length === 0" (click)="processImgNoBackground()">
-                    Procesar imágenes sin fondo
-                </button>
+                    <button mat-raised-button color="accent" class="w-100 btn-process-img mb-3"
+                        [disabled]="isGenerating || product.images.length === 0" (click)="processImgNoBackground()">
+                        <mat-icon class="me-2">remove_bg</mat-icon>
+                        Procesar imágenes sin fondo
+                    </button>
+
+                    <!-- Botón con menú desplegable para IA -->
+                    <div class="ai-button-container">
+                        <button mat-raised-button color="warn" class="w-100 btn-process-img ai-main-button"
+                            [disabled]="isGenerating || product.images.length === 0" 
+                            (click)="toggleAIMenu()">
+                            <mat-icon class="me-2">auto_awesome</mat-icon>
+                            Procesar con fondo generado por IA
+                            <mat-icon class="ms-2 toggle-icon" [class.rotated]="showAIMenu">expand_more</mat-icon>
+                        </button>
+                        
+                        <div class="ai-dropdown-menu" [class.show]="showAIMenu" style="margin-bottom: 100px">
+                            <div class="ai-dropdown-content">
+                                <div class="ai-header-section">
+                                    <h6 class="mb-2 fw-semibold text-primary">
+                                        <mat-icon class="me-1">lightbulb</mat-icon>
+                                        Configuración de IA
+                                    </h6>
+                                    <p class="text-muted small mb-3">
+                                        Genera fondos personalizados usando inteligencia artificial
+                                    </p>
+                                </div>
+                                
+                                <div class="ai-controls">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="useAIBackground" 
+                                               [(ngModel)]="useAIBackground"
+                                               (change)="onAICheckboxChange()">
+                                        <label class="form-check-label fw-medium" for="useAIBackground">
+                                            Habilitar generación de fondo con IA
+                                        </label>
+                                    </div>
+                                    
+                                    <div *ngIf="useAIBackground" class="ai-prompt-section">
+                                        <mat-form-field appearance="outline" class="w-100">
+                                            <mat-label>
+                                                <mat-icon class="me-1" style="font-size: 18px;">edit</mat-icon>
+                                                Descripción del fondo deseado
+                                            </mat-label>
+                                            <textarea matInput 
+                                                      [(ngModel)]="aiBackgroundPrompt"
+                                                      placeholder="Ej: Un paisaje montañoso perfecto para promocionar un perfume"
+                                                      rows="3"
+                                                      maxlength="500"
+                                                      class="ai-prompt-textarea"></textarea>
+                                            <mat-hint align="end">{{ aiBackgroundPrompt.length }}/500</mat-hint>
+                                        </mat-form-field>
+                                        
+                                        <div class="ai-examples">
+                                            <p class="text-muted small mb-2">
+                                                <strong>Ejemplos de prompts:</strong>
+                                            </p>
+                                            <div class="example-tags" style="margin-bottom: 20px">
+                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un fondo elegante y minimalista para productos de lujo'">
+                                                    Elegante y minimalista
+                                                </span>
+                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un ambiente natural con luz suave y colores cálidos'">
+                                                    Ambiente natural
+                                                </span>
+                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un estudio fotográfico profesional con iluminación dramática'">
+                                                    Estudio profesional
+                                                </span>
+                                            </div>
+                                        </div>
+                                    <!--
+                                        <div class= "image-dimensions">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <mat-form-field appearance="outline" class="w-100">
+                                                        <mat-label>Dimensiones</mat-label>
+                                                        <mat-select [(value)]="aiImageDimensionsSelected" >
+                                                            <mat-option *ngFor="let dimension of aiImageDimensions" [value]="dimension">{{ dimension }}</mat-option>
+                                                        </mat-select>
+                                                    </mat-form-field>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    -->
+                                        
+                                        <button mat-raised-button color="primary" class="w-100 mt-3"
+                                                [disabled]="!aiBackgroundPrompt.trim()" 
+                                                (click)="processImgWithAI()">
+                                            <mat-icon class="me-2">rocket_launch</mat-icon>
+                                            Ejecutar con IA
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -152,6 +255,8 @@
             Volver
         </button>
     </div>
+
+    
 
     <div *ngIf="isGenerating" class="loading-overlay">
         <mat-progress-spinner mode="indeterminate" color="primary" diameter="60" strokeWidth="5">

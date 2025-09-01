@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProductService } from 'src/app/services/product.service';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { JobConfirmationComponent } from '../../productOne/job-confirmation/job-confirmation.component';
 import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
 import { MatOption } from '@angular/material/core';
@@ -68,6 +69,15 @@ export class productProcessingViewComponent {
         { label: 'Estructura por GTIN', value: 1 },
         { label: 'Todo en una carpeta', value: 2 },
     ]
+
+    // Propiedades para IA
+    useAIBackground = false;
+    aiBackgroundPrompt = '';
+    showAIMenu = false;
+    aiImageDimensions = ['1024x1024', '768x768', '512x512'];
+    aiImageDimensionsSelected = '1024x1024'; // Valor por defecto
+    errorMessage = '';
+    showError = false;
 
 
     constructor(
@@ -320,5 +330,140 @@ export class productProcessingViewComponent {
                 //('processImg finished.');
             }
         })
+    }
+
+    // Métodos para IA
+    sendToProcessWithAI() {
+        if (!this.useAIBackground || !this.aiBackgroundPrompt.trim()) {
+            this.showErrorMessage('Debe habilitar IA y proporcionar un prompt');
+            return;
+        }
+
+        if (!this.selectedChannel || Object.keys(this.selectedChannel).length === 0) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar con IA');
+            return;
+        }
+
+        //let productList: any[] = JSON.parse(JSON.stringify(this.products));
+        let productList = this.products;
+        this.products.forEach(product => {
+            let imagesPerGtinNum = Number(this.imagesPerGtin);
+
+            if (this.imagesPerGtin === 'Todos') {
+                product.images = [...product.images];
+            }
+            else if (!isNaN(imagesPerGtinNum) && imagesPerGtinNum > 0) {
+                product.images = product.images.slice(0, imagesPerGtinNum);
+            }
+            else {
+                product.images = [];
+            }
+            
+            this.processImgWithAI(product);
+        });
+
+    
+       //this.processImgWithAI(productList);
+        
+    }
+
+    processImgWithAI(product: any) {
+        this.isGenerating = true;
+
+        // Parsear las dimensiones seleccionadas
+        const [aiWidth, aiHeight] = this.aiImageDimensionsSelected.split('x').map(Number);
+        
+        // Crear channel_params con las dimensiones de IA
+        const channelParams: any = {
+            ...this.selectedChannel
+        };
+
+        channelParams.width = 1024;
+        channelParams.height = 1024;
+        channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
+        
+        const params = {
+            images_url: product,
+            channel_params: channelParams,
+            AI_background_prompt: this.aiBackgroundPrompt.trim()
+        }
+
+        console.log('Processing image with AI background:', params);
+        this.productService.productProcessImg(params).subscribe({
+            next: (result: any) => {
+                this.isGenerating = false;
+
+                // Almacenar el job_id en localStorage
+                if (result && result.job_id) {
+                    const storedJobs = localStorage.getItem('processing_jobs');
+                    const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
+
+                    if (!jobIds.includes(result.job_id)) {
+                        jobIds.push(result.job_id);
+                        localStorage.setItem('processing_jobs', JSON.stringify(jobIds));
+                    }
+                }
+
+                // Crear modal de confirmación para ir a ver los jobs
+                const dialogRef = this.dialog.open(JobConfirmationComponent, {
+                    data: result,
+                    width: '500px',
+                    disableClose: true
+                });
+
+                // Manejar la respuesta del modal
+                dialogRef.afterClosed().subscribe(shouldRedirect => {
+                    if (shouldRedirect) {
+                        this.router.navigate(['/jobs']);
+                    }
+                });
+
+            },
+            error: (error) => {
+                this.isGenerating = false;
+                this.showErrorMessage('Error al procesar la imagen con IA');
+                console.error('Error in processImgWithAI:', error);
+            },
+            complete: () => {
+                this.isGenerating = false;
+            }
+        })
+    }
+
+    toggleAIMenu() {
+        this.showAIMenu = !this.showAIMenu;
+        if (!this.showAIMenu) {
+            this.useAIBackground = false;
+            this.aiBackgroundPrompt = '';
+        }
+    }
+
+    onAICheckboxChange() {
+        if (!this.useAIBackground) {
+            this.aiBackgroundPrompt = '';
+        }
+    }
+
+    showErrorMessage(message: string) {
+        this.errorMessage = message;
+        this.showError = true;
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+            this.hideError();
+        }, 5000);
+    }
+
+    hideError() {
+        this.showError = false;
+        this.errorMessage = '';
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: Event) {
+        const target = event.target as HTMLElement;
+        // No cerrar el menú si se hace clic en elementos del menú de IA
+        if (!target.closest('.ai-button-container') && !target.closest('.ai-dropdown-menu')) {
+            this.showAIMenu = false;
+        }
     }
 }

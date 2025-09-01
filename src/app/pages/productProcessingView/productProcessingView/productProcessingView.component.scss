@@ -78,3 +78,233 @@
 .table-channel-select {
   margin-top: 20px;
 }
+
+// Estilos para la funcionalidad de IA
+.ai-button-container {
+    position: relative;
+    margin-bottom: 25px;
+    
+    .ai-main-button {
+        position: relative;
+        z-index: 2;
+        
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            
+            &.rotated {
+                transform: rotate(180deg);
+            }
+        }
+    }
+}
+
+.ai-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e9ecef;
+    z-index: 1000;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(-10px);
+    
+    &.show {
+        max-height: 700px;
+        min-height: 700px;
+        opacity: 1;
+        transform: translateY(0);
+        margin-top: 8px;
+    }
+}
+
+.ai-dropdown-content {
+    padding: 1.5rem;
+    
+    .ai-header-section {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+        
+        h6 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+    }
+}
+
+.ai-controls {
+    .form-check {
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            
+            &:checked {
+                background-color: #667eea;
+                border-color: #667eea;
+            }
+            
+            &:focus {
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
+        }
+        
+        .form-check-label {
+            color: #495057;
+            font-size: 0.95rem;
+        }
+    }
+}
+
+.ai-prompt-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    
+    .ai-prompt-textarea {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        
+        &::placeholder {
+            color: #adb5bd;
+            font-style: italic;
+        }
+    }
+}
+
+.ai-examples {
+    margin-top: 1rem;
+    
+    .example-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        
+        .example-tag {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #bbdefb;
+            
+            &:hover {
+                background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
+            }
+            
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+}
+
+.image-dimensions {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    margin-bottom: 1rem;
+    
+    .mat-form-field {
+        margin-bottom: 0;
+    }
+}
+
+// Estilos para los botones de procesamiento
+.processing-buttons {
+    .btn-process-img {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        border: none;
+        padding: 1rem 1.5rem;
+        font-size: 0.95rem;
+        
+        &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        &:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .mat-icon {
+            font-size: 20px;
+        }
+        
+        // Estilos específicos para cada tipo de botón
+        &[color="primary"] {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            
+            &:hover:not(:disabled) {
+                background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            }
+        }
+        
+        &[color="accent"] {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            
+            &:hover:not(:disabled) {
+                background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+            }
+        }
+        
+        &[color="warn"] {
+            background: linear-gradient(135deg, #7d6afa 0%, #d32f2f 100%);
+            
+            &:hover:not(:disabled) {
+                background: linear-gradient(135deg, #5243ae 0%, #871414 100%);;
+            }
+        }
+    }
+}
+
+// Estilos para el mensaje de error
+.alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    
+    .mat-icon {
+        color: #dc3545;
+    }
+    
+    .btn-close {
+        background: none;
+        border: none;
+        color: #721c24;
+        font-size: 1.25rem;
+        padding: 0;
+        margin-left: auto;
+        cursor: pointer;
+        
+        &:hover {
+            color: #dc3545;
+        }
+    }
+}
