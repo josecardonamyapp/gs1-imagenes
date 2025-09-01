@@ -194,11 +194,15 @@ export class productProcessingViewComponent {
         // console.log('Processing image with channel:', this.selectedFolderStructure);
         // console.log('Selected channel:', this.getGtins());
         console.log('Selected folder structure:', this.selectedChannel);
+        const productNames = product.map((p: any) => p.producName).join(', ');
+
+
         const params = {
             images_url: product,
             channel_params: this.selectedChannel,
             folder_structure: this.selectedFolderStructure,
-            is_multiple_processing: true
+            is_multiple_processing: true,
+            product_names: productNames
         }
 
         console.log('Processing image with params:', params);
@@ -260,7 +264,7 @@ export class productProcessingViewComponent {
             else {
                 product.images = [];
             }
-            
+
             this.processImgNoBackground(product);
         });
 

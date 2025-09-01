@@ -9,7 +9,7 @@
   </div>
 
   <div class="jobs-grid" *ngIf="jobs.length > 0">
-    <!-- <mat-card *ngFor="let job of jobs" class="job-card"> 
+    <!-- <mat-card *ngFor="let job of jobs" class="job-card">
       <mat-card-header>
         <mat-card-title>{{ job.product_name || 'Procesando...' }}</mat-card-title>
         <mat-card-subtitle>GTIN: {{ job.gtin || 'N/A' }}</mat-card-subtitle>
@@ -145,7 +145,7 @@
           <div class="title" [matTooltip]="job.product_name || 'Procesando…'">
             {{ job.product_name || 'Procesando...' }}
           </div>
-          <div class="gtin">GTIN: {{ job.gtin || 'N/A' }}</div>
+          <div class="gtin">GTIN: {{ job.gtin || 'N/A' }} </div>
         </div>
 
         <!-- 3) Actualizado + Fecha -->

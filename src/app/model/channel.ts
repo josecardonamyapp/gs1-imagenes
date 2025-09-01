@@ -13,5 +13,5 @@ export interface Channel {
     rename_base: string;
     rename_separator: string;
     rename_start_index: number;
-    folder_structure: string;
+    folder_structure: number;
 }

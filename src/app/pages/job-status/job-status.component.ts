@@ -71,6 +71,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     // Obtener job IDs del localStorage
     const storedJobs = localStorage.getItem('processing_jobs');
     const jobIds = storedJobs ? JSON.parse(storedJobs) : [];
+    // console.log(jobIds)
 
     this.jobs = jobIds.map((id: string) => ({
       job_id: id,
@@ -142,7 +143,6 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
     this.productService.getJobStatus(job.job_id).subscribe({
       next: (result: any) => {
-        //(`Job ${job.job_id} actualizado:`, result);
         const index = this.jobs.findIndex(j => j.job_id === job.job_id);
         if (index !== -1) {
           this.jobs[index] = { ...this.jobs[index], ...result };
@@ -191,6 +191,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
       // Descargar todos los archivos de forma secuencial para evitar problemas
       for (const file of job.processed_files) {
+        // console.log(file.)
         try {
           //(`Descargando: ${file.output_filename} desde ${file.s3_url}`);
 
@@ -227,7 +228,8 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       //(`ZIP generado. Tamaño: ${zipBlob.size} bytes`);
 
       // Descargar el ZIP con el nombre del GTIN
-      const zipFilename = `${job.gtin}.zip`;
+      console.log(job)
+      const zipFilename = `${job.job_id}.zip`;
       saveAs(zipBlob, zipFilename);
 
       job.downloading = false;
@@ -268,6 +270,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
 
   getStatusChipColor(status: string): string {
+    console.log(status)
     switch (status) {
       case 'COMPLETED': return 'primary';
       case 'PROCESSING': return 'accent';

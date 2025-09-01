@@ -174,10 +174,17 @@
                         <div class="col-md-12 mb-3">
                             <mat-form-field appearance="outline" class="w-100">
                                 <mat-label>Estructura de Carpetas</mat-label>
-                                <textarea matInput [(ngModel)]="channel.folder_structure" name="folder_structure"
-                                    placeholder="ej: /productos/{{ '{' }}categoria{{ '}' }}/{{ '{' }}subcategoria{{ '}' }}/"
-                                    rows="3" disabled=True></textarea>
-                                <mat-hint>Use {{ '{' }}variables{{ '}' }} para crear estructura dinámica</mat-hint>
+                                <!-- <select matNativeControl [(ngModel)]="channel.folder_structure" name="folder_structure"
+                                    required>
+                                    <option value="Redimensionar">Redimensionar</option>
+                                </select> -->
+                                <mat-select [(ngModel)]="channel.folder_structure" name="folder_structure" required>
+                                    <mat-option *ngFor="let structure of folderStructures" [value]="structure.id">
+                                        {{ structure.name }}
+                                    </mat-option>
+
+                                </mat-select>
+
                             </mat-form-field>
                         </div>
                     </div>

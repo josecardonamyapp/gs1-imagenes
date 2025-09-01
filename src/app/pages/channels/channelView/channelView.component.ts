@@ -14,6 +14,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { Channel } from 'src/app/model/channel';
+import { FolderStructureService } from 'src/app/services/folder_structure.service';
+import { catchError, map, of } from 'rxjs';
 
 @Component({
     selector: 'app-channelView',
@@ -49,13 +51,16 @@ export class ChannelViewComponent {
         rename_base: '',
         rename_separator: '',
         rename_start_index: 0,
-        folder_structure: ''
+        folder_structure: 1
     };
     isEditMode = false;
     isLoading = false;
 
+    folderStructures: any[] = [];
+
     constructor(
         private productService: ProductService,
+        private folderStructureService: FolderStructureService,
         private route: ActivatedRoute,
         private router: Router,
         private snackBar: MatSnackBar
@@ -82,7 +87,7 @@ export class ChannelViewComponent {
                     rename_base: params['rename_base'] || '',
                     rename_separator: params['rename_separator'] || '',
                     rename_start_index: parseInt(params['rename_start_index'] || '0'),
-                    folder_structure: params['folder_structure'] || ''
+                    folder_structure: parseInt(params['folder_structure'] || '1')
                 };
                 //('Modo edición:', this.channel);
             } else {
@@ -90,6 +95,19 @@ export class ChannelViewComponent {
                 //('Modo creación');
             }
         });
+        this.getFolderStructures();
+    }
+
+    getFolderStructures() {
+        this.folderStructureService.getFolderStructureList().subscribe({
+          next: (data) => {
+            console.log(data)
+            this.folderStructures = data;
+          },
+          error: (error) => {
+            console.error('Error fetching folder structures:', error);
+          }
+        })
     }
 
     hexToRgb(hex: string): Array<number> {
