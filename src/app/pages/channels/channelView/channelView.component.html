@@ -22,7 +22,7 @@
                             <mat-form-field appearance="outline" class="w-100">
                                 <mat-label>GLN</mat-label>
                                 <input matInput type="number" [(ngModel)]="channel.gln" name="gln"
-                                    placeholder="Ingrese el GLN" />
+                                    placeholder="Ingrese el GLN" [disabled]="disabledGln"/>
                             </mat-form-field>
                         </div>
                     </div>
@@ -72,8 +72,8 @@
                                     </mat-form-field> -->
                                     <mat-form-field appearance="outline" class="w-100">
                                         <mat-label>Extensión</mat-label>
-                                        <select matNativeControl [(ngModel)]="channel.extension"
-                                            name="extension" required>
+                                        <select matNativeControl [(ngModel)]="channel.extension" name="extension"
+                                            required>
                                             <option value="jpg">jpg</option>
                                             <option value="png">png</option>
                                             <option value="webp">webp</option>
@@ -171,7 +171,7 @@
                 <div class="mb-4">
                     <h5 class="text-primary mb-3">Configuración de Estructura</h5>
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <mat-form-field appearance="outline" class="w-100">
                                 <mat-label>Estructura de Carpetas</mat-label>
                                 <!-- <select matNativeControl [(ngModel)]="channel.folder_structure" name="folder_structure"
@@ -187,6 +187,19 @@
 
                             </mat-form-field>
                         </div>
+                        <!-- </div>
+
+                    <div class="row"> -->
+                        <!-- <div class="col-sm-6 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Encarpetado</mat-label>
+                                <mat-select [(ngModel)]="selectedFolderStructure">
+                                    <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
+                                        {{ structure.label }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div> -->
                     </div>
                 </div>
 

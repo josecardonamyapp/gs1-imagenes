@@ -65,8 +65,8 @@ export class productProcessingViewComponent {
     selectedFolderStructure: number = 1; // Default to "Estructura por GTIN"
 
     folderStructures = [
-        { label: 'Estructura por GTIN', value: 1 },
-        { label: 'Todo en una carpeta', value: 2 },
+        { label: 'Guardar Codigo por Carpeta', value: 1 },
+        { label: 'Guardar todas las imágenes en una sola carpeta', value: 2 },
     ]
 
 
@@ -127,7 +127,29 @@ export class productProcessingViewComponent {
     }
 
     getChannel(event: any) {
-        this.selectedChannel = this.channels.find(channel => channel.provider === event.value);
+        const channel = this.channels.find(channel => channel.provider === event.value);
+        channel.background_color = this.rgbToHex(channel.background_color) || '#FFFFFF',
+            this.selectedChannel = channel;
+        console.log('channel', this.selectedChannel)
+    }
+
+    hexToRgb(hex: string): Array<number> {
+        // Eliminar el símbolo '#' si está presente
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+
+        return [r, g, b];
+    }
+
+    componentToHex(c: number): string {
+        const hex = c.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }
+
+    rgbToHex(backgroundColor: string): string {
+        const [r, g, b] = backgroundColor.split(',').map(Number);
+        return '#' + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
     }
 
     async getProductChannels() {
@@ -193,6 +215,8 @@ export class productProcessingViewComponent {
         // this.isGenerating = true;
         // console.log('Processing image with channel:', this.selectedFolderStructure);
         // console.log('Selected channel:', this.getGtins());
+        this.selectedChannel.background_color = this.hexToRgb(this.selectedChannel.background_color).join(','), // Convert hex to RGB
+
         console.log('Selected folder structure:', this.selectedChannel);
         const productNames = product.map((p: any) => p.producName).join(', ');
 

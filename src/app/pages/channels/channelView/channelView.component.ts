@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Channel } from 'src/app/model/channel';
 import { FolderStructureService } from 'src/app/services/folder_structure.service';
 import { catchError, map, of } from 'rxjs';
@@ -30,7 +31,8 @@ import { catchError, map, of } from 'rxjs';
         MatFormFieldModule,
         MatInputModule,
         MatSelectModule,
-        MatSnackBarModule
+        MatSnackBarModule,
+        MatSlideToggleModule
     ],
     templateUrl: './channelView.component.html',
     styleUrl: './channelView.component.scss'
@@ -51,10 +53,19 @@ export class ChannelViewComponent {
         rename_base: '',
         rename_separator: '',
         rename_start_index: 0,
-        folder_structure: 1
+        folder_structure: 1,
+        background: false,
     };
     isEditMode = false;
     isLoading = false;
+    disabledGln = false;
+
+    selectedFolderStructure: number = 1; // Default to "Estructura por GTIN"
+
+    // folderStructures = [
+    //     { label: 'Guardar Codigo por Carpeta', value: 1 },
+    //     { label: 'Guardar todas las imágenes en una sola carpeta', value: 2 },
+    // ]
 
     folderStructures: any[] = [];
 
@@ -87,7 +98,8 @@ export class ChannelViewComponent {
                     rename_base: params['rename_base'] || '',
                     rename_separator: params['rename_separator'] || '',
                     rename_start_index: parseInt(params['rename_start_index'] || '0'),
-                    folder_structure: parseInt(params['folder_structure'] || '1')
+                    folder_structure: parseInt(params['folder_structure'] || '1'),
+                    background: params['background'] || false
                 };
                 //('Modo edición:', this.channel);
             } else {
@@ -96,6 +108,16 @@ export class ChannelViewComponent {
             }
         });
         this.getFolderStructures();
+
+        const gln: any = localStorage.getItem('gln');
+        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+        const hasExcludedRole = roles.some(
+            (role: any) =>
+                typeof role === 'string' &&
+                (role.toLowerCase() === 'systemadmin' || role.toLowerCase().includes('admin'))
+        );
+        this.disabledGln = !hasExcludedRole ? true : false;
+        this.channel.gln = !hasExcludedRole ? gln : 0 ;
     }
 
     getFolderStructures() {

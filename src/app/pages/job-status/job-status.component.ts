@@ -228,7 +228,6 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       //(`ZIP generado. Tamaño: ${zipBlob.size} bytes`);
 
       // Descargar el ZIP con el nombre del GTIN
-      console.log(job)
       const zipFilename = `${job.job_id}.zip`;
       saveAs(zipBlob, zipFilename);
 
@@ -270,7 +269,6 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
 
   getStatusChipColor(status: string): string {
-    console.log(status)
     switch (status) {
       case 'COMPLETED': return 'primary';
       case 'PROCESSING': return 'accent';
