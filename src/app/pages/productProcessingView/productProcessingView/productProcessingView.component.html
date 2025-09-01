@@ -23,15 +23,24 @@
         <div class="col-md-8">
             <div class="card shadow-sm p-3">
                 <!-- <p class="text-muted small">Canales</p> -->
+                <div class="d-flex align-items-center gap-2">
 
-                <mat-form-field appearance="outline" class="w-100">
-                    <mat-label>Canales</mat-label>
-                    <mat-select name="channel" required (selectionChange)="getChannel($event)">
-                        <mat-option *ngFor="let channel of channels" [value]="channel.provider">
-                            {{ channel.provider }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-100">
+                        <mat-label>Canales</mat-label>
+                        <mat-select name="channel" required (selectionChange)="getChannel($event)">
+                            <mat-option *ngFor="let channel of channels" [value]="channel.provider">
+                                {{ channel.provider }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <button *ngIf="disabledFormChannel" mat-raised-button color="primary" (click)="editChannel()">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button *ngIf="!disabledFormChannel" mat-raised-button color="warn" (click)="cancelChannel()">
+                        <mat-icon>close</mat-icon>
+                    </button>
+
+                </div>
 
                 <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
@@ -106,14 +115,14 @@
                                 <div class="label">Width (Ancho)</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.width"
-                                        placeholder="Width (px)">
+                                        placeholder="Width (px)" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
                                 <div class="label">Height (Largo)</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.height"
-                                        placeholder="Height (px)">
+                                        placeholder="Height (px)" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
@@ -124,7 +133,7 @@
                                 <mat-form-field appearance="outline" class="w-100">
                                     <mat-label>Extensión</mat-label>
                                     <select matNativeControl [(ngModel)]="selectedChannel.extension" name="extension"
-                                        required>
+                                        required [disabled]="disabledFormChannel">
                                         <option value="jpg">jpg</option>
                                         <option value="jpeg">jpeg</option>
                                         <option value="png">png</option>
@@ -138,14 +147,15 @@
                             <div class="col-md-4">
                                 <div class="label">Density</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput type="number" [(ngModel)]="selectedChannel.dpi" placeholder="DPI">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.dpi" placeholder="DPI"
+                                        [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
                                 <div class="label">Max size</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.max_size_kb"
-                                        placeholder="Max KB">
+                                        placeholder="Max KB" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
@@ -167,14 +177,15 @@
                             <div class="col-md-4">
                                 <div class="label">Prefijo</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput [(ngModel)]="selectedChannel.rename_base" placeholder="Prefijo">
+                                    <input matInput [(ngModel)]="selectedChannel.rename_base" placeholder="Prefijo"
+                                        [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
                                 <div class="label">Separador</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput [(ngModel)]="selectedChannel.rename_separator"
-                                        placeholder="Separador">
+                                        placeholder="Separador" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                         </div>
@@ -184,7 +195,7 @@
                                 <div class="label">Inicio de secuencia</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.rename_start_index"
-                                        placeholder="Start Index">
+                                        placeholder="Start Index" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <!-- <div class="col-md-4">
@@ -195,17 +206,19 @@
                                 </mat-form-field>
                             </div> -->
                             <div class="col-md-4">
+                                <div class="label">Color de Fondo</div>
                                 <mat-form-field appearance="outline" class="w-100">
-                                    <mat-label>Color de Fondo</mat-label>
+                                    <!-- <mat-label>Color de Fondo</mat-label> -->
                                     <input matInput type="color" [(ngModel)]="selectedChannel.background_color"
-                                        name="background_color" />
+                                        name="background_color" [disabled]="disabledFormChannel" />
 
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
+                                <div class="label">Encarpetado</div>
                                 <mat-form-field appearance="outline" class="w-100">
-                                    <div class="label">Encarpetado</div>
-                                    <mat-select [(ngModel)]="selectedChannel.folder_structure">
+                                    <mat-select [(ngModel)]="selectedChannel.folder_structure"
+                                        [disabled]="disabledFormChannel">
                                         <mat-option *ngFor="let structure of folderStructures"
                                             [value]="structure.value">
                                             {{ structure.label }}

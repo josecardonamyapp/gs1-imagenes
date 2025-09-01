@@ -43,11 +43,7 @@ export class productProcessingViewComponent {
     products: any[] = [];
     channels: any[] = [];
     channelStyles: { [key: string]: any } = {};
-
-    selectedFormat = 'Sams';
-
-    selectedTab = 0;
-
+    disabledFormChannel = false;
     selectedImage: string = '';
     selectedChannel = {} as Channel;
 
@@ -129,8 +125,17 @@ export class productProcessingViewComponent {
     getChannel(event: any) {
         const channel = this.channels.find(channel => channel.provider === event.value);
         channel.background_color = this.rgbToHex(channel.background_color) || '#FFFFFF',
-            this.selectedChannel = channel;
+        this.selectedChannel = channel;
+        this.disabledFormChannel = true;
         console.log('channel', this.selectedChannel)
+    }
+
+    editChannel() {
+        this.disabledFormChannel = false;
+    }
+
+    cancelChannel() {
+        this.disabledFormChannel = true;
     }
 
     hexToRgb(hex: string): Array<number> {
@@ -217,7 +222,7 @@ export class productProcessingViewComponent {
         // console.log('Selected channel:', this.getGtins());
         this.selectedChannel.background_color = this.hexToRgb(this.selectedChannel.background_color).join(','), // Convert hex to RGB
 
-        console.log('Selected folder structure:', this.selectedChannel);
+            console.log('Selected folder structure:', this.selectedChannel);
         const productNames = product.map((p: any) => p.producName).join(', ');
 
 
