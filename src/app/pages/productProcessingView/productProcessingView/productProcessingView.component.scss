@@ -21,8 +21,8 @@
 .dimension-text,
 .dimension-meta {
     font-size: 0.85rem;
-    min-width: 240px;
-    max-width: 350px;
+    min-width: auto;
+    max-width: auto;
     padding-left: 15px;
 
     .label {
@@ -32,11 +32,11 @@
         margin-bottom: 2px;
     }
 
-    .value {
-        color: #222;
-        font-size: 0.85rem;
-        margin-bottom: 0.75rem;
-    }
+    // .value {
+    //     color: #222;
+    //     font-size: 0.85rem;
+    //     margin-bottom: 0.75rem;
+    // }
 }
 
 .tiny-input {
@@ -78,7 +78,6 @@
 .table-channel-select {
   margin-top: 20px;
 }
-
 // Estilos para la funcionalidad de IA
 .ai-button-container {
     position: relative;
@@ -308,3 +307,4 @@
         }
     }
 }
+
