@@ -1,125 +1,202 @@
-<div class="container-fluid py-4">
-  <div class="sticky-header bg-white py-3 px-2 shadow-sm z-index-1000 mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-4 gap-3 flex-wrap" style="padding: 5px;">
-
-      <!-- <mat-form-field id="input-gtin" appearance="outline" class="flex-grow-1 w-100" style="max-width: 35%;">
-        <mat-label>Buscar por nombre o GTIN</mat-label>
-        <input matInput class="small-input" placeholder="Ej: Shampoo o 7500001234567" [(ngModel)]="searchText"
-          (ngModelChange)="onSearchChange($event)">
-        <button mat-icon-button matSuffix *ngIf="searchText" (click)="clearSearch()" aria-label="Clear">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field> -->
-
-      <mat-form-field id="input-gtin" appearance="outline" class="flex-grow-1 w-100" style="max-width: 50%;">
-        <mat-label>Buscar por nombre o GTIN</mat-label>
-
-        <textarea matInput class="small-input" rows="1" placeholder="Ej: Shampoo o 7500001234567,8852369857"
-          [(ngModel)]="searchText" (ngModelChange)="onSearchChange($event)">
-        </textarea>
-
-        <button mat-icon-button matSuffix *ngIf="searchText" (click)="clearSearch()" aria-label="Clear">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field>
-
-
-      <button id="btn-seleccionar-todos" mat-stroked-button color="primary"
-        (click)="selectedGtins.length ? clearAllGtins() : selectAllGtins()">
-        {{ selectedGtins.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
-      </button>
-
-      <div class="text-end my-3">
-        <button mat-raised-button color="accent" (click)="processSelectedImages()" [disabled]="selectedGtins.length <= 0">Procesar Seleccionadas ({{
-          selectedGtins.length }})</button>
-      </div>
-
-      <!-- <button id="btn-buscar-gtins" mat-stroked-button color="warn" (click)="openGtinDialog()" style="white-space: nowrap;">
-        Buscar por lista de GTINs
-      </button> -->
-
-      <!-- <button [tourSteps]="pasos" tourTrigger="click">Iniciar tour</button>
-
-      <div id="paso1">Contenido paso 1</div>
-      <div id="paso2">Contenido paso 2</div>
-
-      <button [tourSteps]="pasos" tourTrigger="click">Iniciar tour</button> -->
-
-
-    </div>
-  </div>
-
-
-
-  <div class="row g-4">
-    @for (product of filtered; track product.gtin) {
-    <div id="tarjeta-producto-1" class="col-12 col-sm-6 col-md-3">
-      <div class="card product-card  h-100 shadow border-0 rounded-3 bg-white text-start"
-        [class.selected-image]="isGtinSelected(product.gtin)"
-        (click)="product.images?.length && toggleGtinSelection(product.gtin)"
-        [class.no-click]="!product.images?.length">
-
-        <!-- <div class="carousel-counter text-center mb-4"> -->
-        <div class="card-header text-center ">
-          <span class="badge bg-light text-dark px-2 py-1 rounded">
-            <h3>{{ product.images.length > 0 ? 1 : 0 }} / {{ product.images.length }} imágenes</h3>
-          </span>
+<div class="dashboard-page dashboard-layout" [class.catalog-open]="catalogPanelVisible">
+  <div class="dashboard-main">
+    <div class="dashboard-toolbar">
+      <header class="dashboard-header">
+        <div class="dashboard-header__info">
+          <h1>Redimensiona las fotos de producto para tus socios comerciales</h1>
+          <!-- <p>Pega los GTIN que deseas procesar y selecciona los productos para enviarlos al panel de canales.</p> -->
         </div>
-
-        <div class="carousel-container position-relative">
-          <button id="carousel-imagenes" mat-icon-button class="carousel-btn left" (click)="previousImage(product)">
-            <mat-icon>chevron_left</mat-icon>
+        <div class="dashboard-header__actions">
+          <button
+            id="btn-seleccionar-todos"
+            mat-stroked-button
+            color="primary"
+            (click)="selectedGtins.length ? clearAllGtins() : selectAllGtins()"
+            [disabled]="!filtered.length">
+            {{ selectedGtins.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
           </button>
-
-          <!-- <h3>{{ product.images.length }}</h3> -->
-          <!-- <ng-container *ngIf="product.images?.length > 0; else noImage">
-            <img [src]="product.images[product.currentIndex]?.uniformresourceidentifier" alt="{{ product.producName }}"
-              loading="lazy" class="card-img-top p-3 mx-auto d-block mb-3"
-              style="height: 180px; object-fit: contain; border-bottom: 1px solid #eee;" />
-          </ng-container> -->
-          <ng-container *ngIf="product.images?.length > 0; else noImage">
-            <div class="position-relative">
-              <img [src]="product.images[product.currentIndex]?.uniformresourceidentifier"
-                alt="{{ product.producName }}" loading="lazy" class="card-img-top p-3 mx-auto d-block mb-3"
-                style="height: 180px; object-fit: contain; border-bottom: 1px solid #eee;" />
+          <button
+            mat-raised-button
+            color="accent"
+            (click)="processSelectedImages()"
+            [disabled]="selectedGtins.length <= 0">
+            Procesar seleccionadas ({{ selectedGtins.length }})
+          </button>
+        </div>
+      </header>
+      <section class="dashboard-controls">
+        <mat-form-field appearance="outline" class="dashboard-controls__textarea" id="input-gtin">
+          <mat-label>
+              Pega aqui los codigos UPC que deseas procesar. Puedes copiarlos desde Excel, Bloc de notas o cualquier lista.
+          </mat-label>
+          <textarea
+            matInput
+            rows="5"
+            [(ngModel)]="searchText"
+            (ngModelChange)="onSearchChange($event)"
+             placeholder="Ejemplo:
+                      07506228087658
+                      07506253223237
+                      75062652322306">
+          </textarea>
+          <!-- <div class="dashboard-textarea-placeholder" *ngIf="!searchText" aria-hidden="true">
+            <p class="placeholder-text">
+              Pega aqui los codigos UPC que deseas procesar. Puedes copiarlos desde Excel, Bloc de notas o cualquier lista.
+            </p>
+            <p class="placeholder-example">
+              Ejemplo:<br />
+              7506228087658<br />
+              7506253223237<br />
+              75062652322306
+            </p>
+          </div> -->
+          <button mat-icon-button matSuffix *ngIf="searchText" (click)="clearSearch()" aria-label="Limpiar lista de codigos">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+        <!-- <ng-template #gtinLongLabel>
+           <p class="placeholder-text">
+              Pega aqui los codigos UPC que deseas procesar. Puedes copiarlos desde Excel, Bloc de notas o cualquier lista.
+            </p>
+            <p class="placeholder-example">
+              Ejemplo:<br />
+              7506228087658<br />
+              7506253223237<br />
+              75062652322306
+            </p>
+        </ng-template> -->
+        <div class="dashboard-controls__actions">
+          <!-- <button mat-stroked-button color="primary" (click)="loadCodesFromTextarea()">
+            <mat-icon>upload</mat-icon>
+            <span>Cargar</span>
+          </button>
+          <button mat-stroked-button color="primary" (click)="downloadTemplate()">
+            <mat-icon>file_download</mat-icon>
+            <span>Descargar plantilla</span>
+          </button> -->
+          <button mat-stroked-button color="primary" (click)="openCreateCatalogDialog()" [disabled]="catalogPanelVisible">
+            <mat-icon>add</mat-icon>
+            <span>Crear catalogo</span>
+          </button>
+        </div>
+      </section>
+    </div>
+    <div class="product-list">
+      <div class="product-results__toolbar">
+        <div class="product-results__count">
+          {{ filtered.length === 1 ? '1 producto disponible' : filtered.length + ' productos disponibles' }}
+        </div>
+        <span class="product-results__spacer"></span>
+      </div>
+      <div class="product-grid">
+        <div class="product-grid__list">
+          <ng-container *ngFor="let product of filtered; trackBy: trackByGtin">
+            <div class="product-grid__item">
+              <div
+                class="card product-card h-100 shadow border-0 rounded-4 bg-white text-start"
+                role="button"
+                [class.selected]="isGtinSelected(product.gtin)"
+                [class.no-click]="!product.images?.length"
+                [attr.aria-label]="'Seleccionar ' + (product.producName || product.gtin)"
+                [attr.aria-pressed]="isGtinSelected(product.gtin)"
+                (click)="product.images?.length && toggleGtinSelection(product.gtin)">
+                <div class="product-card__selected-flag" *ngIf="isGtinSelected(product.gtin)">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Seleccionado</span>
+                </div>
+                <div class="selection-indicator" *ngIf="product.images?.length" (click)="$event.stopPropagation()">
+                  <mat-checkbox
+                    class="selection-checkbox"
+                    color="primary"
+                    [checked]="isGtinSelected(product.gtin)"
+                    [disabled]="!product.images?.length"
+                    (change)="onProductSelectionChange($event, product.gtin)">
+                  </mat-checkbox>
+                </div>
+                <div class="product-card__status">
+                  <span class="badge">{{ product.images.length || 0 }} imagenes disponibles</span>
+                </div>
+                <div class="carousel-container position-relative">
+                  <button mat-icon-button type="button" class="carousel-btn left" (click)="$event.stopPropagation(); previousImage(product)">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  <div class="carousel-loading-overlay" *ngIf="product.isImageLoading">
+                    <mat-progress-spinner diameter="32" strokeWidth="4" mode="indeterminate"></mat-progress-spinner>
+                  </div>
+                  <ng-container *ngIf="product.images?.length > 0; else noImage">
+                    <div class="position-relative">
+                      <img
+                        [src]="product.images[product.currentIndex]?.uniformresourceidentifier"
+                        alt="{{ product.producName }}"
+                        loading="lazy"
+                        class="card-img-top p-3 mx-auto d-block mb-3"
+                        style="height: 180px; object-fit: contain;"
+                        (load)="onProductImageLoad(product)"
+                        (error)="onProductImageError(product)"
+                      />
+                      <div class="carousel-counter" *ngIf="product.images?.length">
+                        {{ (product.currentIndex || 0) + 1 }} / {{ product.images.length }}
+                      </div>
+                    </div>
+                  </ng-container>
+                  <ng-template #noImage>
+                    <div class="no-image-placeholder d-flex flex-column align-items-center justify-content-center">
+                      <mat-icon color="warn" fontIcon="image_not_supported" style="font-size: 36px;"></mat-icon>
+                      <span class="text-muted mt-2" style="font-size: 14px;">Sin imagen</span>
+                    </div>
+                  </ng-template>
+                  <button mat-icon-button type="button" class="carousel-btn right" (click)="$event.stopPropagation(); nextImage(product)">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                </div>
+                <div class="card-body d-flex flex-column pb-3">
+                  <div class="product-card__gtin">GTIN: {{ product.gtin }}</div>
+                  <h4 class="card-title fw-semibold text-dark fs-6 mb-3 text-capitalize">
+                    {{ product.producName }}
+                  </h4>
+                  <div class="product-card__actions mt-auto">
+                    <button mat-button class="custom-orange-button" (click)="goToDetail(product.gtin)">
+                      <strong class="gs1-subtitles">Mas info</strong>
+                      <span class="arrow-icon">&gt;</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </ng-container>
-
-          <ng-template #noImage>
-            <div class="no-image-placeholder d-flex flex-column align-items-center justify-content-center">
-              <mat-icon color="warn" fontIcon="image_not_supported" style="font-size: 36px;"></mat-icon>
-              <span class="text-muted mt-2" style="font-size: 14px;">Sin imagen</span>
-            </div>
-          </ng-template>
-
-          <button id="carousel-imagenes" mat-icon-button class="carousel-btn right" (click)="nextImage(product)">
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
-
-        <div class="card-body d-flex flex-column pb-3">
-          <div class="mb-1 text-muted" style="font-size: 0.85rem;">
-            GTIN: {{ product.gtin }}
-          </div>
-
-          <h4 class="card-title fw-semibold text-dark fs-5 mb-3 text-capitalize">
-            {{ product.producName }}
-          </h4>
-
-          <div id="informacion-tarjeta" class="mt-auto">
-            <button mat-button class="custom-orange-button" (click)="goToDetail(product.gtin)">
-              <strong class="gs1-subtitles">MÁS INFO</strong>
-              <span class="arrow-icon">→</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
-    }
   </div>
+  <div class="catalog-sidebar" *ngIf="catalogPanelVisible">
+    <div class="catalog-sidebar__overlay" (click)="onCatalogPanelCancel()"></div>
+    <aside class="catalog-panel">
+      <app-create-catalog-dialog
+        [data]="catalogPanelData"
+        [visible]="catalogPanelVisible"
+        (cancel)="onCatalogPanelCancel()"
+        (saved)="handleCatalogSaved($event)"
+        (selectionChange)="onCatalogSelectionChange($event)">
+      </app-create-catalog-dialog>
+    </aside>
+  </div>
+
+    <!-- ...el contenido de la grid y panel ya está incluido arriba, elimina duplicados y cierres innecesarios... -->
+
+  <ng-template #emptyState>
+    <div class="product-results__empty">
+      <mat-icon>search</mat-icon>
+      <h3>Comienza pegando los codigos que quieres procesar</h3>
+      <p>Cuando encontremos coincidencias, apareceran aqui para que puedas seleccionarlas.</p>
+    </div>
+  </ng-template>
 
   <div *ngIf="isGenerating" class="loading-overlay">
     <mat-progress-spinner mode="indeterminate" color="primary" diameter="60" strokeWidth="5">
     </mat-progress-spinner>
   </div>
 </div>
+
+
+
+

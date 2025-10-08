@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 import { JobStatusComponent } from './pages/job-status/job-status.component';
+import { HomeLandingComponent } from './pages/home/home-landing.component';
 
 import { AuthGuard } from './guards/auth/auth.guard';
 
@@ -16,8 +17,17 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: '/dashboards/dashboard1',
-        pathMatch: 'full',
+        component: HomeLandingComponent,
+        data: {
+          title: 'Inicio',
+        },
+      },
+      {
+        path: 'home',
+        component: HomeLandingComponent,
+        data: {
+          title: 'Inicio',
+        },
       },
       {
         path: 'starter',

@@ -1,0 +1,65 @@
+﻿<div class="catalog-panel">
+  <form [formGroup]="form" class="catalog-form" (ngSubmit)="save()">
+    <div class="panel-header">
+      <h2>Crear catalogo</h2>
+      <button mat-icon-button type="button" aria-label="Cerrar" (click)="onCancel()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width field-compact">
+      <mat-label>Nombre del catalogo</mat-label>
+      <input matInput formControlName="name" maxlength="80" />
+      <mat-error *ngIf="form.get('name')?.hasError('required')">Ingresa un nombre.</mat-error>
+      <mat-hint align="end">{{ form.get('name')?.value?.length || 0 }}/80</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width field-compact">
+      <mat-label>Descripcion (opcional)</mat-label>
+      <textarea matInput formControlName="description" rows="2" maxlength="200"></textarea>
+      <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }}/200</mat-hint>
+    </mat-form-field>
+
+    <section class="selected" *ngIf="selectedProducts.length; else noSelection">
+      <div class="selected-header">
+        <h3>Productos seleccionados</h3>
+        <div class="selected-header__actions">
+          <span class="selected-counter">{{ selectedProducts.length }} seleccionados</span>
+          <button mat-button type="button" (click)="clearSelection()" [disabled]="saving || !selectedProducts.length">
+            Limpiar seleccion
+          </button>
+        </div>
+      </div>
+
+      <div class="selected-list">
+        <article class="selected-item" *ngFor="let product of selectedProducts">
+          <div class="selected-item__info">
+            <!-- <h4>{{ product.producName || 'Producto sin nombre' }}</h4> -->
+            <p>GTIN: {{ product.gtin }}</p>
+          </div>
+          <button mat-icon-button type="button" aria-label="Quitar" (click)="removeSelected(product.gtin)"
+            [disabled]="saving">
+            <mat-icon>close</mat-icon>
+          </button>
+        </article>
+      </div>
+
+    </section>
+
+    <ng-template #noSelection>
+      <div class="selected-empty">
+        <mat-icon>inventory_2</mat-icon>
+        <h4>No hay productos seleccionados</h4>
+        <p>Selecciona productos desde la galeria principal para agregarlos al catalogo.</p>
+      </div>
+    </ng-template>
+
+    <div class="panel-actions">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="saving">Cancelar</button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving || !selectedProducts.length">
+        <mat-progress-spinner *ngIf="saving" diameter="18" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
+        <span *ngIf="!saving">Guardar catalogo</span>
+      </button>
+    </div>
+  </form>
+</div>

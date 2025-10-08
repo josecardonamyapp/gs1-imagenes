@@ -142,10 +142,13 @@
 
         <!-- 2) Nombre + GTIN -->
         <div class="group info">
-          <div class="title" [matTooltip]="job.product_name || 'Procesando…'">
-            {{ job.product_name || 'Procesando...' }}
+          <div class="title" *ngIf="job.status != 'COMPLETED'" [matTooltip]="job.total_gtins + ' GTINs Procesandose…'">
+            {{ job.total_gtins + ' GTINs Procesandose...' }}
           </div>
-          <div class="gtin">GTIN: {{ job.gtin || 'N/A' }} </div>
+          <div class="title" *ngIf="job.status == 'COMPLETED'" [matTooltip]="job.total_gtins + ' GTINs Procesados'">
+            {{ job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.total_gtins + ' GTIN Procesado' }}
+          </div>
+          <div class="gtin">GTIN: {{ job.total_gtins }} </div>
         </div>
 
         <!-- 3) Actualizado + Fecha -->
@@ -172,6 +175,7 @@
                 {{ job.downloading ? 'Descargando...' : 'Descargar Todos' }}
               </mat-option>
               <mat-option value="link" [disabled]="job.status === 'PROCESSING'">Generar link</mat-option>
+              <mat-option value="regenerate">Regenerar</mat-option>
               <mat-option value="delete" [disabled]="job.status === 'PROCESSING'">Eliminar</mat-option>
             </mat-select>
           </mat-form-field>

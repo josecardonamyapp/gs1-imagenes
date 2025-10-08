@@ -2,9 +2,9 @@
     <h2 class="mb-4 text-center">Detalle del Producto</h2>
     <p class="text-center"><strong>GTIN:</strong> {{ gtin }}</p>
 
-    <div class="row justify-content-center">
-        <div class="col-md-5 d-flex justify-content-center">
-            <div class="d-flex">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-5 col-md-6 mb-4 mb-md-0">
+            <div class="preview-pane">
                 <div class="thumbnail-list me-3">
                     <img *ngFor="let img of product.images" [src]="img.uniformresourceidentifier"
                         (click)="toggleImage(img.uniformresourceidentifier)"
@@ -12,40 +12,51 @@
                         class="img-thumbnail thumbnail-img" alt="Miniatura" width="60" height="60" loading="lazy" />
                 </div>
 
-                <div class="text-center">
+                <div class="preview-stage text-center">
                     <ng-container *ngIf="selectedImage; else noImage">
-                        <img [src]="selectedImage" alt="{{ product.producName }}" class="main-preview-img img-fluid"
-                            style="max-height: 250px; object-fit: contain;" />
+                        <img [src]="selectedImage" alt="{{ product.producName }}" class="main-preview-img img-fluid" />
                     </ng-container>
 
                     <ng-template #noImage>
                         <div class="placeholder-img text-muted text-center">
                             <mat-icon style="font-size: 48px;">image_not_supported</mat-icon>
-                            <p class="mt-2">
-                                Si deseas procesar <strong>una sola imagen</strong>, selecciónala en la lista.<br />
-                                Si está seleccionada y deseas hacer un <strong>procesamiento masivo</strong>,
-                                deselecciónala.
+                        <p class="mt-2">
+                                Si deseas procesar <strong>una sola imagen</strong>, selecci&oacute;nala en la lista.<br />
+                                Si est&aacute; seleccionada y deseas hacer un <strong>procesamiento masivo</strong>,
+                                deselecci&oacute;nala.
                             </p>
                         </div>
                     </ng-template>
                 </div>
             </div>
+
         </div>
-
-        <div class="col-md-6">
+        <div class="col-lg-7 col-md-6">
             <div class="card shadow-sm p-3">
-                <!-- <p class="text-muted small">Canales</p> -->
-
-                <mat-form-field appearance="outline" class="w-100">
-                    <mat-label>Canales</mat-label>
-                    <mat-select name="renaming_type" required
-                                [(ngModel)]="selectedChannel"
-                                (selectionChange)="getChannel($event)">
-                        <mat-option *ngFor="let channel of channels" [value]="channel">
-                            {{ channel.provider }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
+                <!--                 <p class="text-muted small">
+                    El renombrado de archivos utilizar&aacute; por default el GTIN. Si requiere personalizaci&oacute;n, cargue un XLS con GTIN Canal.
+                </p> -->
+                <div class="d-flex align-items-center gap-2">
+                    <mat-form-field appearance="outline" class="w-100">
+                        <mat-label>Canales</mat-label>
+                        <mat-select
+                            name="channelSelector"
+                            required
+                            [(ngModel)]="selectedChannelProvider"
+                            (selectionChange)="onChannelSelectionChange($event.value)"
+                            [ngModelOptions]="{ standalone: true }">
+                            <mat-option *ngFor="let channel of channels" [value]="channel.provider">
+                                {{ channel.provider }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <button *ngIf="disabledFormChannel" mat-raised-button color="primary" (click)="editChannel()">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button *ngIf="!disabledFormChannel" mat-raised-button color="warn" (click)="cancelChannel()">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
 
                 <!-- Mensaje de error -->
                 <div *ngIf="showError" class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -53,77 +64,175 @@
                     {{ errorMessage }}
                     <button type="button" class="btn-close" (click)="hideError()" aria-label="Close"></button>
                 </div>
-
                 <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
-                        <div  *ngIf="selectedChannel" class="d-flex align-items-start justify-content-center flex-wrap gap-4 mb-3 table-channel-select">
-                            <div class="dimension-preview" [ngStyle]="getPreviewStyle(selectedChannel, selectedChannel.gln)">
-                                <span class="dimension-label-inside">
-                                    {{ selectedChannel.width }} x {{ selectedChannel.height }} {{ selectedChannel.extension }}
-                                </span>
-                            </div>
+                <div *ngIf="selectedChannel" class="channel-details mb-3">
+                    <div class="dimension-preview" [ngStyle]="getPreviewStyle(selectedChannel, selectedChannel.gln)">
+                        <span class="dimension-label-inside">
+                            {{ selectedChannel.width }} x {{ selectedChannel.height }} {{ selectedChannel.extension }}
+                        </span>
+                    </div>
 
-                            <div class="dimension-meta">
-                                <div class="row text-center text-md-start">
-                                    <div class="col">
-                                        <div class="label">Width (Ancho)</div>
-                                        <div class="value">{{ selectedChannel.width }}px</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">Height (Largo)</div>
-                                        <div class="value">{{ selectedChannel.height }}px</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">Extension</div>
-                                        <div class="value">{{ selectedChannel.extension }}</div>
-                                    </div>
-                                </div>
-
-                                <div class="row text-center text-md-start mt-3">
-                                    <div class="col">
-                                        <div class="label">Density</div>
-                                        <div class="value">{{ selectedChannel.dpi }}</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">Max size</div>
-                                        <div class="value">{{ selectedChannel.max_size_kb }}</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">GLN</div>
-                                        <div class="value">{{ selectedChannel.gln }}</div>
-                                    </div>
-                                </div>
-                                <div class="row text-center text-md-start mt-3">
-                                    <div class="col">
-                                        <div class="label">Tipo de adaptación</div>
-                                        <div class="value">{{ selectedChannel.adaptation_type }}</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">Prefijo</div>
-                                        <div class="value">{{ selectedChannel.rename_base }}</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">Separador</div>
-                                        <div class="value">{{ selectedChannel.rename_separator }}</div>
-                                    </div>
-
-                                </div>
-                                <div class="row text-center text-md-start mt-3">
-                                    <div class="col">
-                                        <div class="label">Inicio de secuencia</div>
-                                        <div class="value">{{ selectedChannel.rename_start_index }}</div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="label">Estructura de la carpeta</div>
-                                        <div class="value">{{ selectedChannel.folder_structure }}</div>
-                                    </div>
-
-                                </div>
-
-                            </div>
+                    <div class="channel-form-grid">
+                        <div class="form-field">
+                            <span class="label">Width (Ancho)</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput type="number"
+                                       name="channelWidth"
+                                       [(ngModel)]="selectedChannel.width"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="Width (px)"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
                         </div>
-                    <!-- </mat-tab>
-                </mat-tab-group> -->
+
+                        <div class="form-field">
+                            <span class="label">Height (Largo)</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput type="number"
+                                       name="channelHeight"
+                                       [(ngModel)]="selectedChannel.height"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="Height (px)"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Extension</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <mat-select
+                                    name="channelExtension"
+                                    [(ngModel)]="selectedChannel.extension"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="disabledFormChannel">
+                                    <mat-option value="jpg">jpg</mat-option>
+                                    <mat-option value="jpeg">jpeg</mat-option>
+                                    <mat-option value="png">png</mat-option>
+                                    <mat-option value="webp">webp</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Density (DPIs)</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput type="number"
+                                       name="channelDpi"
+                                       [(ngModel)]="selectedChannel.dpi"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="DPI"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Max size (KB)</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput type="number"
+                                       name="channelMaxSize"
+                                       [(ngModel)]="selectedChannel.max_size_kb"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="Max size"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">GLN</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput
+                                       name="channelGln"
+                                       [(ngModel)]="selectedChannel.gln"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="GLN"
+                                       disabled>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Tipo de adaptacion</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput
+                                       name="channelAdaptation"
+                                       [(ngModel)]="selectedChannel.adaptation_type"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       disabled>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <!-- <span class="label">Prefijo</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput
+                                       name="channelRenameBase"
+                                       [(ngModel)]="selectedChannel.rename_base"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="Prefijo"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field> -->
+                                <div class="label">Tipo de Renombrado</div>
+                                <mat-form-field appearance="outline" class="w-100">
+                                    <!-- <mat-label>Tipo de Renombrado</mat-label> -->
+                                    <select matNativeControl [(ngModel)]="selectedChannel.renaming_type" name="renaming_type"
+                                        required [disabled]="disabledFormChannel">
+                                        <option value="Estándar">Estándar</option>
+                                    </select>
+                                </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Separador</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput
+                                       name="channelRenameSeparator"
+                                       [(ngModel)]="selectedChannel.rename_separator"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="Separador"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Inicio de secuencia</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput type="number"
+                                       name="channelStartIndex"
+                                       [(ngModel)]="selectedChannel.rename_start_index"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       placeholder="Inicio"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Color de fondo</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <input matInput type="color"
+                                       name="channelBackground"
+                                       [(ngModel)]="selectedChannel.background_color"
+                                       [ngModelOptions]="{ standalone: true }"
+                                       [disabled]="disabledFormChannel">
+                            </mat-form-field>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="label">Encarpetado</span>
+                            <mat-form-field appearance="outline" class="w-100 small-input">
+                                <mat-select
+                                    name="channelFolderStructure"
+                                    [(ngModel)]="selectedChannel.folder_structure"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="disabledFormChannel">
+                                    <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
+                                        {{ structure.label }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+                <!-- </mat-tab-group> -->
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Disponibilidad de fotos</label>
@@ -136,8 +245,7 @@
                 </div>
 
                 <p class="text-muted small">
-                    El renombrado de archivos utilizará por default el GTIN. Si requiere personalización, cargue un XLS
-                    con GTIN Canal.
+                    El renombrado de archivos utilizar&aacute; por default el GTIN. Si requiere personalizaci&oacute;n, cargue un XLS con GTIN Canal.
                 </p>
 
                 <!-- Botones de procesamiento -->
@@ -145,16 +253,16 @@
                     <button mat-raised-button color="primary" class="w-100 btn-process-img mb-3"
                         [disabled]="isGenerating || product.images.length === 0" (click)="processImg()">
                         <mat-icon class="me-2">auto_fix_high</mat-icon>
-                        Iniciar procesamiento por lotes
+                        Procesar Adaptación
                     </button>
 
                     <button mat-raised-button color="accent" class="w-100 btn-process-img mb-3"
                         [disabled]="isGenerating || product.images.length === 0" (click)="processImgNoBackground()">
                         <mat-icon class="me-2">remove_bg</mat-icon>
-                        Procesar imágenes sin fondo
+                        Remover Fondo
                     </button>
 
-                    <!-- Botón con menú desplegable para IA -->
+                    <!-- Botones con menu desplegable para IA -->
                     <div class="ai-button-container">
                         <button mat-raised-button color="warn" class="w-100 btn-process-img ai-main-button"
                             [disabled]="isGenerating || product.images.length === 0" 
@@ -169,7 +277,7 @@
                                 <div class="ai-header-section">
                                     <h6 class="mb-2 fw-semibold text-primary">
                                         <mat-icon class="me-1">lightbulb</mat-icon>
-                                        Configuración de IA
+                                        Configuraci&oacute;n de IA
                                     </h6>
                                     <p class="text-muted small mb-3">
                                         Genera fondos personalizados usando inteligencia artificial
@@ -183,7 +291,7 @@
                                                [(ngModel)]="useAIBackground"
                                                (change)="onAICheckboxChange()">
                                         <label class="form-check-label fw-medium" for="useAIBackground">
-                                            Habilitar generación de fondo con IA
+                                            Habilitar generaci&oacute;n de fondo con IA
                                         </label>
                                     </div>
                                     
@@ -191,11 +299,11 @@
                                         <mat-form-field appearance="outline" class="w-100">
                                             <mat-label>
                                                 <mat-icon class="me-1" style="font-size: 18px;">edit</mat-icon>
-                                                Descripción del fondo deseado
+                                                Descripci&oacute;n del fondo deseado
                                             </mat-label>
                                             <textarea matInput 
                                                       [(ngModel)]="aiBackgroundPrompt"
-                                                      placeholder="Ej: Un paisaje montañoso perfecto para promocionar un perfume"
+                                                      placeholder="Ej: Un paisaje monta&ntilde;oso perfecto para promocionar un perfume"
                                                       rows="3"
                                                       maxlength="500"
                                                       class="ai-prompt-textarea"></textarea>
@@ -210,10 +318,10 @@
                                                 <span class="example-tag" (click)="aiBackgroundPrompt = 'Un fondo elegante y minimalista para productos de lujo'">
                                                     Elegante y minimalista
                                                 </span>
-                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un ambiente natural con luz suave y colores cálidos'">
+                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un ambiente natural con luz suave y colores c&aacute;lidos'">
                                                     Ambiente natural
                                                 </span>
-                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un estudio fotográfico profesional con iluminación dramática'">
+                                                <span class="example-tag" (click)="aiBackgroundPrompt = 'Un estudio fotogr&aacute;fico profesional con iluminaci&oacute;n dram&aacute;tica'">
                                                     Estudio profesional
                                                 </span>
                                             </div>
@@ -245,7 +353,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -263,3 +370,5 @@
         </mat-progress-spinner>
     </div>
 </div>
+
+

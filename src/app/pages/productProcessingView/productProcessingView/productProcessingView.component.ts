@@ -85,9 +85,43 @@ export class productProcessingViewComponent {
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(params => {
-            this.selectedGtin = Object.values(params);
-            console.log('params', this.selectedGtin);
-
+            // Si viene de regenerar, cargar la parametrización del canal
+            if (params && params['channelID']) {
+                // Asignar los parámetros del canal a selectedChannel
+                this.selectedChannel = {
+                    channelID: Number(params['channelID']) || 0,
+                    gln: Number(params['gln']) || 0,
+                    provider: params['provider'] || '',
+                    width: Number(params['width']) || 0,
+                    height: Number(params['height']) || 0,
+                    extension: params['extension'] || '',
+                    dpi: Number(params['dpi']) || 0,
+                    background_color: params['background_color'] || '#FFFFFF',
+                    max_size_kb: Number(params['max_size_kb']) || 0,
+                    adaptation_type: params['adaptation_type'] || '',
+                    renaming_type: params['renaming_type'] || '',
+                    rename_base: params['rename_base'] || '',
+                    rename_separator: params['rename_separator'] || '',
+                    rename_start_index: Number(params['rename_start_index']) || 0,
+                    folder_structure: Number(params['folder_structure']) || 1,
+                    background: false
+                };
+                this.selectedFolderStructure = Number(params['folder_structure']) || 1;
+                this.imagesPerGtin = params['imagesPerGtin'] || 1;
+                this.disabledFormChannel = true;
+            }
+            // Si hay gtin en los params, cargarlo correctamente como array
+            if (params['gtin']) {
+                if (Array.isArray(params['gtin'])) {
+                    this.selectedGtin = params['gtin'];
+                } else if (typeof params['gtin'] === 'string') {
+                    // Si por error viene como string separado por comas
+                    this.selectedGtin = params['gtin'].split(',');
+                } else {
+                    this.selectedGtin = [params['gtin']];
+                }
+            }
+            console.log('params', params);
         });
         this.getPrductByGtin();
         this.getProductChannels();
@@ -111,13 +145,13 @@ export class productProcessingViewComponent {
                 if (typeof (result) === 'object') {
 
                     result.data.entities.attributes.map((element: any) => {
-                        const obj = {
-                            gln: attributes['custom:userOwnershipData'],
-                            gtin: element.gtin,
-                            producName: element.tradeitemdescriptioninformation.descriptionshort,
-                            images: (Array.isArray(element.referencedfileheader)) ? element.referencedfileheader : [],
-                            currentIndex: 0
-                        }
+                            const obj = {
+                                gln: attributes['custom:userOwnershipData'],
+                                gtin: element.gtin,
+                                producName: element.tradeitemdescriptioninformation?.descriptionshort ?? '',
+                                images: (Array.isArray(element.referencedfileheader)) ? element.referencedfileheader : [],
+                                currentIndex: 0
+                            }
                         // if (element.referencedfileheader != null) {
                         this.products.push(obj);
                         // }

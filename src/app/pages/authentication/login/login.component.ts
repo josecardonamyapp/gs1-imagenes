@@ -54,7 +54,7 @@ export class AppLoginComponent {
         const roles = rolesRaw
           ? rolesRaw.replace(/^\[|\]$/g, '')
             .split(',')
-            .map(role => role.trim())
+            .map(role => role.trim().replace(/^['"]|['"]$/g, ''))
           : [];
         localStorage.setItem('roles', JSON.stringify(roles));
 
@@ -63,7 +63,9 @@ export class AppLoginComponent {
         const exactAllowedRoles = ['systemadmin', 'admin'];
         const partialKeywords = ['retailer', 'premiummanufacturer'];
 
-        const hasAllowedRole = roles.some(
+        const normalizedRoles = roles.map(role => role.toLowerCase());
+
+        const hasAllowedRole = normalizedRoles.some(
           role =>
             exactAllowedRoles.includes(role) ||
             partialKeywords.some(keyword => role.includes(keyword))
@@ -76,13 +78,14 @@ export class AppLoginComponent {
             panelClass: ['snackbar-warn']
           });
           await this.userService.logout();
+          window.location.href = 'https://psi.gs1mexico.org/';
           return;
         }
       }
 
 
       if (authenticated) {
-        this.router.navigate(['/dashboards/dashboard1']);
+        this.router.navigate(['/home']);
       } else {
 
         await this.onSubmit();
@@ -100,7 +103,7 @@ export class AppLoginComponent {
     } else {
       //('Usuario incorrecto')
     }
-    // this.router.navigate(['/dashboards/dashboard1']);
+    // this.router.navigate(['/home']);
   }
 
 

@@ -1,3 +1,4 @@
+﻿
 
 import { Component } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
@@ -38,6 +39,23 @@ import { catchError, map, of } from 'rxjs';
     styleUrl: './channelView.component.scss'
 })
 export class ChannelViewComponent {
+    // Utilidad para saber si el color es uno de los default
+    isCustomColor(color: string): boolean {
+        if (!color) return false;
+        const defaults = ['#FFFFFF', '#F8F8FF', '#FFE4F0', 'TRANSPARENT'];
+        return !defaults.includes((color + '').trim().toUpperCase());
+    }
+
+    // Obtener el valor para el input color
+    getCustomColorValue(): string {
+        // Si el color actual es custom, mostrarlo, si no, negro
+        return this.isCustomColor(this.channel.background_color) ? this.channel.background_color : '#000000';
+    }
+
+    // Al seleccionar un color personalizado
+    setCustomColor(event: any) {
+        this.channel.background_color = event.target.value;
+    }
     channel: Channel = {
         channelID: 0,
         gln: 0,
@@ -46,7 +64,7 @@ export class ChannelViewComponent {
         height: 0,
         extension: '',
         dpi: 0,
-        background_color: '#FFFFFF', // Default white background
+        background_color: 'transparent', // Default transparent background
         max_size_kb: 0,
         adaptation_type: '',
         renaming_type: '',
@@ -64,7 +82,7 @@ export class ChannelViewComponent {
 
     // folderStructures = [
     //     { label: 'Guardar Codigo por Carpeta', value: 1 },
-    //     { label: 'Guardar todas las imágenes en una sola carpeta', value: 2 },
+    //     { label: 'Guardar todas las imÃ¡genes en una sola carpeta', value: 2 },
     // ]
 
     folderStructures: any[] = [];
@@ -91,7 +109,7 @@ export class ChannelViewComponent {
                     height: parseInt(params['height'] || '0'),
                     extension: params['extension'] || '',
                     dpi: parseInt(params['dpi'] || '0'),
-                    background_color: this.rgbToHex(params['background_color']) || '#FFFFFF', // Default white background
+                    background_color: this.rgbToHex(params['background_color']) || 'transparent', // Default transparent background
                     max_size_kb: parseInt(params['max_size_kb'] || '0'),
                     adaptation_type: params['adaptation_type'] || '',
                     renaming_type: params['renaming_type'] || '',
@@ -101,10 +119,10 @@ export class ChannelViewComponent {
                     folder_structure: parseInt(params['folder_structure'] || '1'),
                     background: params['background'] || false
                 };
-                //('Modo edición:', this.channel);
+                //('Modo ediciÃ³n:', this.channel);
             } else {
                 this.isEditMode = false;
-                //('Modo creación');
+                //('Modo creaciÃ³n');
             }
         });
         this.getFolderStructures();
@@ -133,25 +151,56 @@ export class ChannelViewComponent {
     }
 
     hexToRgb(hex: string): Array<number> {
-        // Eliminar el símbolo '#' si está presente
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
+        if (!hex) {
+            return [255, 255, 255];
+        }
+
+        const normalized = (hex + '').trim().toLowerCase();
+        if (normalized === 'transparent') {
+            return [255, 255, 255];
+        }
+
+        const value = normalized.startsWith('#') ? normalized.slice(1) : normalized;
+        const expandedValue = value.length === 3
+            ? value.split('').map(char => char + char).join('')
+            : value;
+
+        if (expandedValue.length !== 6 || /[^0-9a-f]/i.test(expandedValue)) {
+            return [255, 255, 255];
+        }
+
+        const r = parseInt(expandedValue.slice(0, 2), 16);
+        const g = parseInt(expandedValue.slice(2, 4), 16);
+        const b = parseInt(expandedValue.slice(4, 6), 16);
 
         return [r, g, b];
-
     }
-
     componentToHex(c: number): string {
         const hex = c.toString(16);
         return hex.length === 1 ? '0' + hex : hex;
     }
 
     rgbToHex(backgroundColor: string): string {
-        const [r, g, b] = backgroundColor.split(',').map(Number);
-        return '#' + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
-    }
+        if (!backgroundColor) {
+            return 'transparent';
+        }
 
+        const trimmed = backgroundColor.trim();
+        if (trimmed.toLowerCase() === 'transparent') {
+            return 'transparent';
+        }
+
+        if (trimmed.startsWith('#')) {
+            return trimmed;
+        }
+
+        const parts = trimmed.split(',').map(part => Number(part.trim()));
+        if (parts.length === 3 && parts.every(part => !Number.isNaN(part))) {
+            return '#' + this.componentToHex(parts[0]) + this.componentToHex(parts[1]) + this.componentToHex(parts[2]);
+        }
+
+        return '#FFFFFF';
+    }
     getPreviewStyle(format: any) {
         // this.selectedChannel = format;
         if (!format?.width || !format?.height) return {};
@@ -181,7 +230,7 @@ export class ChannelViewComponent {
             return;
         }
 
-        // Convertir campos numéricos a enteros
+        // Convertir campos numÃ©ricos a enteros
         const channelData = this.prepareChannelData();
         //('Datos del canal a guardar:', channelData);
         this.isLoading = true;
@@ -207,7 +256,7 @@ export class ChannelViewComponent {
             return false;
         }
         if (!this.channel.adaptation_type || !this.channel.renaming_type) {
-            this.showMessage('Por favor, seleccione el tipo de adaptación y renombrado');
+            this.showMessage('Por favor, seleccione el tipo de adaptaciÃ³n y renombrado');
             return false;
         }
         if (this.channel.renaming_type === 'custom' && !this.channel.rename_base) {
@@ -226,10 +275,22 @@ export class ChannelViewComponent {
             dpi: parseInt(this.channel.dpi?.toString() || '0'),
             max_size_kb: parseInt(this.channel.max_size_kb?.toString() || '0'),
             rename_start_index: parseInt(this.channel.rename_start_index?.toString() || '0'),
-            background_color: this.hexToRgb(this.channel.background_color).join(','), // Convert hex to RGB
+            background_color: this.normalizeBackgroundColorForPayload(this.channel.background_color), // Preserve transparent or convert hex to RGB
         };
     }
 
+    private normalizeBackgroundColorForPayload(color: string | null | undefined): string {
+        if (!color) {
+            return 'transparent';
+        }
+
+        const normalized = color.trim().toLowerCase();
+        if (normalized === 'transparent') {
+            return 'transparent';
+        }
+
+        return this.hexToRgb(color).join(',');
+    }
     private createChannel(channelData: Channel) {
         this.productService.productCreateChannel(channelData).subscribe({
             next: (result: any) => {
@@ -276,3 +337,5 @@ export class ChannelViewComponent {
         //('edito')
     }
 }
+
+

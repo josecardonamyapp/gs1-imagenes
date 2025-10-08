@@ -1,50 +1,119 @@
 <div class="job-confirmation-modal">
   <div class="modal-header">
-    <div class="success-icon">
-      <mat-icon>check_circle</mat-icon>
+    <div class="header-icon">
+      <mat-icon>auto_awesome</mat-icon>
     </div>
-    <h2>¡Procesamiento Iniciado!</h2>
+    <h2>Procesamiento iniciado</h2>
+    <p class="header-subtitle">Estamos preparando tus imÃ¡genes con IA</p>
   </div>
 
   <div class="modal-content">
-    <div class="job-details">
-      <div class="detail-item">
-        <span class="label">Job ID:</span>
-        <span class="value">{{ data.job_id }}</span>
+    <div class="status-hero">
+      <div class="hero-spinner-wrapper" [ngClass]="heroSpinnerStateClass">
+        <div class="spinner-glow"></div>
+        <mat-progress-spinner
+          class="hero-spinner" [ngClass]="heroSpinnerStateClass"
+          [mode]="heroSpinnerMode"
+          [value]="heroSpinnerValue"
+          [strokeWidth]="4"
+          [diameter]="72">
+        </mat-progress-spinner>
+        <div class="hero-spinner-icon" [ngClass]="heroSpinnerStateClass" *ngIf="heroSpinnerIcon">
+          <mat-icon>{{ heroSpinnerIcon }}</mat-icon>
+        </div>
       </div>
-      
-      <div class="detail-item">
-        <span class="label">Producto:</span>
-        <span class="value">{{ data.product_name }}</span>
+
+      <h3 class="hero-title">{{ primaryStatusText }}</h3>
+
+      <div class="hero-percentage" *ngIf="progressMode === 'determinate'">
+        {{ progressPercentage }}%
       </div>
-      
-      <div class="detail-item">
-        <span class="label">GTIN:</span>
-        <span class="value">{{ data.gtin }}</span>
+
+      <mat-progress-bar
+        class="hero-progress"
+        [mode]="progressMode"
+        [value]="progressMode === 'determinate' ? progressPercentage : 0">
+      </mat-progress-bar>
+
+      <div class="hero-timing" *ngIf="remainingTimeLabel || elapsedTimeLabel">
+        <div class="timing-row" *ngIf="remainingTimeLabel">
+          <mat-icon>schedule</mat-icon>
+          <span>Tiempo estimado restante: {{ remainingTimeLabel }}</span>
+        </div>
+        <div class="timing-row">
+          <mat-icon>timelapse</mat-icon>
+          <span>Tiempo transcurrido: {{ elapsedTimeLabel }}</span>
+        </div>
       </div>
-      
-      <div class="detail-item">
-        <span class="label">Total de imágenes:</span>
-        <span class="value">{{ data.total_images }}</span>
-      </div>
-      
-      <div class="detail-item">
-        <span class="label">Tiempo estimado:</span>
-        <span class="value">{{ data.estimated_completion_time }}</span>
+
+      <p class="hero-note">
+        Este proceso puede tardar entre 2 y 5 minutos. MantÃ©n esta ventana abierta mientras completamos el procesamiento.
+      </p>
+
+      <div class="hero-warning" *ngIf="pollingError">
+        <mat-icon>error_outline</mat-icon>
+        <span>No se pudo actualizar el estado. Reintentaremos en unos segundos.</span>
       </div>
     </div>
 
-    <div class="progress-section">
-      <div class="progress-info">
-        <mat-icon>hourglass_top</mat-icon>
-        <span>{{ data.message }}</span>
+    <div class="status-metrics" *ngIf="hasProgressTotals || hasFailures || hasRemaining">
+      <div class="metric" *ngIf="hasProgressTotals">
+        <span class="metric-label">Procesadas</span>
+        <span class="metric-value">{{ processedImages }}</span>
       </div>
-      <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+      <div class="metric" *ngIf="hasProgressTotals">
+        <span class="metric-label">Total</span>
+        <span class="metric-value">{{ totalImages }}</span>
+      </div>
+      <div class="metric metric--warn" *ngIf="hasRemaining">
+        <span class="metric-label">Pendientes</span>
+        <span class="metric-value">{{ remainingImages }}</span>
+      </div>
+      <div class="metric metric--error" *ngIf="hasFailures">
+        <span class="metric-label">Fallidas</span>
+        <span class="metric-value">{{ failedImages }}</span>
+      </div>
+    </div>
+
+    <div class="job-details">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Job ID</span>
+          <span class="value">{{ data.job_id }}</span>
+        </div>
+        <div class="detail-item" *ngIf="data.gtin">
+          <span class="label">GTIN</span>
+          <span class="value">{{ data.gtin }}</span>
+        </div>
+        <div class="detail-item" *ngIf="data.product_name">
+          <span class="label">Producto</span>
+          <span class="value">{{ data.product_name }}</span>
+        </div>
+        <div class="detail-item" *ngIf="data.estimated_completion_time">
+          <span class="label">Tiempo estimado inicial</span>
+          <span class="value">{{ data.estimated_completion_time }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="job-errors" *ngIf="hasErrors">
+      <div class="errors-header">
+        <mat-icon color="warn">warning</mat-icon>
+        <span>Errores recientes</span>
+      </div>
+
+      <div class="error-item" *ngFor="let error of jobErrors">
+        <mat-icon color="warn">report</mat-icon>
+        <div class="error-content">
+          <p class="error-message">{{ error.error }}</p>
+          <span class="error-timestamp" *ngIf="error.timestamp">Registrado {{ error.timestamp | date:'short' }}</span>
+        </div>
+      </div>
     </div>
 
     <div class="info-box">
       <mat-icon>info</mat-icon>
-      <p>El procesamiento se ejecuta en segundo plano. Puedes consultar el estado en tiempo real en la sección de Jobs.</p>
+      <p>El procesamiento continÃºa en segundo plano. Puedes abrir la vista de Jobs para ver mÃ¡s detalles o descargar los resultados cuando finalice.</p>
     </div>
   </div>
 
@@ -54,7 +123,7 @@
     </button>
     <button mat-raised-button (click)="goToJobs()" color="primary">
       <mat-icon>visibility</mat-icon>
-      Ver estado de Jobs
+      Ver estado de jobs
     </button>
   </div>
-</div> 
+</div>

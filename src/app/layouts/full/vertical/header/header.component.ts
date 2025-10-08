@@ -69,6 +69,7 @@ export class HeaderComponent {
   userLastName = "";
   email = "";
   roles=[] as any;
+  welcomeMessage = 'Bienvenido Usuario';
 
   public selectedLanguage: any = {
     language: 'English',
@@ -130,14 +131,45 @@ export class HeaderComponent {
         this.roles = roles;
         console.log(roles);
 
+        this.updateWelcomeMessage();
 
       }
     } catch (err) {
       console.error('err:', err);
     } finally {
       // this.loading = false;
+      this.updateWelcomeMessage();
     }
   }
+
+  private updateWelcomeMessage(): void {
+    const normalize = (value?: string) => {
+      if (!value) {
+        return '';
+      }
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      const lower = trimmed.toLowerCase();
+      return lower === 'undefined' || lower === 'null' ? '' : trimmed;
+    };
+
+    const nameParts: string[] = [];
+
+    [this.userFirstName, this.userLastName].forEach((value) => {
+      const normalized = normalize(value);
+      if (normalized) {
+        nameParts.push(normalized);
+      }
+    });
+
+    const fullName = nameParts.join(' ');
+    const fallback = normalize(this.email) || 'Usuario';
+    const nameToShow = fullName || fallback;
+    this.welcomeMessage = `Bienvenido ${nameToShow}`.trim();
+  }
+
   openDialog() {
     const dialogRef = this.dialog.open(AppSearchDialogComponent);
 

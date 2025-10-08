@@ -9,12 +9,12 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { GtinDialogComponent } from './dashboard1Filter/dashboard1Filter.component'; // Asegúrate de ajustar la ruta correcta
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCheckboxModule, MatCheckboxChange } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Subject } from 'rxjs';
+import { CatalogProduct } from 'src/app/model/catalog';
+import { CreateCatalogDialogComponent, CreateCatalogDialogData } from './create-catalog-dialog/create-catalog-dialog.component';
+import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TourModule } from 'src/app/core/tour/tour.module';
 import { DriverTourService } from 'src/app/core/tour/driver-tour.service';
@@ -33,7 +33,8 @@ import { DriverTourService } from 'src/app/core/tour/driver-tour.service';
     MatProgressSpinnerModule,
     MatCheckboxModule,
     MatSnackBarModule,
-    TourModule
+    TourModule,
+    CreateCatalogDialogComponent
   ],
   templateUrl: './dashboard1.component.html',
   styleUrl: './dashboard1.component.scss'
@@ -50,6 +51,8 @@ export class AppDashboard1Component {
   filtered: any[] = [];
   searchSubject: Subject<string> = new Subject<string>();
   inputType: 'text' | 'number' | 'mixed' | null = null;
+  catalogPanelVisible = false;
+  catalogPanelData: CreateCatalogDialogData | null = null;
 
   tourByRoute: Record<string, any[]> = {
     '/dashboards/dashboard1': [
@@ -64,7 +67,7 @@ export class AppDashboard1Component {
         element: '#input-gtin',
         popover: {
           title: 'Buscar productos',
-          description: 'Ingresa el nombre del producto o su código GTIN para realizar una búsqueda directa.'
+          description: 'Ingresa el nombre del producto o su cÃ³digo GTIN para realizar una bÃºsqueda directa.'
         },
         allowInteraction: true
       },
@@ -72,44 +75,44 @@ export class AppDashboard1Component {
         element: '#btn-seleccionar-todos',
         popover: {
           title: 'Seleccionar todos los productos',
-          description: 'Haz clic aquí para seleccionar rápidamente todos los productos mostrados.'
+          description: 'Haz clic aquÃ­ para seleccionar rÃ¡pidamente todos los productos mostrados.'
         }
       },
       {
         element: '#btn-buscar-gtins',
         popover: {
-          title: 'Búsqueda por lista de GTINs',
-          description: 'Importa una lista con múltiples GTINs para realizar una búsqueda masiva.'
+          title: 'BÃºsqueda por lista de GTINs',
+          description: 'Importa una lista con mÃºltiples GTINs para realizar una bÃºsqueda masiva.'
         }
       },
       {
         element: '#tarjeta-producto-1',
         popover: {
           title: 'Vista de producto',
-          description: 'Cada tarjeta muestra información clave de un producto individual.'
+          description: 'Cada tarjeta muestra informaciÃ³n clave de un producto individual.'
         }
       },
       {
         element: '#carousel-imagenes',
         popover: {
-          title: 'Carrusel de imágenes',
-          description: 'Desplázate entre las imágenes disponibles del producto para visualizar sus distintas vistas.'
+          title: 'Carrusel de imÃ¡genes',
+          description: 'DesplÃ¡zate entre las imÃ¡genes disponibles del producto para visualizar sus distintas vistas.'
         }
       },
       {
         element: '#informacion-tarjeta',
         popover: {
           title: 'Detalles del producto',
-          description: 'Consulta aquí detalles adicionales como imágenes, descripciones y opciones de procesamiento.'
+          description: 'Consulta aquÃ­ detalles adicionales como imÃ¡genes, descripciones y opciones de procesamiento.'
         }
       }
     ],
     '/channels/channel': [
       {
-        element: '#menu-canales',
+        element: '#menu-canales-de-venta',
         popover: {
-          title: 'Gestión de canales',
-          description: 'Administra tus canales de distribución desde esta sección.'
+          title: 'GestiÃ³n de Canales de Venta',
+          description: 'Administra tus canales de distribuciÃ³n desde esta secciÃ³n.'
         }
       },
       {
@@ -123,14 +126,14 @@ export class AppDashboard1Component {
         element: '#crear-canal',
         popover: {
           title: 'Crear un nuevo canal',
-          description: 'Haz clic aquí para configurar un nuevo canal de distribución.'
+          description: 'Haz clic aquÃ­ para configurar un nuevo canal de distribuciÃ³n.'
         }
       },
       {
         element: '#editar-canal',
         popover: {
           title: 'Editar canal existente',
-          description: 'Modifica la configuración de un canal ya existente desde esta opción.'
+          description: 'Modifica la configuraciÃ³n de un canal ya existente desde esta opciÃ³n.'
         }
       }
     ],
@@ -146,14 +149,14 @@ export class AppDashboard1Component {
         element: '#lista-procesamientos',
         popover: {
           title: 'Lista de procesamientos',
-          description: 'Aquí se muestra un historial detallado de todos tus trabajos procesados.'
+          description: 'AquÃ­ se muestra un historial detallado de todos tus trabajos procesados.'
         }
       },
       {
         element: '#actualizar-procesamientos',
         popover: {
           title: 'Actualizar lista',
-          description: 'Refresca el listado para ver el estado más reciente de tus procesamientos.'
+          description: 'Refresca el listado para ver el estado mÃ¡s reciente de tus procesamientos.'
         }
       },
       {
@@ -176,7 +179,6 @@ export class AppDashboard1Component {
   constructor(
     private productService: ProductService,
     private router: Router,
-    private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private tourService: DriverTourService
   ) { }
@@ -190,155 +192,145 @@ export class AppDashboard1Component {
   }
 
   ngOnInit(): void {
-    this.getPrductsAll();
-
-    // this.searchSubject
-    //   .pipe(debounceTime(300), distinctUntilChanged())
-    //   .subscribe(searchTerm => {
-    //     this.filtered = this.products.filter(product =>
-    //       (product.producName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //       (product.gtin || '').toLowerCase().includes(searchTerm.toLowerCase())
-    //     );
-    //   });
     this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(value => {
-        this.handleSearch(value);
+      .subscribe(async value => {
+        try {
+          await this.handleSearch(value);
+        } catch (error) {
+          console.error('Error during search handling:', error);
+        }
       });
   }
 
-  async getPrductsAll() {
+  private async getProductsByListGtin(gtins: string[], requestedCodes: string[]): Promise<void> {
+    //   width: '400px',
+    // });
+
+    // dialogRef.afterClosed().subscribe((gtins: string[]) => {
+    if (!Array.isArray(gtins) || gtins.length === 0) {
+      return;
+    }
+
     this.isGenerating = true;
-    this.productService.productGetByGln().subscribe({
-      next: (result) => {
-        if (typeof (result) === 'object' && result.data && result.data.entities?.attributes?.length) {
-          this.isGenerating = false;
 
-          result.data.entities.attributes.map((element: any) => {
+    try {
+      const result: any = await firstValueFrom(this.productService.productGetByGtin(gtins));
 
+      if (typeof result === 'object' && result.data && result.data.entities?.attributes) {
+        const fetchedProducts = result.data.entities.attributes
+          .map((element: any) => {
             const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
-
-            // Filtrar solo URLs que sean imágenes
             const imageUrls = files.filter((file: any) => {
               const url = file?.uniformresourceidentifier ?? '';
               return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
             });
 
-            const obj = {
+            if (!imageUrls.length) {
+              return null;
+            }
+
+            return {
               gtin: element?.gtin ?? '',
               producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
               images: imageUrls,
-              currentIndex: 0
-            }
-            if (obj.images.length) {
-              this.products.push(obj);
-            }
-          });
-          this.filtered = [...this.products];
-          if (this.filtered.length != result.data.entities.attributes.length) {
-            this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
-              duration: 3000,
-              verticalPosition: 'top',
-              horizontalPosition: 'center'
-            });
-          }
-        } else {
-          this.isGenerating = false;
-          this.snackBar.open('No se encontraron productos relacionados al GLN', 'Cerrar', {
+              currentIndex: 0,
+              isImageLoading: false
+            };
+          })
+          .filter((product: any) => product !== null);
+
+        const productsByGtin = new Map(this.products.map(product => [product.gtin, product]));
+        fetchedProducts.forEach((product: any) => {
+          productsByGtin.set(product.gtin, product);
+        });
+
+        this.products = Array.from(productsByGtin.values()).map(product => this.prepareProductForDisplay(product));
+        console.log('products', this.products)
+
+        const requestedOrder = Array.isArray(requestedCodes) && requestedCodes.length > 0
+          ? requestedCodes
+          : gtins;
+
+        const productLookup = new Map(this.products.map(product => [product.gtin, product]));
+        this.filtered = requestedOrder
+          .map(code => this.prepareProductForDisplay(productLookup.get(code)))
+          .filter((product): product is any => Boolean(product));
+
+        if (fetchedProducts.length !== result.data.entities.attributes.length) {
+          this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imÃ¡genes asociadas en SyncfonÃ­a.', 'Cerrar', {
             duration: 3000,
             verticalPosition: 'top',
             horizontalPosition: 'center'
           });
         }
-      },
-      error: (error) => {
-        this.isGenerating = false;
-        console.error('Error load products:', error);
-      },
-      complete: () => {
-        this.isGenerating = false;
-        console.log('loading finished.');
+      } else {
+        this.snackBar.open('No se encontraron GTINs relacionados al GLN', 'Cerrar', {
+          duration: 3000,
+          verticalPosition: 'top',
+          horizontalPosition: 'center'
+        });
       }
-    })
-  }
-
-  getProductsByListGtin(gtins: any): void {
-    // const dialogRef = this.dialog.open(GtinDialogComponent, {
-    //   width: '400px',
-    // });
-
-    // dialogRef.afterClosed().subscribe((gtins: string[]) => {
-    if (Array.isArray(gtins) && gtins.length > 0) {
-      this.isGenerating = true;
-
-      this.productService.productGetByGtin(gtins).subscribe({
-        next: (result: any) => {
-          this.isGenerating = false;
-
-          if (typeof (result) === 'object' && result.data && result.data.entities?.attributes?.length) {
-            this.products = result.data.entities.attributes.map((element: any) => {
-
-              const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
-
-              // Filtrar solo URLs que sean imágenes
-              const imageUrls = files.filter((file: any) => {
-                const url = file?.uniformresourceidentifier ?? '';
-                return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
-              });
-
-              if (!imageUrls.length) return null;
-
-              return {
-                gtin: element?.gtin ?? '',
-                producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
-                images: Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [],
-                currentIndex: 0,
-              }
-            })
-              .filter((product: any) => product !== null);
-            this.filtered = [...this.products];
-
-            if (this.filtered.length != result.data.entities.attributes.length) {
-              this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
-                duration: 3000,
-                verticalPosition: 'top',
-                horizontalPosition: 'center'
-              });
-            }
-          } else {
-            this.snackBar.open('No se encontraron GTINs relacionados al GLN', 'Cerrar', {
-              duration: 3000,
-              verticalPosition: 'top',
-              horizontalPosition: 'center'
-            });
-          }
-        },
-        error: err => {
-          this.isGenerating = false;
-          this.snackBar.open(err.error, 'Cerrar', {
-            duration: 3000,
-            verticalPosition: 'top',
-            horizontalPosition: 'center'
-          });
-          console.error('Error al obtener productos por GTINs:', err);
-        }
+    } catch (err: any) {
+      this.snackBar.open(err?.error || 'Error al obtener productos por GTINs.', 'Cerrar', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center'
       });
+      console.error('Error al obtener productos por GTINs:', err);
+    } finally {
+      this.isGenerating = false;
     }
     // });
   }
 
-  nextImage(product: any) {
-    product.currentIndex =
+  nextImage(product: any): void {
+    if (!product?.images?.length || product.images.length <= 1) {
+      return;
+    }
+
+    const nextIndex =
       product.currentIndex === product.images.length - 1
         ? 0
         : product.currentIndex + 1;
+
+    this.updateProductImageIndex(product, nextIndex);
   }
 
-  previousImage(product: any) {
-    product.currentIndex =
+  previousImage(product: any): void {
+    if (!product?.images?.length || product.images.length <= 1) {
+      return;
+    }
+
+    const previousIndex =
       product.currentIndex === 0
         ? product.images.length - 1
         : product.currentIndex - 1;
+
+    this.updateProductImageIndex(product, previousIndex);
+  }
+
+  private updateProductImageIndex(product: any, targetIndex: number): void {
+    if (!product?.images?.length) {
+      return;
+    }
+
+    const totalImages = product.images.length;
+    const normalizedIndex = ((Number.isInteger(targetIndex) ? targetIndex : 0) % totalImages + totalImages) % totalImages;
+
+    if (normalizedIndex === product.currentIndex) {
+      return;
+    }
+
+    const nextImage = product.images[normalizedIndex];
+    const hasUrl = Boolean(nextImage?.uniformresourceidentifier);
+
+    product.isImageLoading = hasUrl;
+    product.currentIndex = normalizedIndex;
+
+    if (!hasUrl) {
+      product.isImageLoading = false;
+    }
   }
 
   goToDetail(gtin: string): void {
@@ -351,15 +343,15 @@ export class AppDashboard1Component {
     if (!trimmed) {
       this.inputType = null;
       this.filtered = [];
-      this.searchText = '';          // ← refleja en el textarea
+      this.searchText = '';          // â† refleja en el textarea
       this.searchSubject.next('');
       return;
     }
 
-    // Detectar tipo admitiendo comas, espacios y saltos de línea
-    if (/^[0-9,\s\r\n]+$/.test(trimmed)) {
+    // Detectar tipo admitiendo comas, espacios y saltos de lÃ­nea
+    if (/^[0-9,\s`r`n]+$/.test(trimmed)) {
       this.inputType = 'number';
-    } else if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(trimmed)) {
+    } else if (/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“ÃšÃ±Ã‘\s]+$/.test(trimmed)) {
       this.inputType = 'text';
     } else {
       this.inputType = 'mixed';
@@ -369,64 +361,70 @@ export class AppDashboard1Component {
 
     if (this.inputType === 'number') {
       normalized = normalized
-        .replace(/[\s\r\n]+/g, ',') // saltos de línea/espacios → coma
+        .replace(/[\s`r`n]+/g, ',') // saltos de lÃ­nea/espacios â†’ coma
         .replace(/,{2,}/g, ',')     // evita ,, consecutivas
         .replace(/^,|,$/g, '');     // sin coma al inicio/fin
 
-      // Autocompletar a 14 dígitos
-      normalized = normalized
+      // Autocompletar a 14 dÃ­gitos
+      const paddedCodes = normalized
         .split(',')
-        .map(n => n.trim().padStart(14, '0'))
-        .join(',');
+        .map(code => code.trim())
+        .filter(code => Boolean(code))
+        .map(code => code.padStart(14, '0'));
+
+      normalized = Array.from(new Set(paddedCodes)).join(',');
     } else if (this.inputType === 'text') {
       normalized = normalized.replace(/\s+/g, ' ');
     }
 
-    // 🔁 Reflejar el valor normalizado en el textarea y continuar flujo
-    this.searchText = normalized;       // ← actualiza el textarea
+    // ðŸ” Reflejar el valor normalizado en el textarea y continuar flujo
+    this.searchText = normalized;       // â† actualiza el textarea
     this.searchSubject.next(normalized);
 
     console.log('inputType:', this.inputType, '=>', normalized);
   }
 
 
-  private handleSearch(value: string) {
-    console.log('handlesearch', value)
+  private async handleSearch(value: string) {
+    console.log('handlesearch', value);
     if (!value) {
       this.filtered = [];
+      this.refreshCatalogPanelData();
       return;
     }
 
     if (this.inputType == 'text') {
-      // Buscar local por nombre
       const localMatches = this.products.filter(p =>
         p.producName?.toLowerCase().includes(value.toLowerCase())
       );
 
-      this.filtered = localMatches;
-
+      this.filtered = localMatches.map(product => this.prepareProductForDisplay(product));
     } else if (this.inputType == 'number') {
-      // Para números, soportando múltiples códigos separados por coma
-      const codes = value.split(',');
-      console.log('codes', codes)
+      const codes = value.split(',').map(code => code.trim()).filter(Boolean);
+      console.log('codes', codes);
 
       const localMatches = this.products.filter(p => codes.includes(p.gtin));
-
-      // Determinar códigos que no están localmente
       const missingCodes = codes.filter(code => !localMatches.some(p => p.gtin === code));
 
+      this.filtered = localMatches.map(product => this.prepareProductForDisplay(product));
+
       if (missingCodes.length > 0) {
-        console.log('missingCodes', missingCodes)
-        this.getProductsByListGtin(missingCodes);
-      } else {
-        this.filtered = localMatches;
+        console.log('missingCodes', missingCodes);
+        await this.getProductsByListGtin(missingCodes, codes);
       }
+    } else {
+      this.applyFilter();
     }
+
+    this.refreshCatalogPanelData();
   }
 
   clearSearch() {
     this.searchText = '';
-    this.applyFilter();
+    this.inputType = null;
+    this.filtered = [];
+    this.searchSubject.next('');
+    this.refreshCatalogPanelData();
   }
 
   applyFilter() {
@@ -435,6 +433,8 @@ export class AppDashboard1Component {
       p.producName?.toLowerCase().includes(query) ||
       p.gtin?.toLowerCase().includes(query)
     );
+
+    this.refreshCatalogPanelData();
   }
 
   trackByGtin(index: number, item: any): string {
@@ -461,6 +461,20 @@ export class AppDashboard1Component {
     } else {
       this.selectedGtins.push(gtin);
     }
+
+    this.refreshCatalogPanelData();
+  }
+
+  onProductSelectionChange(event: MatCheckboxChange, gtin: string): void {
+    if (event.checked) {
+      if (!this.isGtinSelected(gtin)) {
+        this.selectedGtins.push(gtin);
+      }
+    } else if (this.isGtinSelected(gtin)) {
+      this.selectedGtins = this.selectedGtins.filter(selected => selected !== gtin);
+    }
+
+    this.refreshCatalogPanelData();
   }
 
   isGtinSelected(gtin: string): boolean {
@@ -471,17 +485,161 @@ export class AppDashboard1Component {
     this.selectedGtins = this.filtered
       .filter(p => p.images?.length > 0)
       .map(p => p.gtin);
+
+    this.refreshCatalogPanelData();
   }
 
   clearAllGtins(): void {
     this.selectedGtins = [];
+    this.refreshCatalogPanelData();
+  }
+
+  openCreateCatalogDialog(): void {
+    this.catalogPanelVisible = true;
+    this.refreshCatalogPanelData();
+  }
+
+  private refreshCatalogPanelData(): void {
+    if (!this.catalogPanelVisible) {
+      return;
+    }
+
+    const sourceProducts = this.filtered.length ? this.filtered : this.products;
+    this.catalogPanelData = {
+      availableProducts: this.buildCatalogProducts(sourceProducts),
+      preselectedGtins: [...this.selectedGtins]
+    };
+  }
+
+  private buildCatalogProducts(products: any[]): CatalogProduct[] {
+    const mapped: CatalogProduct[] = [];
+    const seen = new Set<string>();
+
+    (products || []).forEach(product => {
+      const gtin = product?.gtin;
+      if (!gtin || seen.has(gtin)) {
+        return;
+      }
+
+      seen.add(gtin);
+      mapped.push({
+        gtin,
+        name: product?.producName ?? product?.name ?? '',
+        producName: product?.producName ?? product?.name ?? '',
+        imageUrl: product?.images?.[0]?.uniformresourceidentifier,
+        images: product?.images ?? [],
+        currentIndex: product?.currentIndex ?? 0,
+        isImageLoading: false
+      });
+    });
+
+    return mapped;
+  }
+
+  handleCatalogSaved(_event: unknown): void {
+    this.clearAllGtins();
+    this.catalogPanelVisible = false;
+    this.catalogPanelData = null;
+  }
+
+  onCatalogPanelCancel(): void {
+    this.catalogPanelVisible = false;
+    this.catalogPanelData = null;
+  }
+
+  onCatalogSelectionChange(gtins: string[]): void {
+    this.selectedGtins = [...gtins];
+    this.refreshCatalogPanelData();
+  }
+
+
+  onProductImageLoad(product: any): void {
+    if (product) {
+      product.isImageLoading = false;
+    }
+  }
+
+  onProductImageError(product: any): void {
+    if (product) {
+      product.isImageLoading = false;
+    }
+  }
+
+  private prepareProductForDisplay(product: any): any {
+    if (!product) {
+      return product;
+    }
+
+    if (!Array.isArray(product.images)) {
+      product.images = [];
+    }
+
+    if (typeof product.currentIndex !== 'number') {
+      product.currentIndex = 0;
+    }
+
+    if (product.images.length === 0) {
+      product.currentIndex = 0;
+    } else if (product.currentIndex < 0 || product.currentIndex >= product.images.length) {
+      product.currentIndex = 0;
+    }
+
+    if (typeof product.isImageLoading !== 'boolean') {
+      product.isImageLoading = false;
+    } else if (product.isImageLoading && product.images.length <= 1) {
+      product.isImageLoading = false;
+    }
+
+    return product;
+  }
+
+  loadCodesFromTextarea(): void {
+    const normalized = (this.searchText || '').trim();
+    if (!normalized) {
+      this.snackBar.open('Pega al menos un codigo UPC o GTIN para continuar.', 'Cerrar', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center'
+      });
+      return;
+    }
+
+    this.onSearchChange(normalized);
+    this.snackBar.open('Lista de codigos lista para buscar.', 'Cerrar', {
+      duration: 2000,
+      verticalPosition: 'bottom',
+      horizontalPosition: 'center'
+    });
+  }
+
+  downloadTemplate(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    const exampleContent = '7506228087658\n7506253223237\n75062652322306';
+    const blob = new Blob([exampleContent], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'plantilla-upc.txt';
+    anchor.rel = 'noopener';
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   }
 
   processSelectedImages() {
     this.router.navigate(['/product-catalog'], {
-      queryParams: this.selectedGtins
+      queryParams: { gtin: this.selectedGtins }
     });
     console.log('procesar', this.selectedGtins)
   }
 
 }
+
+
+
+
+
+
+

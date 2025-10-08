@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -43,7 +43,8 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
   constructor(
     private productService: ProductService,
-    private http: HttpClient
+    private http: HttpClient,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -56,6 +57,12 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+  }
+
+  private updateJobState(jobId: string, changes: Partial<any>): void {
+    this.jobs = this.jobs.map(job =>
+      job.job_id === jobId ? { ...job, ...changes } : job
+    );
   }
 
   startAutoRefresh(): void {
@@ -181,69 +188,71 @@ export class JobStatusComponent implements OnInit, OnDestroy {
   }
 
   async downloadAllFiles(job: any): Promise<void> {
-    if (!job.processed_files || job.processed_files.length === 0) {
+    const processedFiles = job?.processed_files ?? [];
+    if (processedFiles.length === 0) {
       return;
     }
 
+    const jobId = job.job_id;
     job.downloading = true;
-    //(`Iniciando descarga de ${job.processed_files.length} archivos para GTIN: ${job.gtin}`);
+    this.updateJobState(jobId, { downloading: true });
 
     try {
-      // Crear un nuevo ZIP
       const zip = new JSZip();
-
-      // Descargar todos los archivos de forma secuencial para evitar problemas
-      for (const file of job.processed_files) {
-        // console.log(file.)
+      // Leer folder_structure desde channel_params
+      const folderStructure = job?.channel_params?.folder_structure;
+      for (const file of processedFiles) {
         try {
-          //(`Descargando: ${file.output_filename} desde ${file.s3_url}`);
-
-          // Usar HttpClient en lugar de fetch para manejar mejor el CORS
           const blob = await firstValueFrom(this.http.get(file.s3_url, {
             responseType: 'blob'
           }));
 
           if (blob) {
-            //(`Archivo ${file.output_filename} descargado. Tamaño: ${blob.size} bytes`);
-
-            // Agregar el archivo al ZIP con su nombre output_filename
-            zip.file(file.output_filename, blob);
-            //(`Archivo ${file.output_filename} agregado al ZIP`);
+            if (folderStructure === 1) {
+              // Guardar por carpeta GTIN
+              // Extraer GTIN del s3_key o del nombre del archivo
+              let gtin = '';
+              if (file.s3_key) {
+                // s3_key: .../GTIN/filename
+                const parts = file.s3_key.split('/');
+                if (parts.length > 1) gtin = parts[parts.length - 2];
+              }
+              if (!gtin && file.output_filename) {
+                // fallback: primer bloque numérico
+                const match = file.output_filename.match(/\d{8,}/);
+                if (match) gtin = match[0];
+              }
+              const path = gtin ? `${gtin}/${file.output_filename}` : file.output_filename;
+              zip.file(path, blob);
+            } else {
+              // Todas las imágenes en una sola carpeta
+              zip.file(file.output_filename, blob);
+            }
           } else {
-            console.error(`Error: blob vacío para ${file.output_filename}`);
+            console.error(`Error: blob vacio para ${file.output_filename}`);
           }
-          job.downloading = false;
         } catch (error) {
-          job.downloading = false;
           console.error(`Error descargando ${file.output_filename}:`, error);
         }
       }
 
-      //('Generando archivo ZIP...');
-
-      // Generar el ZIP
       const zipBlob = await zip.generateAsync({
         type: 'blob',
         compression: 'DEFLATE',
         compressionOptions: { level: 6 }
       });
 
-      //(`ZIP generado. Tamaño: ${zipBlob.size} bytes`);
-
-      // Descargar el ZIP con el nombre del GTIN
-      const zipFilename = `${job.job_id}.zip`;
+      const zipFilename = `${jobId}.zip`;
       saveAs(zipBlob, zipFilename);
 
-      job.downloading = false;
-      //(`ZIP ${zipFilename} descargado exitosamente con ${job.processed_files.length} archivos`);
-
     } catch (error) {
-      job.downloading = false;
       console.error('Error creando el ZIP:', error);
       alert('Error al crear el archivo ZIP: ' + error);
+    } finally {
+      job.downloading = false;
+      this.updateJobState(jobId, { downloading: false });
     }
   }
-
   getDownloadLink(job: any): string | null {
     if (job.status === 'COMPLETED' && job.processed_files && job.processed_files.length > 0) {
       return job.processed_files[0].s3_url; // Retornar el enlace del primer archivo procesado
@@ -313,6 +322,37 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     if (action === 'download') { this.downloadAllFiles(job); }
     if (action === 'link') { this.getDownloadUrl(job); }
     if (action === 'delete') { this.removeJob(job.job_id); }
+    if (action === 'regenerate') {
+      // Navegar a productProcessingView con los parámetros del canal y los GTIN procesados
+      const params = { ...(job.channel_params || {}) };
+      // Extraer todos los gtin únicos de los archivos procesados
+      if (Array.isArray(job.processed_files)) {
+        const gtins = job.processed_files
+          .map((file: any) => {
+            // Buscar GTIN en el nombre del archivo (asume que el GTIN es la primera secuencia de 8-14 dígitos)
+            const match = file.output_filename.match(/\d{8,14}/);
+            return match ? match[0] : null;
+          })
+          .filter((gtin: string | null, idx: number, arr: any[]) => gtin && arr.indexOf(gtin) === idx);
+        if (gtins.length > 0) {
+          // Eliminar cualquier gtin existente en params
+          delete params.gtin;
+          // Navegar usando un objeto de queryParams con gtin repetido
+          const queryParams: any = { ...params };
+          // Angular permite pasar un array, pero para forzar gtin=...&gtin=... usamos un objeto especial
+          // que repite la clave gtin para cada valor
+          // Esto solo funciona si el router respeta el array como múltiples params
+          // Si no, se puede usar NavigationExtras.queryParamsHandling
+          // Pero aquí lo forzamos:
+          (queryParams as any)['gtin'] = gtins;
+          this.router.navigate(['/product-catalog'], { queryParams: queryParams });
+          return;
+        }
+      }
+      this.router.navigate(['/product-catalog'], { queryParams: params });
+    }
   }
 
 }
+
+

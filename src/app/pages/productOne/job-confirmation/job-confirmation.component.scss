@@ -1,76 +1,328 @@
 .job-confirmation-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  max-width: 520px;
   padding: 0;
-  max-width: 500px;
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 48px -32px rgba(38, 50, 56, 0.45);
 
   .modal-header {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    color: white;
-    padding: 30px 20px;
     text-align: center;
+    padding: 28px 24px 18px;
+    background: linear-gradient(135deg, rgba(255, 167, 38, 0.18), rgba(255, 244, 229, 0.65));
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
 
-    .success-icon {
-      margin-bottom: 16px;
-      
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 152, 0, 0.15);
+      color: #ff9800;
+
       mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        opacity: 0.9;
+        font-size: 28px;
       }
     }
 
     h2 {
       margin: 0;
-      font-size: 24px;
-      font-weight: 500;
+      font-size: 22px;
+      font-weight: 600;
+      color: #e65100;
+    }
+
+    .header-subtitle {
+      margin: 6px 0 0;
+      color: #795548;
+      font-size: 14px;
+      opacity: 0.9;
     }
   }
 
   .modal-content {
-    padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 24px 8px;
 
-    .job-details {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
+    .status-hero {
+      position: relative;
+      text-align: center;
+      padding: 26px 24px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 171, 64, 0.35);
+      background: linear-gradient(180deg, rgba(255, 247, 230, 0.85) 0%, #ffffff 100%);
+      box-shadow: 0 24px 32px -30px rgba(255, 111, 0, 0.55);
+      margin-bottom: 24px;
 
-      .detail-item {
+      .hero-spinner-wrapper {
+        position: relative;
+        margin: 0 auto 18px;
+        width: 96px;
+        height: 96px;
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        
-        &:last-child {
-          margin-bottom: 0;
+        align-items: center;
+        justify-content: center;
+
+        &.is-success .spinner-glow {
+          background: radial-gradient(circle, rgba(129, 199, 132, 0.55) 0%, rgba(129, 199, 132, 0) 65%);
         }
 
-        .label {
+        &.is-error .spinner-glow {
+          background: radial-gradient(circle, rgba(244, 143, 177, 0.55) 0%, rgba(244, 143, 177, 0) 65%);
+        }
+
+        &.is-cancel .spinner-glow {
+          background: radial-gradient(circle, rgba(161, 136, 127, 0.45) 0%, rgba(161, 136, 127, 0) 65%);
+        }
+      }
+
+      .spinner-glow {
+        position: absolute;
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 183, 77, 0.6) 0%, rgba(255, 183, 77, 0) 65%);
+        filter: blur(6px);
+      }
+
+      .hero-spinner {
+        --mdc-circular-progress-active-indicator-color: #ff9800;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+
+        &.is-success {
+          --mdc-circular-progress-active-indicator-color: #4caf50;
+        }
+
+        &.is-error {
+          --mdc-circular-progress-active-indicator-color: #e53935;
+        }
+
+        &.is-cancel {
+          --mdc-circular-progress-active-indicator-color: #757575;
+        }
+      }
+
+      .hero-spinner-icon {
+        position: absolute;
+        pointer-events: none;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 82px;
+        height: 82px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.35);
+
+        mat-icon {
+          font-size: 46px;
+          width: 46px;
+          height: 46px;
+          line-height: 46px;
+        }
+
+        &.is-success mat-icon {
+          color: #2e7d32;
+        }
+
+        &.is-error mat-icon {
+          color: #d32f2f;
+        }
+
+        &.is-cancel mat-icon {
+          color: #6d4c41;
+        }
+      }
+
+      .hero-title {
+        margin: 0 0 12px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #3e2723;
+      }
+
+      .hero-percentage {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ff9800;
+        margin-bottom: 12px;
+      }
+
+      .hero-progress {
+        --mdc-linear-progress-active-indicator-color: #ff9800;
+        --mdc-linear-progress-track-color: rgba(255, 183, 77, 0.25);
+        height: 10px;
+        border-radius: 999px;
+      }
+
+      .hero-timing {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+
+        .timing-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: #5d4037;
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            color: #ff9800;
+          }
+        }
+      }
+
+      .hero-note {
+        margin: 18px auto 0;
+        max-width: 320px;
+        font-size: 13px;
+        color: #6d4c41;
+        line-height: 1.4;
+      }
+
+      .hero-warning {
+        margin-top: 16px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 145, 0, 0.35);
+        background: rgba(255, 249, 230, 0.9);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #8d6e63;
+
+        mat-icon {
+          color: #fb8c00;
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+
+    .status-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+
+      .metric {
+        border-radius: 14px;
+        padding: 16px 14px;
+        background: #f9fafb;
+        border: 1px solid rgba(158, 158, 158, 0.12);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        text-align: left;
+
+        .metric-label {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #757575;
           font-weight: 600;
-          color: #555;
-          flex: 1;
+        }
+
+        .metric-value {
+          font-size: 22px;
+          font-weight: 700;
+          color: #263238;
+        }
+
+        &.metric--warn .metric-value {
+          color: #fb8c00;
+        }
+
+        &.metric--error .metric-value {
+          color: #e53935;
+        }
+      }
+    }
+
+    .job-details {
+      border-radius: 16px;
+      border: 1px solid rgba(207, 216, 220, 0.65);
+      background: #fefefe;
+      padding: 18px;
+      margin-bottom: 24px;
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px 18px;
+      }
+
+      .detail-item {
+        .label {
+          display: block;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #78909c;
+          margin-bottom: 4px;
         }
 
         .value {
-          color: #333;
-          font-weight: 500;
-          flex: 1;
-          text-align: right;
+          font-size: 14px;
+          font-weight: 600;
+          color: #37474f;
           word-break: break-word;
         }
       }
     }
 
-    .progress-section {
-      margin-bottom: 20px;
+    .job-errors {
+      background: #fff3e0;
+      border: 1px solid #ffe0b2;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 24px;
 
-      .progress-info {
+      .errors-header {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        font-weight: 600;
+        color: #e65100;
         margin-bottom: 12px;
-        color: #666;
+
+        mat-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .error-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        background: #fff8e1;
+        border: 1px solid #ffcc80;
+        margin-bottom: 12px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
 
         mat-icon {
           font-size: 20px;
@@ -78,28 +330,40 @@
           height: 20px;
         }
 
-        span {
-          font-size: 14px;
+        .error-content {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
         }
-      }
 
-      mat-progress-bar {
-        height: 6px;
-        border-radius: 3px;
+        .error-message {
+          margin: 0;
+          color: #5d4037;
+          font-size: 13px;
+          line-height: 1.4;
+          word-break: break-word;
+        }
+
+        .error-timestamp {
+          font-size: 12px;
+          color: #8d6e63;
+        }
       }
     }
 
     .info-box {
-      background: #e3f2fd;
-      border: 1px solid #bbdefb;
-      border-radius: 8px;
-      padding: 16px;
       display: flex;
       align-items: flex-start;
       gap: 12px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      color: #1565c0;
+      font-size: 13px;
+      line-height: 1.4;
 
       mat-icon {
-        color: #1976d2;
         font-size: 20px;
         width: 20px;
         height: 20px;
@@ -108,64 +372,64 @@
 
       p {
         margin: 0;
-        color: #1565c0;
-        font-size: 14px;
-        line-height: 1.4;
       }
     }
   }
 
   .modal-actions {
-    padding: 16px 24px;
-    background: #fafafa;
     display: flex;
-    gap: 12px;
     justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px 24px;
+    background: #ffffff;
 
     button {
       min-width: 140px;
-      height: 40px;
+      height: 42px;
       border-radius: 20px;
-      font-weight: 500;
+      font-weight: 600;
 
       &[color="basic"] {
-        color: #666;
+        color: #546e7a;
       }
 
       mat-icon {
-        margin-right: 8px;
+        margin-right: 6px;
         font-size: 18px;
-        width: 18px;
-        height: 18px;
       }
     }
   }
 }
 
-// Responsive design
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .job-confirmation-modal {
+    max-height: calc(100vh - 24px);
+
     .modal-content {
-      padding: 16px;
-      
+      padding: 20px 18px 4px;
+
+      .status-hero {
+        padding: 22px 18px;
+      }
+
+      .status-metrics {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      }
+
       .job-details {
-        .detail-item {
-          flex-direction: column;
-          gap: 4px;
-          
-          .value {
-            text-align: left;
-          }
+        .detail-grid {
+          grid-template-columns: 1fr;
         }
       }
     }
 
     .modal-actions {
       flex-direction: column;
-      
+      align-items: stretch;
+
       button {
         width: 100%;
       }
     }
   }
-} 
+}

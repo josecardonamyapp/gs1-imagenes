@@ -29,7 +29,7 @@ export const ChannelRableSettings: ColumnConfig[] = [
   },
   {
     key: 'provider',
-    label: 'Proveedor',
+    label: 'Canal de Venta',
     sortable: false,
     type: 'text'
   },

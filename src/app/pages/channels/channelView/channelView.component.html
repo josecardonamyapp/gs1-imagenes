@@ -22,7 +22,24 @@
                             <mat-form-field appearance="outline" class="w-100">
                                 <mat-label>GLN</mat-label>
                                 <input matInput type="number" [(ngModel)]="channel.gln" name="gln"
-                                    placeholder="Ingrese el GLN" [disabled]="disabledGln"/>
+                                    placeholder="Ingrese el GLN" [disabled]="disabledGln" />
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración de Adaptación -->
+                <div class="mb-4">
+                    <h5 class="text-primary mb-3">Configuración de Adaptación</h5>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <mat-form-field appearance="outline" class="w-100">
+                                <mat-label>Tipo de Adaptación</mat-label>
+                                <select matNativeControl [(ngModel)]="channel.adaptation_type" name="adaptation_type"
+                                    required>
+                                    <option value="Redimensionar">Redimensionar</option>
+                                    <option value="Remover_Fondo">Remover Fondo</option>
+                                </select>
                             </mat-form-field>
                         </div>
                     </div>
@@ -85,7 +102,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <mat-form-field appearance="outline" class="w-100">
-                                        <mat-label>Densidad (DPI)</mat-label>
+                                        <mat-label>Density (DPIs)</mat-label>
                                         <input matInput type="number" [(ngModel)]="channel.dpi" name="dpi" required
                                             min="1" />
                                     </mat-form-field>
@@ -99,30 +116,44 @@
                                     </mat-form-field>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <mat-form-field appearance="outline" class="w-100">
-                                        <mat-label>Color de Fondo</mat-label>
-                                        <input matInput type="color" [(ngModel)]="channel.background_color"
-                                            name="background_color" />
-
-                                    </mat-form-field>
+                                    <fieldset [disabled]="channel.adaptation_type === 'Remover_Fondo'">
+                                        <label class="form-label">Color de Fondo</label>
+                                        <div class="color-picker-row">
+                                            <button type="button" class="color-circle transparent-option"
+                                                [ngClass]="{'selected': channel.background_color === 'transparent'}"
+                                                matTooltip="Fondo transparente"
+                                                (click)="channel.background_color = 'transparent'">
+                                            </button>
+                                            <button type="button" class="color-circle"
+                                                [ngClass]="{'selected': channel.background_color === '#FFFFFF'}"
+                                                [style.background]="'#FFFFFF'"
+                                                (click)="channel.background_color = '#FFFFFF'"></button>
+                                            <!-- <button type="button" class="color-circle" [ngClass]="{'selected': channel.background_color === '#F8F8FF'}" [style.background]="'#F8F8FF'" (click)="channel.background_color = '#F8F8FF'"></button> -->
+                                            <button type="button" class="color-circle"
+                                                [ngClass]="{'selected': channel.background_color === '#FFE4F0'}"
+                                                [style.background]="'#FFE4F0'"
+                                                (click)="channel.background_color = '#FFE4F0'"></button>
+                                            <div class="custom-color-picker-wrapper d-flex align-items-center"
+                                                style="gap:6px;">
+                                                <label class="color-circle custom-picker position-relative"
+                                                    [style.background]="isCustomColor(channel.background_color) ? channel.background_color : '#fff'">
+                                                    <input #colorInput type="color" [value]="getCustomColorValue()"
+                                                        (input)="setCustomColor($event)"
+                                                        style="opacity:0;width:0;height:0;position:absolute;" />
+                                                    <mat-icon *ngIf="!isCustomColor(channel.background_color)"
+                                                        class="plus-icon"
+                                                        style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;color:#1976d2;pointer-events:none;">add</mat-icon>
+                                                </label>
+                                                <mat-icon class="custom-picker-icon"
+                                                    style="font-size:20px;color:#555;cursor:pointer;"
+                                                    (click)="$event.stopPropagation(); $event.preventDefault(); colorInput.click();">
+                                                    <!-- Ícono invisible solo para mantener el área clickeable -->
+                                                </mat-icon>
+                                            </div>
+                                        </div>
+                                    </fieldset>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Configuración de Adaptación -->
-                <div class="mb-4">
-                    <h5 class="text-primary mb-3">Configuración de Adaptación</h5>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <mat-form-field appearance="outline" class="w-100">
-                                <mat-label>Tipo de Adaptación</mat-label>
-                                <select matNativeControl [(ngModel)]="channel.adaptation_type" name="adaptation_type"
-                                    required>
-                                    <option value="Redimensionar">Redimensionar</option>
-                                </select>
-                            </mat-form-field>
                         </div>
                     </div>
                 </div>

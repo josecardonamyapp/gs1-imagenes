@@ -54,7 +54,13 @@ export class ProductOneComponent {
     selectedTab = 0;
 
     selectedImage: string | null = null;
-    selectedChannel = {} as Channel;
+    selectedChannel: Channel | null = null;
+    selectedChannelProvider: string | null = null;
+    disabledFormChannel = true;
+    folderStructures = [
+        { label: 'Guardar codigo por carpeta', value: 1 },
+        { label: 'Guardar todas las imagenes en una sola carpeta', value: 2 },
+    ];
 
     isGenerating = false;
     
@@ -78,10 +84,6 @@ export class ProductOneComponent {
         this.gtin = this.route.snapshot.paramMap.get('gtin');
         this.getPrductByGtin();
         this.getProductChannels();
-        setTimeout(() => {
-            this.getChannel({ value: this.channels[0]?.provider });
-            this.getInitChannel({ value: this.channels[0]?.provider });
-        }, 500);
     }
 
     goToReturn() {
@@ -97,15 +99,22 @@ export class ProductOneComponent {
 
                         const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
 
-                        // Filtrar solo URLs que sean imágenes
+                        // Filtrar solo URLs que sean imagenes
                         const imageUrls = files.filter((file: any) => {
                             const url = file?.uniformresourceidentifier ?? '';
                             return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
                         });
 
+                        const descriptionInfo = element?.tradeitemdescriptioninformation ?? {};
+                        const description = typeof descriptionInfo.descriptionshort === 'string'
+                            ? descriptionInfo.descriptionshort
+                            : typeof descriptionInfo.descriptionShort === 'string'
+                                ? descriptionInfo.descriptionShort
+                                : '';
+
                         const obj = {
-                            gtin: element.gtin,
-                            producName: element.tradeitemdescriptioninformation.descriptionshort,
+                            gtin: element?.gtin ?? '',
+                            producName: description,
                             images: imageUrls,
                             currentIndex: 0
                         }
@@ -128,6 +137,7 @@ export class ProductOneComponent {
             next: (result: any) => {
                 if (typeof (result) === 'object') {
                     this.channels = result.channels;
+                    this.initializeSelectedChannel();
                 }
             }
         })
@@ -135,7 +145,9 @@ export class ProductOneComponent {
 
     getPreviewStyle(format: any, gln: any) {
 
-        this.product["gln"] = gln;
+        if (gln !== undefined && gln !== null) {
+            this.product["gln"] = gln;
+        }
         if (!format?.width || !format?.height) return {};
 
         const maxBoxSize = 200;
@@ -159,13 +171,168 @@ export class ProductOneComponent {
     }
 
 
-    getInitChannel(event: any) {
-        this.selectedChannel = this.channels.find(channel => channel.provider === event.value);
+    onChannelSelectionChange(provider: string): void {
+        this.selectChannelByProvider(provider);
     }
 
-    getChannel(event: any) {
-        console.log('event', event)
-        this.selectedChannel = this.channels.find(channel => channel.provider === event.value.provider);
+    editChannel(): void {
+        if (!this.selectedChannel) {
+            return;
+        }
+
+        this.disabledFormChannel = false;
+    }
+
+    cancelChannel(): void {
+        this.disabledFormChannel = true;
+    }
+
+    private initializeSelectedChannel(): void {
+        const provider = this.selectedChannelProvider ?? this.channels[0]?.provider ?? null;
+        this.selectChannelByProvider(provider);
+    }
+
+    private selectChannelByProvider(provider: string | null | undefined): void {
+        if (!provider) {
+            this.selectedChannel = null;
+            this.selectedChannelProvider = null;
+            return;
+        }
+
+        const channel = this.channels.find(item => item?.provider === provider);
+        if (!channel) {
+            this.selectedChannel = null;
+            this.selectedChannelProvider = provider;
+            return;
+        }
+
+        this.selectedChannelProvider = channel.provider;
+        this.selectedChannel = this.prepareChannelForEditing(channel);
+        this.disabledFormChannel = true;
+
+        if (channel?.gln) {
+            this.product['gln'] = channel.gln;
+        }
+    }
+
+    private prepareChannelForEditing(channel: Channel): Channel {
+        const copy: Channel = { ...channel };
+        copy.background_color = this.ensureHexColor(copy.background_color);
+
+        if (copy.folder_structure === undefined || copy.folder_structure === null) {
+            copy.folder_structure = this.folderStructures[0]?.value ?? 1;
+        }
+
+        if (copy.rename_start_index === undefined || copy.rename_start_index === null) {
+            copy.rename_start_index = 0;
+        }
+
+        return copy;
+    }
+
+    private ensureHexColor(color?: string | null): string {
+        if (!color) {
+            return '#FFFFFF';
+        }
+
+        return color.startsWith('#') ? color : this.rgbToHex(color);
+    }
+
+    private componentToHex(value: number): string {
+        const clamped = Math.max(0, Math.min(255, Math.round(value)));
+        const hex = clamped.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }
+
+    private hexToRgb(hex: string): number[] {
+        if (!hex) {
+            return [255, 255, 255];
+        }
+
+        const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
+        if (normalized.length !== 6) {
+            return [255, 255, 255];
+        }
+
+        const r = parseInt(normalized.slice(0, 2), 16);
+        const g = parseInt(normalized.slice(2, 4), 16);
+        const b = parseInt(normalized.slice(4, 6), 16);
+
+        if ([r, g, b].some(value => Number.isNaN(value))) {
+            return [255, 255, 255];
+        }
+
+        return [r, g, b];
+    }
+
+    private rgbToHex(color: string): string {
+        if (!color) {
+            return '#FFFFFF';
+        }
+
+        const parts = color.split(',').map(part => parseInt(part.trim(), 10));
+        if (parts.length !== 3 || parts.some(part => Number.isNaN(part))) {
+            return '#FFFFFF';
+        }
+
+        return '#' + parts.map(part => this.componentToHex(part)).join('');
+    }
+
+    private normalizeBackgroundColor(color: string | null | undefined): string {
+        if (!color) {
+            return '255,255,255';
+        }
+
+        if (color.startsWith('#')) {
+            return this.hexToRgb(color).join(',');
+        }
+
+        const parts = color.split(',').map(part => part.trim());
+        if (parts.length === 3 && parts.every(part => part !== '' && !Number.isNaN(Number(part)))) {
+            return parts.join(',');
+        }
+
+        return color;
+    }
+
+    private buildChannelPayload(): any {
+        if (!this.selectedChannel) {
+            return null;
+        }
+
+        const payload: any = {
+            ...this.selectedChannel,
+            width: Number(this.selectedChannel.width) || 0,
+            height: Number(this.selectedChannel.height) || 0,
+            dpi: Number(this.selectedChannel.dpi) || 0,
+            max_size_kb: Number(this.selectedChannel.max_size_kb) || 0,
+            rename_start_index: Number(this.selectedChannel.rename_start_index) || 0,
+            folder_structure: Number.isNaN(Number(this.selectedChannel.folder_structure))
+                ? (this.folderStructures[0]?.value ?? 1)
+                : Number(this.selectedChannel.folder_structure)
+        };
+
+        payload.background_color = this.normalizeBackgroundColor(this.selectedChannel.background_color);
+
+        return payload;
+    }
+
+    private buildProductPayload(): any {
+        if (this.selectedImage) {
+            const selectedImgObj = this.product.images.find(
+                (img: any) => img.uniformresourceidentifier === this.selectedImage
+            );
+
+            return {
+                ...this.product,
+                images: selectedImgObj ? [selectedImgObj] : []
+            };
+        }
+
+        return {
+            ...this.product,
+            images: Array.isArray(this.product.images) ? [...this.product.images] : []
+        };
     }
 
     toggleImage(url: string) {
@@ -174,29 +341,27 @@ export class ProductOneComponent {
     }
 
     processImg() {
+        if (!this.selectedChannel) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+            return;
+        }
+
         this.isGenerating = true;
 
-        let productToSend;
+        const productToSend = this.buildProductPayload();
+        const channelParams = this.buildChannelPayload();
 
-        if (this.selectedImage) {
-            const selectedImgObj = this.product.images.find(
-                (img: any) => img.uniformresourceidentifier == this.selectedImage
-            );
-
-            productToSend = {
-                ...this.product,
-                images: selectedImgObj ? [selectedImgObj] : []
-            };
-        } else {
-            productToSend = this.product;
+        if (!channelParams) {
+            this.isGenerating = false;
+            this.showErrorMessage('No fue posible preparar los parametros del canal.');
+            return;
         }
 
         const params = {
             images_url: productToSend,
-            channel_params: this.selectedChannel
-        }
+            channel_params: channelParams
+        };
 
-        //(params)
         console.log('Processing image with channel:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
@@ -214,7 +379,7 @@ export class ProductOneComponent {
                     }
                 }
 
-                // Crear modal de confirmación para ir a ver los jobs
+                // Crear modal de confirmacion para ir a ver los jobs
                 const dialogRef = this.dialog.open(JobConfirmationComponent, {
                     data: result,
                     width: '500px',
@@ -242,28 +407,27 @@ export class ProductOneComponent {
     }
 
     processImgNoBackground() {
+        if (!this.selectedChannel) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+            return;
+        }
+
         this.isGenerating = true;
 
-        let productToSend;
+        const productToSend = this.buildProductPayload();
+        const channelParams = this.buildChannelPayload();
 
-        if (this.selectedImage) {
-            const selectedImgObj = this.product.images.find(
-                (img: any) => img.uniformresourceidentifier == this.selectedImage
-            );
-
-            productToSend = {
-                ...this.product,
-                images: selectedImgObj ? [selectedImgObj] : []
-            };
-        } else {
-            productToSend = this.product;
+        if (!channelParams) {
+            this.isGenerating = false;
+            this.showErrorMessage('No fue posible preparar los parametros del canal.');
+            return;
         }
 
         const params = {
             images_url: productToSend,
-            channel_params: this.selectedChannel,
+            channel_params: channelParams,
             no_background: true
-        }
+        };
 
         console.log('Processing image with no background:', params);
         this.productService.productProcessImg(params).subscribe({
@@ -282,7 +446,7 @@ export class ProductOneComponent {
                     }
                 }
 
-                // Crear modal de confirmación para ir a ver los jobs
+                // Crear modal de confirmacion para ir a ver los jobs
                 const dialogRef = this.dialog.open(JobConfirmationComponent, {
                     data: result,
                     width: '500px',
@@ -299,11 +463,10 @@ export class ProductOneComponent {
             },
             error: (error) => {
                 this.isGenerating = false;
-                console.error('Error in processImg:', error);
+                console.error('Error in processImgNoBackground:', error);
             },
             complete: () => {
                 this.isGenerating = false;
-                //('processImg finished.');
             }
         })
 
@@ -315,47 +478,32 @@ export class ProductOneComponent {
             return;
         }
 
-        if (!this.selectedChannel || Object.keys(this.selectedChannel).length === 0) {
+        if (!this.selectedChannel) {
             this.showErrorMessage('Debe seleccionar un canal antes de procesar con IA');
             return;
         }
 
         this.isGenerating = true;
-        this.hideError(); // Ocultar errores previos
+        this.hideError();
 
-        let productToSend;
+        const productToSend = this.buildProductPayload();
+        const channelParams: any = this.buildChannelPayload();
 
-        if (this.selectedImage) {
-            const selectedImgObj = this.product.images.find(
-                (img: any) => img.uniformresourceidentifier == this.selectedImage
-            );
-
-            productToSend = {
-                ...this.product,
-                images: selectedImgObj ? [selectedImgObj] : []
-            };
-        } else {
-            productToSend = this.product;
+        if (!channelParams) {
+            this.isGenerating = false;
+            this.showErrorMessage('No fue posible preparar los parametros del canal.');
+            return;
         }
-
-        // Parsear las dimensiones seleccionadas
-        const [aiWidth, aiHeight] = this.aiImageDimensionsSelected.split('x').map(Number);
-        
-        // Crear channel_params con las dimensiones de IA si está habilitado
-        const channelParams: any = {
-            ...this.selectedChannel
-        };
 
         channelParams.width = 1024;
         channelParams.height = 1024;
         channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
-        
 
         const params = {
             images_url: productToSend,
             channel_params: channelParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
-        }
+        };
 
         console.log('Processing image with AI background:', params);
         this.productService.productProcessImg(params).subscribe({
@@ -373,7 +521,7 @@ export class ProductOneComponent {
                     }
                 }
 
-                // Crear modal de confirmación para ir a ver los jobs
+                // Crear modal de confirmacion para ir a ver los jobs
                 const dialogRef = this.dialog.open(JobConfirmationComponent, {
                     data: result,
                     width: '500px',
@@ -402,7 +550,7 @@ export class ProductOneComponent {
     showErrorMessage(message: string) {
         this.errorMessage = message;
         this.showError = true;
-        // Auto-ocultar después de 5 segundos
+        // Auto-ocultar despues de 5 segundos
         setTimeout(() => {
             this.hideError();
         }, 5000);
@@ -430,7 +578,7 @@ export class ProductOneComponent {
     @HostListener('document:click', ['$event'])
     onDocumentClick(event: Event) {
         const target = event.target as HTMLElement;
-        // No cerrar el menú si se hace clic en elementos del menú de IA
+        // No cerrar el menu si se hace clic en elementos del menu de IA
         if (!target.closest('.ai-button-container') && !target.closest('.ai-dropdown-menu')) {
             this.showAIMenu = false;
         }

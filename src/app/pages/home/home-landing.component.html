@@ -1,0 +1,60 @@
+<section class="landing">
+  <div class="landing__welcome">
+    <h1>Bienvenido a Syncfonia Multimedia!</h1>
+    <p class="landing__subtitle">
+      Adapta las fotos de tus productos y compartelas con tus socios comerciales.
+    </p>
+  </div>
+
+  <p class="landing__prompt">Selecciona la opcion que deseas procesar</p>
+
+  <div class="landing__cards">
+    <button
+      type="button"
+      class="option-card"
+      [routerLink]="dashboardRoute"
+      aria-label="Ir al panel de recorte y eliminacion de fondo"
+    >
+      <div class="option-card__icon">
+        <mat-icon>content_cut</mat-icon>
+      </div>
+      <div class="option-card__content">
+        <h2>Recorta y Elimina Fondo</h2>
+        <p>
+          Elimina el fondo de tus imagenes y deja solamente las fotos profesionales para tus catalogos.
+        </p>
+        <ul>
+          <li>Redimensiona</li>
+          <li>Recorta</li>
+          <li>Comparte</li>
+        </ul>
+      </div>
+      <span class="option-card__cta">Comenzar</span>
+    </button>
+
+    <button
+      type="button"
+      class="option-card"
+      [routerLink]="dashboardRoute"
+      aria-label="Ir al panel de redimensionamiento de producto"
+    >
+      <div class="option-card__icon option-card__icon--secondary">
+        <mat-icon>photo_size_select_large</mat-icon>
+      </div>
+      <div class="option-card__content">
+        <h2>Redimensiona las fotos</h2>
+        <p>
+          Ajusta las fotos de tus productos de acuerdo con las especificaciones de tus socios comerciales.
+        </p>
+        <ul>
+          <li>Alineacion</li>
+          <li>Ajuste de fondo</li>
+          <li>Recorte</li>
+          <li>Rotacion</li>
+          <li>Comparte</li>
+        </ul>
+      </div>
+      <span class="option-card__cta">Comenzar</span>
+    </button>
+  </div>
+</section>

@@ -7,10 +7,10 @@ export const navItems: NavItem[] = [
   {
     displayName: 'Inicio',
     iconName: 'home',
-    route: '/dashboards/dashboard1',
+    route: '/home',
   },
   {
-    displayName: 'Canales',
+    displayName: 'Canales de Venta',
     iconName: 'photo-cog',
     route: '/channels/channel'
   },
@@ -20,3 +20,4 @@ export const navItems: NavItem[] = [
     route: '/jobs'
   }
 ];
+
