@@ -40,6 +40,24 @@ import { Channel } from 'src/app/model/channel';
     styleUrls: ['./productProcessingView.component.scss']
 })
 export class productProcessingViewComponent {
+    // Utilidad para saber si el color es uno de los default
+    isCustomColor(color: string): boolean {
+        if (!color) return false;
+        const defaults = ['#FFFFFF', '#F8F8FF', '#FFE4F0', 'TRANSPARENT'];
+        return !defaults.includes((color + '').trim().toUpperCase());
+    }
+
+    // Obtener el valor para el input color
+    getCustomColorValue(): string {
+        // Si el color actual es custom, mostrarlo, si no, negro
+        return this.isCustomColor(this.selectedChannel.background_color) ? this.selectedChannel.background_color : '#000000';
+    }
+
+    // Al seleccionar un color personalizado
+    setCustomColor(event: any) {
+        this.selectedChannel.background_color = event.target.value;
+    }
+
     gtin: string | null = null;
     products: any[] = [];
     channels: any[] = [];
@@ -104,7 +122,8 @@ export class productProcessingViewComponent {
                     rename_separator: params['rename_separator'] || '',
                     rename_start_index: Number(params['rename_start_index']) || 0,
                     folder_structure: Number(params['folder_structure']) || 1,
-                    background: false
+                    background: false,
+                    transparent_background: false
                 };
                 this.selectedFolderStructure = Number(params['folder_structure']) || 1;
                 this.imagesPerGtin = params['imagesPerGtin'] || 1;
@@ -264,7 +283,9 @@ export class productProcessingViewComponent {
         // this.isGenerating = true;
         // console.log('Processing image with channel:', this.selectedFolderStructure);
         // console.log('Selected channel:', this.getGtins());
-        this.selectedChannel.background_color = this.hexToRgb(this.selectedChannel.background_color).join(','), // Convert hex to RGB
+        if(this.selectedChannel.background_color != 'transparent'){
+            this.selectedChannel.background_color = this.hexToRgb(this.selectedChannel.background_color).join(',') // Convert hex to RGB
+        }
 
             console.log('Selected folder structure:', this.selectedChannel);
         const productNames = product.map((p: any) => p.producName).join(', ');
@@ -275,7 +296,9 @@ export class productProcessingViewComponent {
             channel_params: this.selectedChannel,
             folder_structure: this.selectedFolderStructure,
             is_multiple_processing: true,
-            product_names: productNames
+            product_names: productNames,
+            no_background: this.selectedChannel.background_color == 'transparent' ? true : false,
+            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
         }
 
         console.log('Processing image with params:', params);

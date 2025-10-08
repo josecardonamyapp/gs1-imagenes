@@ -73,6 +73,7 @@ export class ChannelViewComponent {
         rename_start_index: 0,
         folder_structure: 1,
         background: false,
+        transparent_background: false,
     };
     isEditMode = false;
     isLoading = false;
@@ -117,7 +118,8 @@ export class ChannelViewComponent {
                     rename_separator: params['rename_separator'] || '',
                     rename_start_index: parseInt(params['rename_start_index'] || '0'),
                     folder_structure: parseInt(params['folder_structure'] || '1'),
-                    background: params['background'] || false
+                    background: params['background'] || false,
+                    transparent_background: params['background_color'] == 'transparent' ? true : false,
                 };
                 //('Modo ediciÃ³n:', this.channel);
             } else {

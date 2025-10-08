@@ -39,6 +39,24 @@ import { Channel } from 'src/app/model/channel';
     styleUrls: ['./productOne.component.scss']
 })
 export class ProductOneComponent {
+     // Utilidad para saber si el color es uno de los default
+    isCustomColor(color: string): boolean {
+        if (!color) return false;
+        const defaults = ['#FFFFFF', '#F8F8FF', '#FFE4F0', 'TRANSPARENT'];
+        return !defaults.includes((color + '').trim().toUpperCase());
+    }
+
+    // Obtener el valor para el input color
+    getCustomColorValue(): string {
+        // Si el color actual es custom, mostrarlo, si no, negro
+        return this.isCustomColor(this.selectedChannel.background_color) ? this.selectedChannel.background_color : '#000000';
+    }
+
+    // Al seleccionar un color personalizado
+    setCustomColor(event: any) {
+        this.selectedChannel.background_color = event.target.value;
+    }
+    
     gtin: string | null = null;
     product: any = {
         gtin: '',
@@ -54,7 +72,8 @@ export class ProductOneComponent {
     selectedTab = 0;
 
     selectedImage: string | null = null;
-    selectedChannel: Channel | null = null;
+    // selectedChannel: Channel | null = null;
+    selectedChannel = {} as Channel;
     selectedChannelProvider: string | null = null;
     disabledFormChannel = true;
     folderStructures = [
@@ -137,7 +156,7 @@ export class ProductOneComponent {
             next: (result: any) => {
                 if (typeof (result) === 'object') {
                     this.channels = result.channels;
-                    this.initializeSelectedChannel();
+                    // this.initializeSelectedChannel();
                 }
             }
         })
@@ -194,14 +213,14 @@ export class ProductOneComponent {
 
     private selectChannelByProvider(provider: string | null | undefined): void {
         if (!provider) {
-            this.selectedChannel = null;
+            this.selectedChannel = {} as Channel;
             this.selectedChannelProvider = null;
             return;
         }
 
         const channel = this.channels.find(item => item?.provider === provider);
         if (!channel) {
-            this.selectedChannel = null;
+            this.selectedChannel = {} as Channel;
             this.selectedChannelProvider = provider;
             return;
         }
@@ -312,7 +331,9 @@ export class ProductOneComponent {
                 : Number(this.selectedChannel.folder_structure)
         };
 
-        payload.background_color = this.normalizeBackgroundColor(this.selectedChannel.background_color);
+        if(this.selectedChannel.background_color != 'transparent'){
+            payload.background_color = this.normalizeBackgroundColor(this.selectedChannel.background_color);
+        }
 
         return payload;
     }
@@ -359,7 +380,9 @@ export class ProductOneComponent {
 
         const params = {
             images_url: productToSend,
-            channel_params: channelParams
+            channel_params: channelParams,
+            no_background: this.selectedChannel.background_color == 'transparent' ? true : false,
+            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
         };
 
         console.log('Processing image with channel:', params);

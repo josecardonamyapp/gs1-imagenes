@@ -192,8 +192,8 @@
                                 <div class="label">Tipo de Renombrado</div>
                                 <mat-form-field appearance="outline" class="w-100">
                                     <!-- <mat-label>Tipo de Renombrado</mat-label> -->
-                                    <select matNativeControl [(ngModel)]="selectedChannel.renaming_type" name="renaming_type"
-                                        required [disabled]="disabledFormChannel">
+                                    <select matNativeControl [(ngModel)]="selectedChannel.renaming_type"
+                                        name="renaming_type" required [disabled]="disabledFormChannel">
                                         <option value="Estándar">Estándar</option>
                                     </select>
                                 </mat-form-field>
@@ -222,15 +222,54 @@
                                         placeholder="Folder structure" disabled>
                                 </mat-form-field>
                             </div> -->
-                            <div class="col-md-4">
+                            <!-- <div class="col-md-4">
                                 <div class="label">Color de Fondo</div>
                                 <mat-form-field appearance="outline" class="w-100">
-                                    <!-- <mat-label>Color de Fondo</mat-label> -->
                                     <input matInput type="color" [(ngModel)]="selectedChannel.background_color"
                                         name="background_color" [disabled]="disabledFormChannel" />
 
                                 </mat-form-field>
+                            </div> -->
+                            <div class="col-md-4">
+                                <fieldset [disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
+                                    <label class="form-label">Color de Fondo</label>
+                                    <div class="color-picker-row">
+                                        <button type="button" class="color-circle transparent-option"
+                                            [ngClass]="{'selected': selectedChannel.background_color === 'transparent'}"
+                                            matTooltip="Fondo transparente"
+                                            (click)="selectedChannel.background_color = 'transparent'">
+                                        </button>
+                                        <button type="button" class="color-circle"
+                                            [ngClass]="{'selected': selectedChannel.background_color === '#FFFFFF'}"
+                                            [style.background]="'#FFFFFF'"
+                                            (click)="selectedChannel.background_color = '#FFFFFF'"></button>
+                                        <!-- <button type="button" class="color-circle" [ngClass]="{'selected': channel.background_color === '#F8F8FF'}" [style.background]="'#F8F8FF'" (click)="channel.background_color = '#F8F8FF'"></button> -->
+                                        <button type="button" class="color-circle"
+                                            [ngClass]="{'selected': selectedChannel.background_color === '#FFE4F0'}"
+                                            [style.background]="'#FFE4F0'"
+                                            (click)="selectedChannel.background_color = '#FFE4F0'"></button>
+                                        <div class="custom-color-picker-wrapper d-flex align-items-center"
+                                            style="gap:6px;">
+                                            <label class="color-circle custom-picker position-relative"
+                                                [style.background]="isCustomColor(selectedChannel.background_color) ? selectedChannel.background_color : '#fff'">
+                                                <input #colorInput type="color" [value]="getCustomColorValue()"
+                                                    (input)="setCustomColor($event)"
+                                                    style="opacity:0;width:0;height:0;position:absolute;" />
+                                                <mat-icon *ngIf="!isCustomColor(selectedChannel.background_color)"
+                                                    class="plus-icon"
+                                                    style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;color:#1976d2;pointer-events:none;">add</mat-icon>
+                                            </label>
+                                            <mat-icon class="custom-picker-icon"
+                                                style="font-size:20px;color:#555;cursor:pointer;"
+                                                (click)="$event.stopPropagation(); $event.preventDefault(); colorInput.click();">
+                                                <!-- Ícono invisible solo para mantener el área clickeable -->
+                                            </mat-icon>
+                                        </div>
+                                    </div>
+                                </fieldset>
                             </div>
+
+
                             <div class="col-md-4">
                                 <div class="label">Encarpetado</div>
                                 <mat-form-field appearance="outline" class="w-100">
