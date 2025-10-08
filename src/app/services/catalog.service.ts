@@ -24,8 +24,8 @@ export class CatalogService {
     });
   }
 
-  getCatalogs(): Observable<Catalog[]> {
-    return this.http.get<Catalog[]>(`${this.baseUrl}product-catalogs`, {
+  getCatalogs(gln: string): Observable<Catalog[]> {
+    return this.http.get<Catalog[]>(`${this.baseUrl}catalogs?gln=${gln}`, {
       headers: this.buildHeaders()
     });
   }
