@@ -78,6 +78,16 @@
             <mat-icon>add</mat-icon>
             <span>Crear catalogo</span>
           </button>
+
+          <mat-form-field>
+            <mat-label> Catalogos </mat-label>
+            <mat-select (selectionChange)="onCatalogSelectedChange($event.value)" [value]="catalogSelected?.catalog_id">
+              <mat-option [value]="null">Selecciona una opción</mat-option>
+              @for (catalog of catalogList; track catalog.catalog_id) {
+                <mat-option [value]="catalog.catalog_id"> {{ catalog.name }} </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         </div>
       </section>
     </div>

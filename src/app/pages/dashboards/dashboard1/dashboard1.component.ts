@@ -18,6 +18,9 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TourModule } from 'src/app/core/tour/tour.module';
 import { DriverTourService } from 'src/app/core/tour/driver-tour.service';
+
+import { CatalogService } from 'src/app/services/catalog.service';
+
 @Component({
   selector: 'app-dashboard1',
   standalone: true,
@@ -52,8 +55,9 @@ export class AppDashboard1Component {
   searchSubject: Subject<string> = new Subject<string>();
   inputType: 'text' | 'number' | 'mixed' | null = null;
   catalogPanelVisible = false;
+  catalogList: any[] = [];
   catalogPanelData: CreateCatalogDialogData | null = null;
-
+  catalogSelected: any = null;
   tourByRoute: Record<string, any[]> = {
     '/dashboards/dashboard1': [
       {
@@ -180,7 +184,8 @@ export class AppDashboard1Component {
     private productService: ProductService,
     private router: Router,
     private snackBar: MatSnackBar,
-    private tourService: DriverTourService
+    private tourService: DriverTourService,
+    private catalogService: CatalogService
   ) { }
 
   ngAfterViewInit() {
@@ -191,7 +196,7 @@ export class AppDashboard1Component {
     this.tourService.startMultiPageTour(userId, tourKey, this.tourSequence, this.tourByRoute);
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(async value => {
@@ -201,6 +206,20 @@ export class AppDashboard1Component {
           console.error('Error during search handling:', error);
         }
       });
+
+    await this.getCatalogs();
+  }
+
+  private async getCatalogs(): Promise<void> {
+    const gln = localStorage.getItem('gln') as string;
+    try {
+      const catalogs = await firstValueFrom(this.catalogService.getCatalogs(gln));
+      this.catalogList = catalogs || [];
+      console.log('Catalogs fetched:', this.catalogList);
+    }
+    catch (err) {
+      console.error('Error fetching catalogs:', err);
+    }
   }
 
   private async getProductsByListGtin(gtins: string[], requestedCodes: string[]): Promise<void> {
@@ -563,6 +582,11 @@ export class AppDashboard1Component {
     if (product) {
       product.isImageLoading = false;
     }
+  }
+
+  onCatalogSelectedChange(catalogId: string): void {
+    const catalogData = this.catalogList.find(c => c.catalog_id === catalogId) || null;
+    this.filtered = catalogData && catalogData.data ? catalogData.data : [];
   }
 
   private prepareProductForDisplay(product: any): any {
