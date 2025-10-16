@@ -56,7 +56,7 @@ export class ProductOneComponent {
     setCustomColor(event: any) {
         this.selectedChannel.background_color = event.target.value;
     }
-    
+
     gtin: string | null = null;
     product: any = {
         gtin: '',
@@ -82,7 +82,7 @@ export class ProductOneComponent {
     ];
 
     isGenerating = false;
-    
+
     // Nuevas propiedades para IA
     useAIBackground = false;
     aiBackgroundPrompt = '';
@@ -103,6 +103,10 @@ export class ProductOneComponent {
         this.gtin = this.route.snapshot.paramMap.get('gtin');
         this.getPrductByGtin();
         this.getProductChannels();
+
+        if (!this.hasSelectedChannel()) {
+            this.disabledFormChannel = true;
+        }
     }
 
     goToReturn() {
@@ -121,7 +125,7 @@ export class ProductOneComponent {
                         // Filtrar solo URLs que sean imagenes
                         const imageUrls = files.filter((file: any) => {
                             const url = file?.uniformresourceidentifier ?? '';
-                            return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                            return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
                         });
 
                         const descriptionInfo = element?.tradeitemdescriptioninformation ?? {};
@@ -356,13 +360,17 @@ export class ProductOneComponent {
         };
     }
 
+    hasSelectedChannel(): boolean {
+        return !!(this.selectedChannel && Object.keys(this.selectedChannel).length > 0 && this.selectedChannel.provider);
+    }
+
     toggleImage(url: string) {
         this.selectedImage = this.selectedImage === url ? null : url;
         console.log('img seleccionada', this.selectedImage)
     }
 
     processImg() {
-        if (!this.selectedChannel) {
+        if (!this.hasSelectedChannel()) {
             this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
             return;
         }
@@ -430,7 +438,7 @@ export class ProductOneComponent {
     }
 
     processImgNoBackground() {
-        if (!this.selectedChannel) {
+        if (!this.hasSelectedChannel()) {
             this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
             return;
         }
@@ -449,7 +457,8 @@ export class ProductOneComponent {
         const params = {
             images_url: productToSend,
             channel_params: channelParams,
-            no_background: true
+            no_background: true,
+            transparent_background: true
         };
 
         console.log('Processing image with no background:', params);
@@ -501,7 +510,7 @@ export class ProductOneComponent {
             return;
         }
 
-        if (!this.selectedChannel) {
+        if (!this.hasSelectedChannel()) {
             this.showErrorMessage('Debe seleccionar un canal antes de procesar con IA');
             return;
         }

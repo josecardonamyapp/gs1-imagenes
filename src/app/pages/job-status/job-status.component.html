@@ -166,7 +166,7 @@
         </div>
 
         <!-- 5) Acciones -->
-        <div *ngIf="job.status == 'COMPLETED'" class="group actions">
+        <div *ngIf="['COMPLETED', 'COMPLETED_WITH_ERRORS'].includes(job.status)" class="group actions">
           <mat-form-field appearance="outline" class="actions-select">
             <mat-select placeholder="Acciones" (selectionChange)="handleAction($event.value, job)">
               <mat-option value="refresh" [disabled]="job.status === 'LOADING'">Actualizar</mat-option>

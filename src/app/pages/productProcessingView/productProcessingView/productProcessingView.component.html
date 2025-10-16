@@ -33,10 +33,22 @@
                             </mat-option>
                         </mat-select>
                     </mat-form-field>
-                    <button *ngIf="disabledFormChannel" mat-raised-button color="primary" (click)="editChannel()">
+                    <button
+                        *ngIf="disabledFormChannel"
+                        mat-raised-button
+                        color="primary"
+                        (click)="editChannel()"
+                        [disabled]="!hasSelectedChannel()"
+                    >
                         <mat-icon>edit</mat-icon>
                     </button>
-                    <button *ngIf="!disabledFormChannel" mat-raised-button color="warn" (click)="cancelChannel()">
+                    <button
+                        *ngIf="!disabledFormChannel"
+                        mat-raised-button
+                        color="warn"
+                        (click)="cancelChannel()"
+                        [disabled]="!hasSelectedChannel()"
+                    >
                         <mat-icon>close</mat-icon>
                     </button>
 
@@ -231,8 +243,8 @@
                                 </mat-form-field>
                             </div> -->
                             <div class="col-md-4">
+                                <label class="form-label">Color de Fondo</label>
                                 <fieldset [disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
-                                    <label class="form-label">Color de Fondo</label>
                                     <div class="color-picker-row">
                                         <button type="button" class="color-circle transparent-option"
                                             [ngClass]="{'selected': selectedChannel.background_color === 'transparent'}"

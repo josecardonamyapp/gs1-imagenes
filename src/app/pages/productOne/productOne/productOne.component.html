@@ -48,10 +48,22 @@
                             </mat-option>
                         </mat-select>
                     </mat-form-field>
-                    <button *ngIf="disabledFormChannel" mat-raised-button color="primary" (click)="editChannel()">
+                    <button
+                        *ngIf="disabledFormChannel"
+                        mat-raised-button
+                        color="primary"
+                        (click)="editChannel()"
+                        [disabled]="!hasSelectedChannel()"
+                    >
                         <mat-icon>edit</mat-icon>
                     </button>
-                    <button *ngIf="!disabledFormChannel" mat-raised-button color="warn" (click)="cancelChannel()">
+                    <button
+                        *ngIf="!disabledFormChannel"
+                        mat-raised-button
+                        color="warn"
+                        (click)="cancelChannel()"
+                        [disabled]="!hasSelectedChannel()"
+                    >
                         <mat-icon>close</mat-icon>
                     </button>
                 </div>

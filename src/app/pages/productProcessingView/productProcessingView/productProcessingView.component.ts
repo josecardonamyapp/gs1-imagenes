@@ -150,6 +150,10 @@ export class productProcessingViewComponent {
                 this.channelStyles[channel.channelID] = this.getPreviewStyle(channel);
             });
         }, 500);
+
+        if (!this.hasSelectedChannel()) {
+            this.disabledFormChannel = true;
+        }
     }
 
     goToReturn() {
@@ -254,6 +258,11 @@ export class productProcessingViewComponent {
     }
 
     sendToProcess() {
+        if (!this.hasSelectedChannel()) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+            return;
+        }
+
         let productList: any[] = JSON.parse(JSON.stringify(this.products));
 
         productList.forEach(product => {
@@ -280,7 +289,12 @@ export class productProcessingViewComponent {
     }
 
     processImg(product: any) {
-        // this.isGenerating = true;
+        if (!this.hasSelectedChannel()) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+            return;
+        }
+
+        this.isGenerating = true;
         // console.log('Processing image with channel:', this.selectedFolderStructure);
         // console.log('Selected channel:', this.getGtins());
         if(this.selectedChannel.background_color != 'transparent'){
@@ -347,6 +361,11 @@ export class productProcessingViewComponent {
     }
 
     sendToProcessNoBackground() {
+        if (!this.hasSelectedChannel()) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+            return;
+        }
+
         let productList: any[] = JSON.parse(JSON.stringify(this.products));
 
         productList.forEach(product => {
@@ -361,20 +380,16 @@ export class productProcessingViewComponent {
             else {
                 product.images = [];
             }
-
         });
-
         this.processImgNoBackground(productList);
-
-        // this.products.forEach((product) => {
-        //     product.images = product.images.slice(0, this.imagesPerGtin);
-        //     console.log('process sin fondo', product)
-
-        //     this.processImgNoBackground(product);
-        // });
     }
 
     processImgNoBackground(product: any) {
+        if (!this.hasSelectedChannel()) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+            return;
+        }
+
         this.isGenerating = true;
         const params = {
             images_url: product,
@@ -431,7 +446,7 @@ export class productProcessingViewComponent {
             return;
         }
 
-        if (!this.selectedChannel || Object.keys(this.selectedChannel).length === 0) {
+        if (!this.hasSelectedChannel()) {
             this.showErrorMessage('Debe seleccionar un canal antes de procesar con IA');
             return;
         }
@@ -450,21 +465,26 @@ export class productProcessingViewComponent {
             else {
                 product.images = [];
             }
-            
+
             this.processImgWithAI(product);
         });
 
-    
+
        //this.processImgWithAI(productList);
-        
+
     }
 
     processImgWithAI(product: any) {
+        if (!this.hasSelectedChannel()) {
+            this.showErrorMessage('Debe seleccionar un canal antes de procesar con IA');
+            return;
+        }
+
         this.isGenerating = true;
 
         // Parsear las dimensiones seleccionadas
         const [aiWidth, aiHeight] = this.aiImageDimensionsSelected.split('x').map(Number);
-        
+
         // Crear channel_params con las dimensiones de IA
         const channelParams: any = {
             ...this.selectedChannel
@@ -473,7 +493,7 @@ export class productProcessingViewComponent {
         channelParams.width = 1024;
         channelParams.height = 1024;
         channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
-        
+
         const params = {
             images_url: product,
             channel_params: channelParams,
@@ -548,6 +568,10 @@ export class productProcessingViewComponent {
     hideError() {
         this.showError = false;
         this.errorMessage = '';
+    }
+
+    hasSelectedChannel(): boolean {
+        return !!(this.selectedChannel && Object.keys(this.selectedChannel).length > 0 && this.selectedChannel.provider);
     }
 
     @HostListener('document:click', ['$event'])

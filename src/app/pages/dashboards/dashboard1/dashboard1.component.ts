@@ -212,7 +212,6 @@ export class AppDashboard1Component implements OnInit {
       });
 
     await this.getCatalogs();
-    console.log('filtered ng', this.filtered);
     this.autoToggleToolbarOnResults();
   }
 
@@ -251,7 +250,7 @@ export class AppDashboard1Component implements OnInit {
             // const files = Array.isArray(element?.ReferencedFileHeader) ? element.ReferencedFileHeader : [];
             const imageUrls = files.filter((file: any) => {
               const url = file?.uniformresourceidentifier ?? '';
-              return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+              return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png)$/i.test(url);
             });
 
             if (!imageUrls.length) {
@@ -700,6 +699,10 @@ export class AppDashboard1Component implements OnInit {
     const toggleEl = this.toolbarToggleRef?.nativeElement ?? null;
 
     if ((toolbarEl && toolbarEl.contains(target)) || (toggleEl && toggleEl.contains(target))) {
+      return;
+    }
+
+    if (this.filtered.length === 0) {
       return;
     }
 
