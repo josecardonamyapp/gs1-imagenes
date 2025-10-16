@@ -56,7 +56,7 @@ export class ProductOneComponent {
     setCustomColor(event: any) {
         this.selectedChannel.background_color = event.target.value;
     }
-    
+
     gtin: string | null = null;
     product: any = {
         gtin: '',
@@ -82,7 +82,7 @@ export class ProductOneComponent {
     ];
 
     isGenerating = false;
-    
+
     // Nuevas propiedades para IA
     useAIBackground = false;
     aiBackgroundPrompt = '';
@@ -449,7 +449,8 @@ export class ProductOneComponent {
         const params = {
             images_url: productToSend,
             channel_params: channelParams,
-            no_background: true
+            no_background: true,
+            transparent_background: true
         };
 
         console.log('Processing image with no background:', params);

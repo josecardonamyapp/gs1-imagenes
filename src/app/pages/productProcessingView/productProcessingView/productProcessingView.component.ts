@@ -348,7 +348,9 @@ export class productProcessingViewComponent {
 
     sendToProcessNoBackground() {
 
-        this.products.forEach(product => {
+      let productList: any[] = JSON.parse(JSON.stringify(this.products));
+
+        productList.forEach(product => {
             let imagesPerGtinNum = Number(this.imagesPerGtin);
 
             if (this.imagesPerGtin === 'Todos') {
@@ -360,16 +362,8 @@ export class productProcessingViewComponent {
             else {
                 product.images = [];
             }
-
-            this.processImgNoBackground(product);
         });
-
-        // this.products.forEach((product) => {
-        //     product.images = product.images.slice(0, this.imagesPerGtin);
-        //     console.log('process sin fondo', product)
-
-        //     this.processImgNoBackground(product);
-        // });
+        this.processImgNoBackground(productList);
     }
 
     processImgNoBackground(product: any) {
@@ -448,13 +442,13 @@ export class productProcessingViewComponent {
             else {
                 product.images = [];
             }
-            
+
             this.processImgWithAI(product);
         });
 
-    
+
        //this.processImgWithAI(productList);
-        
+
     }
 
     processImgWithAI(product: any) {
@@ -462,7 +456,7 @@ export class productProcessingViewComponent {
 
         // Parsear las dimensiones seleccionadas
         const [aiWidth, aiHeight] = this.aiImageDimensionsSelected.split('x').map(Number);
-        
+
         // Crear channel_params con las dimensiones de IA
         const channelParams: any = {
             ...this.selectedChannel
@@ -471,7 +465,7 @@ export class productProcessingViewComponent {
         channelParams.width = 1024;
         channelParams.height = 1024;
         channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
-        
+
         const params = {
             images_url: product,
             channel_params: channelParams,
