@@ -90,7 +90,17 @@ export class ProductService {
             params = params.append('gtin[]', gtins);
         }
 
+        // const bodyrequest = {
+        //     "TradeItemKey":{
+        //         "Gln":"7508006476711",
+        //         "Gtin":"07506194504070",
+        //         "TargetMarketCountryCode":"484"
+        //     },
+        //     "TradeItemModules":["ALL","TradeItemMeasurements","TradeItemDescriptionInformation"]
+        // }
 
+
+        // return this.http.post('https://api.syncfonia.com/api/v1/products', bodyrequest, { headers });
         return this.http.get('https://api.syncfonia.com/api/v1/products?', { headers, params });
     }
 

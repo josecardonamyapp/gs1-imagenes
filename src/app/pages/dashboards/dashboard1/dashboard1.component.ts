@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { ProductService } from 'src/app/services/product.service';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,7 +42,7 @@ import { CatalogService } from 'src/app/services/catalog.service';
   templateUrl: './dashboard1.component.html',
   styleUrl: './dashboard1.component.scss'
 })
-export class AppDashboard1Component {
+export class AppDashboard1Component implements OnInit {
   products: any[] = [];
   carouselImages: any[] = [];
   selectedProduct: any = null;
@@ -58,6 +58,10 @@ export class AppDashboard1Component {
   catalogList: any[] = [];
   catalogPanelData: CreateCatalogDialogData | null = null;
   catalogSelected: any = null;
+  showToolbar = true;
+
+  @ViewChild('toolbar') toolbarRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('toolbarToggle', { static: true }) toolbarToggleRef?: ElementRef<HTMLButtonElement>;
   tourByRoute: Record<string, any[]> = {
     '/dashboards/dashboard1': [
       {
@@ -208,6 +212,8 @@ export class AppDashboard1Component {
       });
 
     await this.getCatalogs();
+    console.log('filtered ng', this.filtered);
+    this.autoToggleToolbarOnResults();
   }
 
   private async getCatalogs(): Promise<void> {
@@ -237,9 +243,12 @@ export class AppDashboard1Component {
       const result: any = await firstValueFrom(this.productService.productGetByGtin(gtins));
 
       if (typeof result === 'object' && result.data && result.data.entities?.attributes) {
+      // if (typeof result === 'object' && result.TradeItemList[0].TradeItemInformation[0].Extension.Any[0].ReferencedFileHeader) {
+        // const fetchedProducts = result?.TradeItemList[0]?.TradeItemInformation[0]?.Extension.Any
         const fetchedProducts = result.data.entities.attributes
           .map((element: any) => {
             const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
+            // const files = Array.isArray(element?.ReferencedFileHeader) ? element.ReferencedFileHeader : [];
             const imageUrls = files.filter((file: any) => {
               const url = file?.uniformresourceidentifier ?? '';
               return typeof url === 'string' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
@@ -250,8 +259,10 @@ export class AppDashboard1Component {
             }
 
             return {
+              // gtin: result.TradeItemList[0].GTIN ?? '',
               gtin: element?.gtin ?? '',
               producName: element?.tradeitemdescriptioninformation?.descriptionshort ?? '',
+              // producName:  '',
               images: imageUrls,
               currentIndex: 0,
               isImageLoading: false
@@ -275,9 +286,11 @@ export class AppDashboard1Component {
         this.filtered = requestedOrder
           .map(code => this.prepareProductForDisplay(productLookup.get(code)))
           .filter((product): product is any => Boolean(product));
+        this.autoToggleToolbarOnResults();
 
+        // if (fetchedProducts.length !== result.TradeItemList.length) {
         if (fetchedProducts.length !== result.data.entities.attributes.length) {
-          this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imÃ¡genes asociadas en SyncfonÃ­a.', 'Cerrar', {
+          this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
             duration: 3000,
             verticalPosition: 'top',
             horizontalPosition: 'center'
@@ -364,6 +377,7 @@ export class AppDashboard1Component {
       this.filtered = [];
       this.searchText = '';          // â† refleja en el textarea
       this.searchSubject.next('');
+      this.autoToggleToolbarOnResults();
       return;
     }
 
@@ -408,6 +422,7 @@ export class AppDashboard1Component {
     console.log('handlesearch', value);
     if (!value) {
       this.filtered = [];
+      this.autoToggleToolbarOnResults();
       this.refreshCatalogPanelData();
       return;
     }
@@ -418,6 +433,7 @@ export class AppDashboard1Component {
       );
 
       this.filtered = localMatches.map(product => this.prepareProductForDisplay(product));
+      this.autoToggleToolbarOnResults();
     } else if (this.inputType == 'number') {
       const codes = value.split(',').map(code => code.trim()).filter(Boolean);
       console.log('codes', codes);
@@ -426,6 +442,7 @@ export class AppDashboard1Component {
       const missingCodes = codes.filter(code => !localMatches.some(p => p.gtin === code));
 
       this.filtered = localMatches.map(product => this.prepareProductForDisplay(product));
+      this.autoToggleToolbarOnResults();
 
       if (missingCodes.length > 0) {
         console.log('missingCodes', missingCodes);
@@ -436,6 +453,7 @@ export class AppDashboard1Component {
     }
 
     this.refreshCatalogPanelData();
+    console.log('filtered', this.filtered);
   }
 
   clearSearch() {
@@ -443,6 +461,7 @@ export class AppDashboard1Component {
     this.inputType = null;
     this.filtered = [];
     this.searchSubject.next('');
+    this.autoToggleToolbarOnResults();
     this.refreshCatalogPanelData();
   }
 
@@ -452,6 +471,7 @@ export class AppDashboard1Component {
       p.producName?.toLowerCase().includes(query) ||
       p.gtin?.toLowerCase().includes(query)
     );
+    this.autoToggleToolbarOnResults();
 
     this.refreshCatalogPanelData();
   }
@@ -587,6 +607,7 @@ export class AppDashboard1Component {
   onCatalogSelectedChange(catalogId: string): void {
     const catalogData = this.catalogList.find(c => c.catalog_id === catalogId) || null;
     this.filtered = catalogData && catalogData.data ? catalogData.data : [];
+    this.autoToggleToolbarOnResults();
   }
 
   private prepareProductForDisplay(product: any): any {
@@ -657,6 +678,32 @@ export class AppDashboard1Component {
       queryParams: { gtin: this.selectedGtins }
     });
     console.log('procesar', this.selectedGtins)
+  }
+
+  private autoToggleToolbarOnResults(): void {
+    this.showToolbar = this.filtered.length === 0;
+  }
+
+  toggleToolbar(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showToolbar = !this.showToolbar;
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleDocumentClick(event: Event): void {
+    if (!this.showToolbar || !this.toolbarRef?.nativeElement) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const toolbarEl = this.toolbarRef?.nativeElement ?? null;
+    const toggleEl = this.toolbarToggleRef?.nativeElement ?? null;
+
+    if ((toolbarEl && toolbarEl.contains(target)) || (toggleEl && toggleEl.contains(target))) {
+      return;
+    }
+
+    this.showToolbar = false;
   }
 
 }

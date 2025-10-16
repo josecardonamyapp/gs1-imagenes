@@ -347,8 +347,9 @@ export class productProcessingViewComponent {
     }
 
     sendToProcessNoBackground() {
+        let productList: any[] = JSON.parse(JSON.stringify(this.products));
 
-        this.products.forEach(product => {
+        productList.forEach(product => {
             let imagesPerGtinNum = Number(this.imagesPerGtin);
 
             if (this.imagesPerGtin === 'Todos') {
@@ -361,8 +362,9 @@ export class productProcessingViewComponent {
                 product.images = [];
             }
 
-            this.processImgNoBackground(product);
         });
+
+        this.processImgNoBackground(productList);
 
         // this.products.forEach((product) => {
         //     product.images = product.images.slice(0, this.imagesPerGtin);

@@ -175,7 +175,7 @@
                 {{ job.downloading ? 'Descargando...' : 'Descargar Todos' }}
               </mat-option>
               <mat-option value="link" [disabled]="job.status === 'PROCESSING'">Generar link</mat-option>
-              <mat-option value="regenerate">Regenerar</mat-option>
+              <!-- <mat-option value="regenerate">Regenerar</mat-option> -->
               <mat-option value="delete" [disabled]="job.status === 'PROCESSING'">Eliminar</mat-option>
             </mat-select>
           </mat-form-field>

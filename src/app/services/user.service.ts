@@ -243,14 +243,19 @@ export class UserService {
     }
 
     async logout() {
-        await signOut({ global: true });
-        const logoutWin = window.open(
-            `https://dev1-gs1mx.us.auth0.com/v2/logout?client_id=mIMNjtpz6MuwkxFt1wq2exdTFL6c2bsD&returnTo=${encodeURIComponent(environment.domainUrl)}`,
-            '_blank'
-        );
-        setTimeout(() => {
-            logoutWin?.close();
-        }, 3000);
+        try {
+            await signOut({ global: true });
+        } catch (error) {
+            console.error('Error al cerrar sesion en Cognito:', error);
+        } finally {
+            const cognitoDomain = environment.cognitoDomain.startsWith('http')
+                ? environment.cognitoDomain
+                : `https://${environment.cognitoDomain}`;
+            const logoutUrl = `${cognitoDomain}/logout?client_id=${environment.cognitoAppClientId}` +
+                `&logout_uri=${encodeURIComponent(environment.domainUrl)}&federated=1`;
+
+            window.location.href = logoutUrl;
+        }
     }
 
     async signOut(): Promise<void> {

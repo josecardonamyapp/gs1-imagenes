@@ -1,6 +1,45 @@
 <div class="dashboard-page dashboard-layout" [class.catalog-open]="catalogPanelVisible">
   <div class="dashboard-main">
-    <div class="dashboard-toolbar">
+    <div class="dashboard-toolbar-toggle">
+      <div class="dashboard-toolbar-toggle__actions" *ngIf="!showToolbar && filtered.length">
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="selectedGtins.length ? clearAllGtins() : selectAllGtins()"
+          [disabled]="!filtered.length"
+        >
+          {{ selectedGtins.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+        </button>
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="processSelectedImages()"
+          [disabled]="selectedGtins.length <= 0"
+        >
+          Procesar seleccionadas ({{ selectedGtins.length }})
+        </button>
+      </div>
+      <button
+        mat-icon-button
+        type="button"
+        class="dashboard-toolbar__toggle"
+        [class.dashboard-toolbar__toggle--active]="showToolbar"
+        [attr.aria-label]="showToolbar ? 'Ocultar herramientas de busqueda' : 'Mostrar herramientas de busqueda'"
+        [attr.aria-expanded]="showToolbar"
+        [matTooltip]="showToolbar ? 'Ocultar herramientas de busqueda' : 'Mostrar herramientas de busqueda'"
+        matTooltipPosition="below"
+        (click)="toggleToolbar($event)"
+        #toolbarToggle
+      >
+        <mat-icon>search</mat-icon>
+      </button>
+    </div>
+    <div
+      class="dashboard-toolbar"
+      *ngIf="showToolbar"
+      #toolbar
+      (click)="$event.stopPropagation()"
+    >
       <header class="dashboard-header">
         <div class="dashboard-header__info">
           <h1>Redimensiona las fotos de producto para tus socios comerciales</h1>

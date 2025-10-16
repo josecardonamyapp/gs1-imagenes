@@ -22,7 +22,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 1.75rem;
+  padding: 1rem 0.5rem 1rem;
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 28px 60px -32px rgba(15, 23, 42, 0.4);
@@ -45,7 +45,7 @@
 
 .dashboard-header__info h1 {
   margin: 0;
-  font-size: 1.95rem;
+  font-size: 1.50rem;
   font-weight: 700;
   color: #ff7a66;
   letter-spacing: 0.01em;
@@ -72,9 +72,61 @@
   white-space: nowrap;
 }
 
+.dashboard-toolbar-toggle {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-toolbar__toggle {
+  color: #ff7a66;
+  border: 1px solid rgba(255, 122, 102, 0.45);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px -16px rgba(255, 122, 102, 0.55);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dashboard-toolbar__toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -14px rgba(255, 122, 102, 0.6);
+}
+
+.dashboard-toolbar__toggle--active {
+  background: #ff7a66;
+  color: #ffffff;
+  box-shadow: 0 20px 40px -18px rgba(255, 122, 102, 0.65);
+}
+
+.dashboard-toolbar__toggle:focus-visible {
+  outline: 2px solid #ff7a66;
+  outline-offset: 4px;
+}
+
+.dashboard-toolbar__toggle mat-icon {
+  display: block;
+}
+
+.dashboard-toolbar__toggle--active mat-icon {
+  color: #ffffff;
+}
+
+.dashboard-toolbar-toggle__actions {
+  display: inline-flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-toolbar-toggle__actions button {
+  white-space: nowrap;
+}
+
 @media (max-width: 1200px) {
   .dashboard-header {
     grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
   }
 
   .dashboard-header__actions {
@@ -93,7 +145,7 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   align-items: stretch;
-  padding: 1.5rem 1.75rem;
+  padding: 1rem 1.25rem;
   border-radius: 18px;
   background: linear-gradient(140deg, #f1f5ff 0%, #ffffff 40%, #ffffff 100%);
   border: 1px solid rgba(148, 163, 184, 0.22);
@@ -101,7 +153,7 @@
 
 .dashboard-controls__textarea {
   position: relative;
-  flex: 1 1 360px;
+  flex: 1 1 300px;
   min-width: 320px;
 }
 
@@ -444,7 +496,8 @@
   max-width: none;
   min-width: 0;
   transition: margin-right 0.28s ease, max-width 0.28s ease;
-  padding: 1.75rem 2rem 3rem;
+  // padding: 1.75rem 2rem 3rem;
+  // padding: 1rem 1rem 1rem;
   display: flex;
   flex-direction: column;
 }
@@ -514,6 +567,16 @@
 .position-relative img {
   display: block;
   margin: 0 auto;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 200;
 }
 
 

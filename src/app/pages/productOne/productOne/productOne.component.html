@@ -3,7 +3,7 @@
     <p class="text-center"><strong>GTIN:</strong> {{ gtin }}</p>
 
     <div class="row g-4 align-items-start">
-        <div class="col-lg-5 col-md-6 mb-4 mb-md-0">
+        <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
             <div class="preview-pane">
                 <div class="thumbnail-list me-3">
                     <img *ngFor="let img of product.images" [src]="img.uniformresourceidentifier"
@@ -32,7 +32,7 @@
             </div>
 
         </div>
-        <div class="col-lg-7 col-md-6">
+        <div class="col-lg-8 col-md-6">
             <div class="card shadow-sm p-3">
                 <!--                 <p class="text-muted small">
                     El renombrado de archivos utilizar&aacute; por default el GTIN. Si requiere personalizaci&oacute;n, cargue un XLS con GTIN Canal.
@@ -187,7 +187,7 @@
                                        [disabled]="disabledFormChannel">
                             </mat-form-field>
                         </div> -->
-                        <div class="col-md-4">
+                        <div class="form-field">
                             <fieldset [disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
                                 <label class="form-label">Color de Fondo</label>
                                 <div class="color-picker-row">
