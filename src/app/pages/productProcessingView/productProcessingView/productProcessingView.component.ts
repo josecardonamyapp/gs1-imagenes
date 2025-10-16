@@ -301,18 +301,18 @@ export class productProcessingViewComponent {
             this.selectedChannel.background_color = this.hexToRgb(this.selectedChannel.background_color).join(',') // Convert hex to RGB
         }
 
-            console.log('Selected folder structure:', this.selectedChannel);
+        console.log('Selected folder structure:', this.selectedChannel);
         const productNames = product.map((p: any) => p.producName).join(', ');
 
 
         const params = {
             images_url: product,
             channel_params: this.selectedChannel,
-            folder_structure: this.selectedFolderStructure,
+            no_background: true,
+            transparent_background: false,
             is_multiple_processing: true,
             product_names: productNames,
-            no_background: this.selectedChannel.background_color == 'transparent' ? true : false,
-            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
+            // transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
         }
 
         console.log('Processing image with params:', params);
@@ -394,7 +394,11 @@ export class productProcessingViewComponent {
         const params = {
             images_url: product,
             channel_params: this.selectedChannel,
-            no_background: true
+            no_background: true,
+            transparent_background: true,
+            is_multiple_processing: true,
+            product_names: product.map((p: any) => p.producName).join(', '),
+            // folder_structure: this.selectedFolderStructure,
         }
 
         this.productService.productProcessImg(params).subscribe({
