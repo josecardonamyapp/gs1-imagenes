@@ -490,7 +490,7 @@ export class ProductOneComponent {
         const params = {
             images_url: productToSend,
             channel_params: channelParams,
-            no_background: this.selectedChannel.background_color == 'transparent' ? true : false,
+            no_background: true,
             transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false,
             gln: glnNumber
         };
@@ -561,7 +561,7 @@ export class ProductOneComponent {
             images_url: productToSend,
             channel_params: channelParams,
             no_background: true,
-            transparent_background: true,
+            not_apply_transformations: true,
             gln: glnNumber
         };
 
@@ -745,7 +745,7 @@ export class ProductOneComponent {
             }
 
             const img = new Image();
-            
+
             // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
             const timeoutId = setTimeout(() => {
                 console.warn(`Timeout checking orientation: ${imageUrl}`);

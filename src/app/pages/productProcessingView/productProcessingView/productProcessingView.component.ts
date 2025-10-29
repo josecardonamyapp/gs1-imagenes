@@ -292,7 +292,7 @@ export class productProcessingViewComponent {
             }
 
             const img = new Image();
-            
+
             // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
             const timeoutId = setTimeout(() => {
                 console.warn(`Timeout checking orientation: ${imageUrl}`);
@@ -344,7 +344,7 @@ export class productProcessingViewComponent {
             img.onload = () => {
                 clearTimeout(timeoutId);
                 const isLandscape = img.width > img.height; // horizontal
-                
+
                 if (!isLandscape) {
                     done(imageUrl);
                     return;
@@ -356,13 +356,13 @@ export class productProcessingViewComponent {
                     canvas.width = img.height;
                     canvas.height = img.width;
                     const ctx = canvas.getContext('2d');
-                    
+
                     if (!ctx) {
                         console.warn('Canvas context not available, using CSS fallback');
                         done(imageUrl, true);
                         return;
                     }
-                    
+
                     ctx.translate(canvas.width / 2, canvas.height / 2);
                     ctx.rotate(Math.PI / 2); // 90 grados
                     ctx.drawImage(img, -img.width / 2, -img.height / 2);
@@ -371,7 +371,7 @@ export class productProcessingViewComponent {
                     const lower = imageUrl.toLowerCase();
                     const mime = lower.endsWith('.png') ? 'image/png' : 'image/jpeg';
                     const dataUrl = canvas.toDataURL(mime, 0.92);
-                    
+
                     console.log(`✓ Canvas rotation successful for: ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
                     done(dataUrl);
                 } catch (e) {
@@ -662,11 +662,11 @@ export class productProcessingViewComponent {
             images_url: product,
             channel_params: this.selectedChannel,
             no_background: true,
-            transparent_background: false,
+            // transparent_background: false,
             is_multiple_processing: true,
             product_names: productNames,
             gln: glnNumber,
-            // transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
+            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
         }
 
         console.log('Processing image with params:', params);
@@ -749,7 +749,7 @@ export class productProcessingViewComponent {
             images_url: product,
             channel_params: this.selectedChannel,
             no_background: true,
-            transparent_background: true,
+            not_apply_transformations: true,
             is_multiple_processing: true,
             product_names: product.map((p: any) => p.producName).join(', '),
             gln: glnNumber,
