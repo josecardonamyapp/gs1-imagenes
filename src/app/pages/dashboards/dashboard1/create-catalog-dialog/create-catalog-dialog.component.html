@@ -36,8 +36,9 @@
           <div class="selected-item__info">
             <!-- <h4>{{ product.producName || 'Producto sin nombre' }}</h4> -->
             <p>GTIN: {{ product.gtin }}</p>
+            <p *ngIf="product.gln">GLN: {{ product.gln }}</p>
           </div>
-          <button mat-icon-button type="button" aria-label="Quitar" (click)="removeSelected(product.gtin)"
+          <button mat-icon-button type="button" aria-label="Quitar" (click)="removeSelected(product)"
             [disabled]="saving">
             <mat-icon>close</mat-icon>
           </button>

@@ -1,0 +1,17 @@
+:host {
+    display: block;
+}
+
+.channel-required-dialog__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.channel-required-dialog__content {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    max-width: 380px;
+}

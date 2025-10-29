@@ -18,8 +18,16 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-top: 4px;
-    margin-bottom: 8px;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+}
+
+.fieldset-color-picker {
+    align-content: center;
+    padding: 0;
+    margin: 0;
+    border-radius: 8px;
+    height: 56px;
 }
 
 .color-circle {
@@ -146,4 +154,53 @@
         font-size: 0.85rem;
         margin-bottom: 0.75rem;
     }
+}
+.custom-renaming-hint {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 122, 102, 0.22);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 250, 245, 0.95), #ffffff);
+    box-shadow: 0 18px 30px -26px rgba(255, 122, 102, 0.35);
+    margin-top: 0.75rem;
+}
+
+.hint-badge {
+    background: linear-gradient(135deg, #ff7a66, #ff9966);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-size: 0.8rem;
+}
+
+.custom-renaming-hint .text-muted {
+    line-height: 1.4;
+}
+
+.custom-renaming-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 1rem 0;
+}
+
+.custom-renaming-action {
+    flex: 1 1 220px;
+    min-width: 200px;
+}
+
+.custom-renaming-file {
+    flex: 1 1 100%;
+}
+
+@media (max-width: 768px) {
+    .custom-renaming-actions {
+        flex-direction: column;
+    }
+
+    .custom-renaming-action {
+        min-width: 100%;
+    }
+}
+
+.custom-renaming-note {
+    margin-top: 0.5rem;
 }

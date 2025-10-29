@@ -116,8 +116,8 @@
                                     </mat-form-field>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <fieldset [disabled]="channel.adaptation_type === 'Remover_Fondo'">
-                                        <label class="form-label">Color de Fondo</label>
+                                    <label class="form-label">Color de Fondo</label>
+                                    <fieldset class="fieldset-color-picker" [disabled]="channel.adaptation_type === 'Remover_Fondo'">
                                         <div class="color-picker-row">
                                             <button type="button" class="color-circle transparent-option"
                                                 [ngClass]="{'selected': channel.background_color === 'transparent'}"
@@ -158,41 +158,77 @@
                     </div>
                 </div>
 
-                <!-- Configuración de Renombrado -->
+                <!-- Configuracion de Renombrado -->
                 <div class="mb-4">
-                    <h5 class="text-primary mb-3">Configuración de Renombrado</h5>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <h5 class="text-primary mb-3">Configuracion de Renombrado de las Imagenes</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
                             <mat-form-field appearance="outline" class="w-100">
-                                <mat-label>Tipo de Renombrado</mat-label>
-                                <select matNativeControl [(ngModel)]="channel.renaming_type" name="renaming_type"
-                                    required>
-                                    <option value="Estándar">Estándar</option>
-                                </select>
+                                <mat-label>
+                                    <span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado requiere cargar un archivo con codigos e identificadores." matTooltipPosition="above">
+                                        Tipo de Renombrado*
+                                    </span>
+                                </mat-label>
+                                <mat-select [(ngModel)]="channel.renaming_type" name="renaming_type" required (selectionChange)="onRenamingTypeChange($event.value)">
+                                    <mat-option value="standard">Estándar</mat-option>
+                                    <!-- <mat-option value="custom">Personalizado</mat-option> -->
+                                </mat-select>
                             </mat-form-field>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <mat-form-field appearance="outline" class="w-100">
-                                <mat-label>Base del Renombrado</mat-label>
-                                <input matInput type="text" [(ngModel)]="channel.rename_base" name="rename_base"
-                                    placeholder="ej: producto_, imagen_" [required]="channel.renaming_type === 'custom'"
-                                    disabled=True />
+                                <mat-label>
+                                    <span matTooltip="Texto que se antepone al sufijo. Solo aplica cuando seleccionas renombrado personalizado." matTooltipPosition="above">
+                                        Base del Renombrado*
+                                    </span>
+                                </mat-label>
+                                <input matInput type="text" [(ngModel)]="channel.rename_base" name="rename_base" placeholder="ej: producto_, imagen_" [required]="channel.renaming_type === 'custom'" [disabled]="channel.renaming_type !== 'custom'" />
                             </mat-form-field>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+
+                    <!-- <div class="custom-renaming-hint" *ngIf="channel.renaming_type === 'custom'">
+                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2">
+                            <span class="hint-badge text-white px-3 py-1 rounded-pill">Base para Renombrado Personalizado</span>
+                            <span class="text-muted small">
+                                Carga un archivo con la relacion de codigos y el identificador que deseas aplicar al renombrar las imagenes.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="custom-renaming-actions" *ngIf="channel.renaming_type === 'custom'">
+                        <button mat-raised-button color="primary" class="custom-renaming-action" type="button" (click)="fileInput.click()">
+                            <mat-icon class="me-2">upload_file</mat-icon>
+                            Cargar Archivo
+                        </button>
+                        <button mat-stroked-button color="primary" class="custom-renaming-action" type="button" (click)="downloadCustomTemplate()">
+                            <mat-icon class="me-2">download</mat-icon>
+                            Descargar Plantilla
+                        </button>
+                        <input #fileInput type="file" accept=".csv,.xlsx,.xls,.txt" class="d-none" (change)="onCustomFileSelected($event)" />
+                        <div class="custom-renaming-file text-muted small" *ngIf="customRenameFileName">
+                            Archivo seleccionado: <strong>{{ customRenameFileName }}</strong>
+                        </div>
+                    </div> -->
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
                             <mat-form-field appearance="outline" class="w-100">
-                                <mat-label>Separador</mat-label>
-                                <input matInput type="text" [(ngModel)]="channel.rename_separator"
-                                    name="rename_separator" placeholder="ej: _, -, ." />
+                                <mat-label>
+                                    <span matTooltip="Caracter que separa la base del sufijo. Ejemplos: _, -, ." matTooltipPosition="above">
+                                        Separador
+                                    </span>
+                                </mat-label>
+                                <input matInput type="text" [(ngModel)]="channel.rename_separator" name="rename_separator" placeholder="ej: _, -, ." />
                             </mat-form-field>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                             <mat-form-field appearance="outline" class="w-100">
-                                <mat-label>Índice de Inicio</mat-label>
-                                <input matInput type="number" [(ngModel)]="channel.rename_start_index"
-                                    name="rename_start_index" min="0" />
+                                <mat-label>
+                                    <span matTooltip="Numero o letra con el que deseas iniciar la secuencia del sufijo." matTooltipPosition="above">
+                                        Inicio secuencia de Sufijo
+                                    </span>
+                                </mat-label>
+                                <input matInput type="number" [(ngModel)]="channel.rename_start_index" name="rename_start_index" min="0" />
                             </mat-form-field>
                         </div>
                     </div>

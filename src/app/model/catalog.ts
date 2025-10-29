@@ -1,5 +1,7 @@
 export interface CatalogProduct {
   gtin: string;
+  gln?: string | null;
+  key?: string;
   name?: string;
   imageUrl?: string;
   producName?: string;

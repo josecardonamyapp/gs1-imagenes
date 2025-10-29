@@ -17,11 +17,11 @@ import { CreateCatalogDialogComponent, CreateCatalogDialogData } from './create-
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TourModule } from 'src/app/core/tour/tour.module';
-
-// import { DriverTourService } from 'src/app/core/tour/driver-tour.service';
+import { DriverTourService } from 'src/app/core/tour/driver-tour.service';
 
 import { CatalogService } from 'src/app/services/catalog.service';
-import { createProductKey, extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
+
+const createProductKey = (gtin: string, gln?: string | null): string => `${gtin || ''}::${gln || ''}`;
 
 @Component({
   selector: 'app-dashboard1',
@@ -44,7 +44,7 @@ import { createProductKey, extractGlnFromKey, extractGtinFromKey } from 'src/app
   templateUrl: './dashboard1.component.html',
   styleUrl: './dashboard1.component.scss'
 })
-export class AppDashboard1Component implements OnInit {
+export class AppDashboard1Component implements OnInit, AfterViewInit {
   products: any[] = [];
   carouselImages: any[] = [];
   selectedProduct: any = null;
@@ -52,7 +52,7 @@ export class AppDashboard1Component implements OnInit {
   searchText: string = '';
   gtinListInput: string = '';
   isGenerating = false;
-  selectedProductKeys: string[] = [];
+  selectedGtins: string[] = [];
   filtered: any[] = [];
   searchSubject: Subject<string> = new Subject<string>();
   inputType: 'text' | 'number' | 'mixed' | null = null;
@@ -64,253 +64,75 @@ export class AppDashboard1Component implements OnInit {
 
   @ViewChild('toolbar') toolbarRef?: ElementRef<HTMLDivElement>;
   @ViewChild('toolbarToggle', { static: true }) toolbarToggleRef?: ElementRef<HTMLButtonElement>;
-  // tourByRoute: Record<string, any[]> = {
-  //   '/home': [
-  //     {
-  //       element: '#menu-inicio',
-  //       popover: {
-  //         title: 'Inicio',
-  //         description: 'Accede al panel principal para comenzar a gestionar tus productos y actividades.'
-  //       }
-  //     },
-  //     {
-  //       element: '#home-landing',
-  //       popover: {
-  //         title: 'Selección de opciones',
-  //         description: 'Selecciona la opción que deseas procesar.'
-  //       },
-  //       allowInteraction: true
-  //     },
-  //   ],
-  //   '/dashboards/dashboard1': [
-  //     {
-  //       element: '#input-gtin',
-  //       popover: {
-  //         title: 'Buscar productos',
-  //         description: 'Ingresa el nombre del producto o su código GTIN para realizar una búsqueda directa.'
-  //       },
-  //       allowInteraction: true
-  //     },
-  //     {
-  //       element: '#btn-seleccionar-todos',
-  //       popover: {
-  //         title: 'Seleccionar todos los productos',
-  //         description: 'Haz clic aquí para seleccionar rápidamente todos los productos mostrados.'
-  //       }
-  //     },
-  //     {
-  //       element: '#btn-buscar-gtins',
-  //       popover: {
-  //         title: 'Búsqueda por lista de GTINs',
-  //         description: 'Importa una lista con múltiples GTINs para realizar una búsqueda masiva.'
-  //       }
-  //     },
-  //     {
-  //       element: '#tarjeta-producto-1',
-  //       popover: {
-  //         title: 'Vista de producto',
-  //         description: 'Cada tarjeta muestra información clave de un producto individual.'
-  //       }
-  //     },
-  //     {
-  //       element: '#carousel-imagenes',
-  //       popover: {
-  //         title: 'Carrusel de imágenes',
-  //         description: 'Desplázate entre las imágenes disponibles del producto para visualizar sus distintas vistas.'
-  //       }
-  //     },
-  //     {
-  //       element: '#informacion-tarjeta',
-  //       popover: {
-  //         title: 'Detalles del producto',
-  //         description: 'Consulta aquí detalles adicionales como imágenes, descripciones y opciones de procesamiento.'
-  //       }
-  //     }
-  //   ],
-  //   '/channels/channel': [
-  //     {
-  //       element: '#menu-canales-de-venta',
-  //       popover: {
-  //         title: 'Gestión de Canales de Venta',
-  //         description: 'Administra tus canales de distribución desde esta sección.'
-  //       }
-  //     },
-  //     {
-  //       element: '#lista-canales',
-  //       popover: {
-  //         title: 'Listado de canales',
-  //         description: 'Visualiza todos los canales existentes configurados en la plataforma.'
-  //       }
-  //     },
-  //     {
-  //       element: '#crear-canal',
-  //       popover: {
-  //         title: 'Crear un nuevo canal',
-  //         description: 'Haz clic aquí para configurar un nuevo canal de distribución.'
-  //       }
-  //     },
-  //     {
-  //       element: '#editar-canal',
-  //       popover: {
-  //         title: 'Editar canal existente',
-  //         description: 'Modifica la configuración de un canal ya existente desde esta opción.'
-  //       }
-  //     }
-  //   ],
-  //   '/jobs': [
-  //     {
-  //       element: '#menu-mis-procesamientos',
-  //       popover: {
-  //         title: 'Mis Procesamientos',
-  //         description: 'Consulta todas las solicitudes de procesamiento realizadas hasta ahora.'
-  //       }
-  //     },
-  //     {
-  //       element: '#lista-procesamientos',
-  //       popover: {
-  //         title: 'Lista de procesamientos',
-  //         description: 'Aquí se muestra un historial detallado de todos tus trabajos procesados.'
-  //       }
-  //     },
-  //     {
-  //       element: '#actualizar-procesamientos',
-  //       popover: {
-  //         title: 'Actualizar lista',
-  //         description: 'Refresca el listado para ver el estado más reciente de tus procesamientos.'
-  //       }
-  //     },
-  //     {
-  //       element: '#procesar-productos',
-  //       popover: {
-  //         title: 'Nuevo procesamiento',
-  //         description: 'Inicia un nuevo procesamiento a partir de tu lista de productos seleccionados.'
-  //       }
-  //     }
-  //   ]
-  // };
-
-
-  // tourSequence: string[] = [
-  //   '/dashboards/dashboard1',
-  //   '/channels/channel',
-  //   '/jobs'
-  // ];
+  tourByRoute: Record<string, any[]> = {
+    '/dashboards/dashboard1': [
+      {
+        element: '#menu-inicio',
+        popover: {
+          title: 'Inicio',
+          description: 'Accede al panel principal para comenzar a gestionar tus productos y actividades.'
+        }
+      },
+      {
+        element: '#input-gtin',
+        popover: {
+          title: 'Buscar productos',
+          description: 'Ingresa el nombre del producto o su c�digo GTIN para realizar una b�squeda directa.',
+        },
+        allowInteraction: true
+      },
+      {
+        element: '#btn-seleccionar-todos',
+        popover: {
+          title: 'Seleccionar todos los productos',
+          description: 'Haz clic aqu� para seleccionar r�pidamente todos los productos mostrados.',
+        }
+      },
+      {
+        element: '#btn-buscar-gtins',
+        popover: {
+          title: 'B�squeda por lista de GTINs',
+          description: 'Importa una lista con m�ltiples GTINs para realizar una b�squeda masiva.',
+        }
+      },
+      {
+        element: '#tarjeta-producto-1',
+        popover: {
+          title: 'Vista de producto',
+          description: 'Cada tarjeta muestra informaci�n clave de un producto individual.',
+        }
+      },
+      {
+        element: '#carousel-imagenes',
+        popover: {
+          title: 'Carrusel de im�genes',
+          description: 'Despl�zate entre las im�genes disponibles del producto para visualizar sus distintas vistas.',
+        }
+      },
+      {
+        element: '#informacion-tarjeta',
+        popover: {
+          title: 'Detalles del producto',
+          description: 'Consulta aqu� detalles adicionales como im�genes, descripciones y opciones de procesamiento.',
+        }
+      }
+    ]
+  };
 
   constructor(
     private productService: ProductService,
     private router: Router,
     private snackBar: MatSnackBar,
-    // private tourService: DriverTourService,
+    private tourService: DriverTourService,
     private catalogService: CatalogService
   ) { }
-
-  // ngAfterViewInit() {
-
-  //   const userId = 'usuario';
-  //   const tourKey = 'dashboard';
-
-  //   this.tourService.startMultiPageTour(userId, tourKey, this.tourSequence, this.tourByRoute);
-  // }
-
-  async ngOnInit(): Promise<void> {
-    this.searchSubject
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(async value => {
-        try {
-          await this.handleSearch(value);
-        } catch (error) {
-          console.error('Error during search handling:', error);
-        }
-      });
-
-    await this.getCatalogs();
-    this.autoToggleToolbarOnResults();
-  }
-
-  private async getCatalogs(): Promise<void> {
-    const gln = localStorage.getItem('gln') as string;
-    try {
-      const catalogs = await firstValueFrom(this.catalogService.getCatalogs(gln));
-      this.catalogList = catalogs || [];
-      console.log('Catalogs fetched:', this.catalogList);
-    }
-    catch (err) {
-      console.error('Error fetching catalogs:', err);
-    }
-  }
-
-  private async getProductsByListGtin(gtins: string[], requestedCodes: string[]): Promise<void> {
-    //   width: '400px',
-    // });
-
-    // dialogRef.afterClosed().subscribe((gtins: string[]) => {
-    if (!Array.isArray(gtins) || gtins.length === 0) {
-      return;
-    }
-
-    this.isGenerating = true;
-
-    try {
-      const response: any = await firstValueFrom(this.productService.productGetByGtin(gtins));
-      const normalizedProducts = this.productService.normalizeTradeItemsResponse(response);
-
-      if (normalizedProducts.length > 0) {
-        // Mostrar productos inmediatamente sin esperar la detección de orientación
-        const fetchedProducts = normalizedProducts
-          .map((product: SyncfoniaProduct) => {
-            const validImages = Array.isArray(product.images)
-              ? product.images.filter(image => {
-                const url = image?.uniformresourceidentifier ?? '';
-                return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png)$/i.test(url);
-              })
-              : [];
-
-            if (!validImages.length) {
-              return null;
-            }
-
-            // Preparar imágenes sin rotación inicialmente
-            const preparedImages = validImages.map(image => ({
-              ...image,
-              displayUrl: image?.uniformresourceidentifier,
-              rotateCssFallback: false // Inicialmente sin rotación
-            }));
-
-            return {
-              gtin: product.gtin,
-              producName: product.producName,
-              images: preparedImages,
-              currentIndex: 0,
-              isImageLoading: false,
-              gln: product.gln ?? '',
-              image360Path: product.image360Path ?? null,
-              brandName: product.brandName ?? '',
-              functionalName: product.functionalName ?? '',
-              attributes: product.attributes,
-              partyNameProvider: product.partyNameProvider ?? ''
-            };
-          });
-
-        const filteredProducts = fetchedProducts.filter((product): product is any => product !== null);
-
-        // Detectar orientación en segundo plano después de mostrar los productos
-        filteredProducts.forEach((product) => {
-          product.images.forEach((image: any, index: number) => {
-            this.checkIfImageNeedsRotation(image?.uniformresourceidentifier)
-              .then(needsRotation => {
-                image.rotateCssFallback = needsRotation;
-              })
-              .catch(() => {
-                // Si falla, mantener sin rotación
-                image.rotateCssFallback = false;
-              });
-          });
-        });
+          })
+          .filter((product): product is any => product !== null);
 
         const productsByKey = new Map(
           this.products.map(product => [createProductKey(product.gtin, product.gln), product])
         );
-        filteredProducts.forEach((product: any) => {
+        fetchedProducts.forEach((product: any) => {
           productsByKey.set(createProductKey(product.gtin, product.gln), product);
         });
 
@@ -344,7 +166,7 @@ export class AppDashboard1Component implements OnInit {
         this.autoToggleToolbarOnResults();
 
         if (fetchedProducts.length !== normalizedProducts.length) {
-          this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
+          this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de im�genes asociadas en Syncfon�a.', 'Cerrar', {
             duration: 3000,
             verticalPosition: 'top',
             horizontalPosition: 'center'
@@ -419,14 +241,8 @@ export class AppDashboard1Component implements OnInit {
     }
   }
 
-  goToDetail(gtin: string, gln?: string | null): void {
-    const key = createProductKey(gtin, gln);
-    this.router.navigate(['/product', gtin], {
-      queryParams: {
-        productKey: key,
-        gln: gln ?? ''
-      }
-    });
+  goToDetail(gtin: string): void {
+    this.router.navigate(['/product', gtin]);
   }
 
   onSearchChange(value: string | null | undefined) {
@@ -435,16 +251,16 @@ export class AppDashboard1Component implements OnInit {
     if (!trimmed) {
       this.inputType = null;
       this.filtered = [];
-      this.searchText = '';          // â† refleja en el textarea
+      this.searchText = '';          // ← refleja en el textarea
       this.searchSubject.next('');
       this.autoToggleToolbarOnResults();
       return;
     }
 
-    // Detectar tipo admitiendo comas, espacios y saltos de lÃ­nea
+    // Detectar tipo admitiendo comas, espacios y saltos de línea
     if (/^[0-9,\s`r`n]+$/.test(trimmed)) {
       this.inputType = 'number';
-    } else if (/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“ÃšÃ±Ã‘\s]+$/.test(trimmed)) {
+    } else if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(trimmed)) {
       this.inputType = 'text';
     } else {
       this.inputType = 'mixed';
@@ -454,11 +270,11 @@ export class AppDashboard1Component implements OnInit {
 
     if (this.inputType === 'number') {
       normalized = normalized
-        .replace(/[\s`r`n]+/g, ',') // saltos de lÃ­nea/espacios â†’ coma
+        .replace(/[\s`r`n]+/g, ',') // saltos de línea/espacios → coma
         .replace(/,{2,}/g, ',')     // evita ,, consecutivas
         .replace(/^,|,$/g, '');     // sin coma al inicio/fin
 
-      // Autocompletar a 14 dÃ­gitos
+      // Autocompletar a 14 dígitos
       const paddedCodes = normalized
         .split(',')
         .map(code => code.trim())
@@ -470,8 +286,8 @@ export class AppDashboard1Component implements OnInit {
       normalized = normalized.replace(/\s+/g, ' ');
     }
 
-    // ðŸ” Reflejar el valor normalizado en el textarea y continuar flujo
-    this.searchText = normalized;       // â† actualiza el textarea
+    // 🔁 Reflejar el valor normalizado en el textarea y continuar flujo
+    this.searchText = normalized;       // ← actualiza el textarea
     this.searchSubject.next(normalized);
 
     console.log('inputType:', this.inputType, '=>', normalized);
@@ -552,79 +368,45 @@ export class AppDashboard1Component implements OnInit {
   // }
 
 
-  toggleGtinSelection(gtin: string, gln?: string | null): void {
-    const key = createProductKey(gtin, gln);
-    const index = this.selectedProductKeys.indexOf(key);
+  toggleGtinSelection(gtin: string): void {
+    const index = this.selectedGtins.indexOf(gtin);
 
     if (index > -1) {
-      this.selectedProductKeys.splice(index, 1);
+      this.selectedGtins.splice(index, 1);
     } else {
-      this.selectedProductKeys.push(key);
+      this.selectedGtins.push(gtin);
     }
 
     this.refreshCatalogPanelData();
   }
 
-  onProductSelectionChange(event: MatCheckboxChange, gtin: string, gln?: string | null): void {
-    const key = createProductKey(gtin, gln);
-
+  onProductSelectionChange(event: MatCheckboxChange, gtin: string): void {
     if (event.checked) {
-      if (!this.isGtinSelected(gtin, gln)) {
-        this.selectedProductKeys.push(key);
+      if (!this.isGtinSelected(gtin)) {
+        this.selectedGtins.push(gtin);
       }
-    } else if (this.isGtinSelected(gtin, gln)) {
-      this.selectedProductKeys = this.selectedProductKeys.filter(selected => selected !== key);
+    } else if (this.isGtinSelected(gtin)) {
+      this.selectedGtins = this.selectedGtins.filter(selected => selected !== gtin);
     }
 
     this.refreshCatalogPanelData();
   }
 
-  isGtinSelected(gtin: string, gln?: string | null): boolean {
-    const key = createProductKey(gtin, gln);
-    return this.selectedProductKeys.includes(key);
+  isGtinSelected(gtin: string): boolean {
+    return this.selectedGtins.includes(gtin);
   }
 
   selectAllGtins(): void {
-    const keys = this.filtered
+    this.selectedGtins = this.filtered
       .filter(p => p.images?.length > 0)
-      .map(p => createProductKey(p.gtin, p.gln));
-
-    this.selectedProductKeys = Array.from(new Set(keys));
+      .map(p => p.gtin);
 
     this.refreshCatalogPanelData();
   }
 
   clearAllGtins(): void {
-    this.selectedProductKeys = [];
+    this.selectedGtins = [];
     this.refreshCatalogPanelData();
-  }
-
-  private getSelectedProductPairs(): Array<{ key: string; gtin: string; gln: string | null }> {
-    return this.selectedProductKeys
-      .map(key => {
-        const gtin = extractGtinFromKey(key);
-        const gln = extractGlnFromKey(key) || null;
-
-        if (!gtin) {
-          return null;
-        }
-
-        return { key, gtin, gln };
-      })
-      .filter((pair): pair is { key: string; gtin: string; gln: string | null } => Boolean(pair));
-  }
-
-  private getSelectedGtins(): string[] {
-    const pairs = this.getSelectedProductPairs();
-    const unique = new Set<string>();
-
-    pairs.forEach(pair => {
-      if (pair.gtin) {
-        unique.add(pair.gtin);
-      }
-    });
-
-    return Array.from(unique);
   }
 
   openCreateCatalogDialog(): void {
@@ -640,7 +422,7 @@ export class AppDashboard1Component implements OnInit {
     const sourceProducts = this.filtered.length ? this.filtered : this.products;
     this.catalogPanelData = {
       availableProducts: this.buildCatalogProducts(sourceProducts),
-      preselectedProductKeys: [...this.selectedProductKeys]
+      preselectedGtins: [...this.selectedGtins]
     };
   }
 
@@ -650,18 +432,13 @@ export class AppDashboard1Component implements OnInit {
 
     (products || []).forEach(product => {
       const gtin = product?.gtin;
-      const gln = product?.gln ?? null;
-      const key = createProductKey(gtin, gln);
-
-      if (!gtin || seen.has(key)) {
+      if (!gtin || seen.has(gtin)) {
         return;
       }
 
-      seen.add(key);
+      seen.add(gtin);
       mapped.push({
         gtin,
-        gln,
-        key,
         name: product?.producName ?? product?.name ?? '',
         producName: product?.producName ?? product?.name ?? '',
         imageUrl: product?.images?.[0]?.uniformresourceidentifier,
@@ -685,8 +462,8 @@ export class AppDashboard1Component implements OnInit {
     this.catalogPanelData = null;
   }
 
-  onCatalogSelectionChange(productKeys: string[]): void {
-    this.selectedProductKeys = [...productKeys];
+  onCatalogSelectionChange(gtins: string[]): void {
+    this.selectedGtins = [...gtins];
     this.refreshCatalogPanelData();
   }
 
@@ -772,20 +549,11 @@ export class AppDashboard1Component implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 
-  processSelectedImages(): void {
-    const pairs = this.getSelectedProductPairs();
-    const gtins = pairs.map(pair => pair.gtin);
-    const glns = pairs.map(pair => pair.gln ?? '');
-    const productKeys = pairs.map(pair => pair.key);
-
+  processSelectedImages() {
     this.router.navigate(['/product-catalog'], {
-      queryParams: {
-        gtin: gtins,
-        gln: glns,
-        productKey: productKeys
-      }
+      queryParams: { gtin: this.selectedGtins }
     });
-    console.log('procesar', this.selectedProductKeys);
+    console.log('procesar', this.selectedGtins)
   }
 
   private autoToggleToolbarOnResults(): void {
@@ -798,6 +566,22 @@ export class AppDashboard1Component implements OnInit {
   }
 
   @HostListener('document:click', ['$event'])
+  startDashboardTour(force = false): void {
+    const steps = this.tourByRoute['/dashboards/dashboard1'];
+    if (!steps || steps.length === 0) {
+      return;
+    }
+
+    const userId = localStorage.getItem('user_id') || 'dashboard_user';
+    const tourKey = 'dashboard1';
+
+    if (force) {
+      this.tourService.forceStartTour(steps);
+      return;
+    }
+
+    this.tourService.startTourIfFirstTime(userId, tourKey, steps);
+  }
   handleDocumentClick(event: Event): void {
     if (!this.showToolbar || !this.toolbarRef?.nativeElement) {
       return;
@@ -818,56 +602,7 @@ export class AppDashboard1Component implements OnInit {
     this.showToolbar = false;
   }
 
-  /**
-   * Detecta si una imagen necesita rotación (es horizontal).
-   * Solo verifica dimensiones, NO usa Canvas para evitar problemas de CORS.
-   * La rotación se aplicará con CSS en el template.
-   */
-  private checkIfImageNeedsRotation(imageUrl: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      if (!imageUrl || typeof imageUrl !== 'string') {
-        resolve(false);
-        return;
-      }
-
-      const img = new Image();
-      
-      // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
-      const timeoutId = setTimeout(() => {
-        console.warn(`Timeout checking orientation: ${imageUrl}`);
-        resolve(false);
-      }, 5000);
-
-      img.onload = () => {
-        clearTimeout(timeoutId);
-        // Si es horizontal (ancho > alto), necesita rotación CSS
-        const isHorizontal = img.width > img.height;
-        if (isHorizontal) {
-          console.log(`🔄 Horizontal image detected (${img.width}x${img.height}): ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
-        }
-        resolve(isHorizontal);
-      };
-
-      img.onerror = () => {
-        clearTimeout(timeoutId);
-        console.warn(`Error loading image for orientation check: ${imageUrl}`);
-        resolve(false); // Si falla, no rotar
-      };
-
-      // NO configurar crossOrigin - solo queremos dimensiones
-      // Esto evita errores CORS porque no accedemos a los píxeles
-      img.src = imageUrl;
-    });
-  }
-
 }
-
-
-
-
-
-
-
 
 
 

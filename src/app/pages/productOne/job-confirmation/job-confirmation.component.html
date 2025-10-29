@@ -4,7 +4,7 @@
       <mat-icon>auto_awesome</mat-icon>
     </div>
     <h2>Procesamiento iniciado</h2>
-    <p class="header-subtitle">Estamos preparando tus imÃ¡genes con IA</p>
+    <p class="header-subtitle">Estamos preparando tus imágenes con IA</p>
   </div>
 
   <div class="modal-content">
@@ -47,8 +47,13 @@
       </div>
 
       <p class="hero-note">
-        Este proceso puede tardar entre 2 y 5 minutos. MantÃ©n esta ventana abierta mientras completamos el procesamiento.
+        Este proceso puede tardar entre 2 y 5 minutos. Mantén esta ventana abierta mientras completamos el procesamiento.
       </p>
+
+      <div class="hero-redirect-notice" *ngIf="redirectCountdown !== null">
+        <mat-icon>north_east</mat-icon>
+        <span>Redirigiendo a Jobs en {{ redirectCountdown }}s...</span>
+      </div>
 
       <div class="hero-warning" *ngIf="pollingError">
         <mat-icon>error_outline</mat-icon>
@@ -118,10 +123,17 @@
   </div>
 
   <div class="modal-actions">
-    <button mat-button (click)="closeModal()" color="basic">
-      Continuar trabajando
+    <button 
+      mat-button 
+      (click)="redirectCountdown !== null ? cancelRedirect() : closeModal()" 
+      color="basic">
+      {{ redirectCountdown !== null ? 'Quedarme aquí' : 'Continuar trabajando' }}
     </button>
-    <button mat-raised-button (click)="goToJobs()" color="primary">
+    <button 
+      mat-raised-button 
+      (click)="goToJobs()" 
+      color="primary"
+      [disabled]="redirectCountdown !== null">
       <mat-icon>visibility</mat-icon>
       Ver estado de jobs
     </button>

@@ -67,7 +67,7 @@ export class ChannelViewComponent {
         background_color: 'transparent', // Default transparent background
         max_size_kb: 0,
         adaptation_type: '',
-        renaming_type: '',
+        renaming_type: 'standard',
         rename_base: '',
         rename_separator: '',
         rename_start_index: 0,
@@ -78,6 +78,10 @@ export class ChannelViewComponent {
     isEditMode = false;
     isLoading = false;
     disabledGln = false;
+    isAdminUser = false;
+    currentUserGln: number | null = null;
+    customRenameFile: File | null = null;
+    customRenameFileName: string | null = null;
 
     selectedFolderStructure: number = 1; // Default to "Estructura por GTIN"
 
@@ -113,7 +117,7 @@ export class ChannelViewComponent {
                     background_color: this.rgbToHex(params['background_color']) || 'transparent', // Default transparent background
                     max_size_kb: parseInt(params['max_size_kb'] || '0'),
                     adaptation_type: params['adaptation_type'] || '',
-                    renaming_type: params['renaming_type'] || '',
+                    renaming_type: (params['renaming_type'] && params['renaming_type'].toLowerCase() === 'custom') ? 'custom' : 'standard',
                     rename_base: params['rename_base'] || '',
                     rename_separator: params['rename_separator'] || '',
                     rename_start_index: parseInt(params['rename_start_index'] || '0'),
@@ -128,16 +132,34 @@ export class ChannelViewComponent {
             }
         });
         this.getFolderStructures();
+        this.initializeUserAccess();
+    }
 
-        const gln: any = localStorage.getItem('gln');
-        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
-        const hasExcludedRole = roles.some(
+    private initializeUserAccess(): void {
+        const storedGln = (localStorage.getItem('gln') || '').trim();
+        let roles: string[] = [];
+
+        try {
+            const rawRoles = JSON.parse(localStorage.getItem('roles') || '[]');
+            roles = Array.isArray(rawRoles) ? rawRoles : [];
+        } catch {
+            roles = [];
+        }
+
+        this.isAdminUser = roles.some(
             (role: any) =>
                 typeof role === 'string' &&
                 (role.toLowerCase() === 'systemadmin' || role.toLowerCase().includes('admin'))
         );
-        this.disabledGln = !hasExcludedRole ? true : false;
-        this.channel.gln = !hasExcludedRole ? gln : 0 ;
+        this.disabledGln = !this.isAdminUser;
+
+        if (!this.isAdminUser && storedGln) {
+            const numericGln = parseInt(storedGln, 10);
+            if (!Number.isNaN(numericGln)) {
+                this.currentUserGln = numericGln;
+                this.channel.gln = numericGln;
+            }
+        }
     }
 
     getFolderStructures() {
@@ -258,17 +280,21 @@ export class ChannelViewComponent {
             return false;
         }
         if (!this.channel.adaptation_type || !this.channel.renaming_type) {
-            this.showMessage('Por favor, seleccione el tipo de adaptaciÃ³n y renombrado');
+            this.showMessage('Por favor, seleccione el tipo de adaptacion y renombrado');
             return false;
         }
         if (this.channel.renaming_type === 'custom' && !this.channel.rename_base) {
             this.showMessage('Por favor, ingrese la base del renombrado');
             return false;
         }
+        if (this.channel.renaming_type === 'custom' && !this.customRenameFile && !this.isEditMode) {
+            this.showMessage('Por favor, carga el archivo de renombrado personalizado');
+            return false;
+        }
         return true;
     }
-
     private prepareChannelData(): Channel {
+        const renamingType = this.channel.renaming_type === 'custom' ? 'custom' : 'Estandar';
         return {
             ...this.channel,
             gln: parseInt(this.channel.gln?.toString() || '0'),
@@ -277,10 +303,10 @@ export class ChannelViewComponent {
             dpi: parseInt(this.channel.dpi?.toString() || '0'),
             max_size_kb: parseInt(this.channel.max_size_kb?.toString() || '0'),
             rename_start_index: parseInt(this.channel.rename_start_index?.toString() || '0'),
-            background_color: this.normalizeBackgroundColorForPayload(this.channel.background_color), // Preserve transparent or convert hex to RGB
+            renaming_type: renamingType,
+            background_color: this.normalizeBackgroundColorForPayload(this.channel.background_color),
         };
     }
-
     private normalizeBackgroundColorForPayload(color: string | null | undefined): string {
         if (!color) {
             return 'transparent';
@@ -323,6 +349,48 @@ export class ChannelViewComponent {
                 console.error('Error:', error);
             }
         });
+    }
+
+    onRenamingTypeChange(value: string): void {
+        this.channel.renaming_type = value;
+        if (value !== 'custom') {
+            this.customRenameFile = null;
+            this.customRenameFileName = null;
+            this.channel.rename_base = '';
+            this.channel.rename_separator = '';
+            this.channel.rename_start_index = 0;
+        }
+    }
+
+    onCustomFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement | null;
+        const file = input?.files && input.files.length > 0 ? input.files[0] : null;
+        this.customRenameFile = file;
+        this.customRenameFileName = file ? file.name : null;
+
+        if (file) {
+            this.showMessage('Archivo de renombrado personalizado seleccionado correctamente');
+        }
+    }
+
+    downloadCustomTemplate(): void {
+        const headers = ['GTIN', 'IdentificadorPersonalizado'];
+        const exampleRows = [
+            ['07501234567890', 'SKU001'],
+            ['07509876543210', 'SKU002'],
+        ];
+
+        const csvContent = [headers.join(','), ...exampleRows.map(row => row.join(','))].join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'plantilla-renombrado-personalizado.csv';
+        anchor.rel = 'noopener';
+        anchor.click();
+
+        window.URL.revokeObjectURL(url);
     }
 
     onCancel() {

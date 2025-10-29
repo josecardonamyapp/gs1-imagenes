@@ -73,11 +73,17 @@
 }
 
 .dashboard-toolbar-toggle {
+  position: sticky;
+  top: 64px;
+  z-index: 40;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  padding: 0.75rem 0.5rem 0.5rem;
+  background: linear-gradient(180deg, #f6f8fb 40%, rgba(246, 248, 251, 0));
+  backdrop-filter: blur(6px);
 }
 
 .dashboard-toolbar__toggle {
@@ -378,7 +384,7 @@
   border: 1.5px solid #ffe5e0;
   transition: box-shadow 0.2s, transform 0.18s;
   margin: 0;
-  padding: 1.25rem 1.25rem 1.75rem 1.25rem;
+  padding: 1rem 1rem 1rem 1rem;
   position: relative;
   overflow: hidden;
 }
@@ -406,8 +412,8 @@
   font-weight: 700;
   font-size: 1.05rem;
   border-radius: 12px;
-  padding: 0.35rem 1.1rem;
-  margin-right: 0.5rem;
+  padding: 0.35rem 1rem;
+  // margin-right: 0.5rem;
   letter-spacing: 0.02em;
 }
 
@@ -446,10 +452,17 @@
   font-size: 1rem;
   font-weight: 600;
   color: #475569;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+.product-card__gln {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #475569;
+  margin-top: 0.75rem;
+  margin-bottom: 0.2rem;
 }
 .card-title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 0.5rem;
@@ -579,10 +592,65 @@
   z-index: 200;
 }
 
+.product-results__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 3rem 2rem;
+  margin: 3rem auto;
+  max-width: 480px;
+  width: 100%;
+  border-radius: 24px;
+  border: 1px dashed rgba(100, 116, 139, 0.4);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+  box-shadow: 0 24px 48px -30px rgba(15, 23, 42, 0.45);
+  color: #475569;
+  text-align: center;
+}
+
+.product-results__empty mat-icon {
+  font-size: 3rem;
+  color: #ff7a66;
+}
+
+.product-results__empty h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.product-results__empty p {
+  margin: 0;
+  font-size: 1rem;
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .product-results__empty {
+    padding: 2.5rem 1.5rem;
+    margin: 2rem auto;
+  }
+}
 
 
+/* --- Image orientation helpers --- */
+.rotate-90 {
+  transform: rotate(90deg);
+  transform-origin: center center;
+}
 
-
+/* Ensure rotated images fit within the 180px display area without clipping */
+.position-relative img.rotate-90,
+.carousel-container img.rotate-90 {
+  height: auto !important;
+  max-height: 180px;
+  width: auto !important;
+  max-width: 100%;
+}
 
 
 

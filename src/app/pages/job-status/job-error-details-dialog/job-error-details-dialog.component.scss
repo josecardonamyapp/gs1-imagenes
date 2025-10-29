@@ -1,0 +1,211 @@
+:host {
+    display: block;
+}
+
+.job-errors-dialog {
+    display: flex;
+    flex-direction: column;
+    min-width: 360px;
+    max-width: 520px;
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.dialog-header {
+    text-align: center;
+    padding: 28px 24px 22px;
+    background: linear-gradient(135deg, rgba(255, 183, 77, 0.25), rgba(255, 245, 233, 0.9));
+
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        margin: 0 auto 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 171, 64, 0.22);
+        color: #ff9800;
+
+        mat-icon {
+            font-size: 28px;
+        }
+    }
+
+    h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        color: #e65100;
+    }
+
+    p {
+        margin: 8px 0 10px;
+        font-size: 14px;
+        color: #6d4c41;
+    }
+
+    .job-id {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 171, 64, 0.35);
+        font-size: 12px;
+        color: #bf360c;
+    }
+}
+
+mat-dialog-content.dialog-content {
+    padding: 24px;
+    max-height: 420px;
+    background: #ffffff;
+}
+
+.summary-card {
+    padding: 18px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 171, 64, 0.4);
+    background: linear-gradient(180deg, rgba(255, 248, 225, 0.95) 0%, #ffffff 100%);
+    box-shadow: 0 16px 32px -28px rgba(255, 111, 0, 0.45);
+    margin-bottom: 20px;
+
+    .summary-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: #e65100;
+        margin-bottom: 16px;
+
+        mat-icon {
+            color: #ff7043;
+        }
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+    }
+
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #fff3e0;
+        border: 1px solid rgba(255, 171, 64, 0.35);
+    }
+
+    .summary-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #a1887f;
+    }
+
+    .summary-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #d84315;
+    }
+
+    .summary-issues {
+        margin: 16px 0 0;
+        padding-left: 20px;
+        color: #6d4c41;
+        font-size: 13px;
+
+        li {
+            margin-bottom: 6px;
+        }
+    }
+}
+
+.errors-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .errors-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        color: #c62828;
+    }
+
+    .error-card {
+        display: flex;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: #fff8e1;
+        border: 1px solid rgba(255, 204, 128, 0.8);
+        box-shadow: 0 6px 18px -15px rgba(255, 112, 67, 0.65);
+
+        &:last-child {
+            margin-bottom: 4px;
+        }
+    }
+
+    .error-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: rgba(244, 81, 30, 0.12);
+        color: #f4511e;
+
+        mat-icon {
+            font-size: 22px;
+        }
+    }
+
+    .error-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .error-message {
+        margin: 0;
+        font-size: 14px;
+        color: #5d4037;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+
+    .error-meta {
+        font-size: 12px;
+        color: #8d6e63;
+    }
+}
+
+mat-dialog-actions.dialog-actions {
+    padding: 16px 24px 22px;
+    background: #ffffff;
+
+    button {
+        color: #d84315;
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 480px) {
+    .job-errors-dialog {
+        min-width: 0;
+        border-radius: 16px;
+    }
+
+    mat-dialog-content.dialog-content {
+        padding: 20px;
+    }
+}

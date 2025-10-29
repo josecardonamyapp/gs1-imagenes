@@ -10,10 +10,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ProductService } from '../../services/product.service';
 import { HttpClient } from '@angular/common/http';
 import { saveAs } from 'file-saver';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { JobErrorDetailsDialogComponent } from './job-error-details-dialog/job-error-details-dialog.component';
+import { catchError } from 'rxjs/operators';
 
 const JSZip = require('jszip');
 
@@ -31,25 +35,32 @@ const JSZip = require('jszip');
     MatProgressSpinnerModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDialogModule,
+    MatSnackBarModule
   ],
   templateUrl: './job-status.component.html',
   styleUrls: ['./job-status.component.scss']
 })
 export class JobStatusComponent implements OnInit, OnDestroy {
   jobs: any[] = [];
+  completedJobs: any[] = [];
   loading = false;
+  completedLoading = false;
   private refreshInterval: any;
 
   constructor(
     private productService: ProductService,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
     this.loadJobs();
     this.checkJobsStatus();
+    this.loadCompletedJobs();
     this.startAutoRefresh();
   }
 
@@ -82,6 +93,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
     // Invertir el orden para mostrar los más recientes primero
     const reversedJobIds = [...jobIds].reverse();
+    console.log('Job IDs cargados desde localStorage:', reversedJobIds);
 
     this.jobs = reversedJobIds.map((id: string) => ({
       job_id: id,
@@ -90,11 +102,49 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       product_name: '',
       gtin: '',
       processed_files: [],
-      errors: []
+      errors: [],
+      selectedAction: null
     }));
+    console.log('Jobs cargados desde localStorage:', this.jobs);
 
     //('Jobs cargados desde localStorage:', this.jobs);
   }
+
+  // checkJobsStatus2(): void {
+  //   if (this.jobs.length === 0) {
+  //     return;
+  //   }
+
+  //   this.loading = true;
+  //   let completedRequests = 0;
+
+  //   this.jobs.forEach((job, index) => {
+  //     this.productService.getJobStatus(job.job_id).subscribe({
+  //       next: (result: any) => {
+  //         //(`Job ${job.job_id} resultado:`, result);
+  //         this.jobs[index] = { ...this.jobs[index], ...result };
+
+  //         completedRequests++;
+  //         if (completedRequests === this.jobs.length) {
+  //           this.loading = false;
+  //         }
+  //       },
+  //       error: (error: any) => {
+  //         console.error(`Error consultando job ${job.job_id}:`, error);
+  //         this.jobs[index] = {
+  //           ...this.jobs[index],
+  //           status: 'ERROR',
+  //           status_description: 'Error al consultar el estado del trabajo'
+  //         };
+
+  //         completedRequests++;
+  //         if (completedRequests === this.jobs.length) {
+  //           this.loading = false;
+  //         }
+  //       }
+  //     });
+  //   });
+  // }
 
   checkJobsStatus(): void {
     if (this.jobs.length === 0) {
@@ -102,53 +152,86 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
-    let completedRequests = 0;
 
-    this.jobs.forEach((job, index) => {
-      this.productService.getJobStatus(job.job_id).subscribe({
-        next: (result: any) => {
-          //(`Job ${job.job_id} resultado:`, result);
-          this.jobs[index] = { ...this.jobs[index], ...result };
-
-          completedRequests++;
-          if (completedRequests === this.jobs.length) {
-            this.loading = false;
-          }
-        },
-        error: (error: any) => {
+    // Creamos un arreglo de observables (uno por cada job)
+    const jobRequests = this.jobs.map(job =>
+      this.productService.getJobStatus(job.job_id).pipe(
+        catchError(error => {
           console.error(`Error consultando job ${job.job_id}:`, error);
-          this.jobs[index] = {
-            ...this.jobs[index],
+          // Retornamos un objeto con estado de error
+          return of({
+            job_id: job.job_id,
             status: 'ERROR',
             status_description: 'Error al consultar el estado del trabajo'
-          };
+          });
+        })
+      )
+    );
 
-          completedRequests++;
-          if (completedRequests === this.jobs.length) {
-            this.loading = false;
+    // Ejecuta todas las peticiones en paralelo
+    forkJoin(jobRequests).subscribe({
+      next: (results: any[]) => {
+        // results es un arreglo con el resultado de cada job
+        const updatedJobs: any[] = [];
+
+        results.forEach(result => {
+          // Si el job terminó o tiene errores → eliminarlo
+          const status = (result.status || '').toUpperCase();
+          if (status === 'COMPLETED' || status === 'COMPLETED_WITH_ERRORS' || status === 'ERROR') {
+            // Eliminar del localStorage
+            const jobsLS = JSON.parse(localStorage.getItem('processing_jobs') || '[]');
+            const updatedLS = jobsLS.filter((id: string) => id !== result.job_id);
+            localStorage.setItem('processing_jobs', JSON.stringify(updatedLS));
+          } else {
+            // Si no ha terminado, mantenerlo en la lista local
+            const existingJob = this.jobs.find(j => j.job_id === result.job_id);
+            updatedJobs.push({ ...existingJob, ...result });
           }
-        }
-      });
+        });
+
+        // Actualiza el array con solo los jobs activos
+        this.jobs = updatedJobs;
+
+        this.loading = false;
+      },
+      error: err => {
+        console.error('Error general al consultar los jobs:', err);
+        this.loading = false;
+      }
     });
   }
 
   getDownloadUrl(job: any): string | null {
+    // Activar loading para generar link
+    job.generatingLink = true;
+    this.loading = true;
     this.productService.getJobDownloadUrl(job.job_id).subscribe({
       next: (result: any) => {
         console.log(`Download URL para job ${job.job_id}:`, result);
         let downloadUrl = result.zip_file_info.download_url;
         navigator.clipboard.writeText(downloadUrl)
-
-        alert('URL copiado al portapapeles');
+        this.snackBar.open('URL copiado al portapapeles', 'Cerrar', {
+          duration: 2500,
+          verticalPosition: 'top'
+        });
+        job.generatingLink = false;
+        this.loading = false;
       },
       error: (error: any) => {
         console.error(`Error obteniendo download URL para job ${job.job_id}:`, error);
+        this.snackBar.open('Error al generar el link de descarga', 'Cerrar', {
+          duration: 3000,
+          verticalPosition: 'top'
+        });
+        job.generatingLink = false;
+        this.loading = false;
       }
     });
     return null;
   }
 
   refreshJobStatus(job: any): void {
+    console.log(`Refrescando estado del job`, job);
     job.status = 'LOADING';
 
     this.productService.getJobStatus(job.job_id).subscribe({
@@ -156,6 +239,25 @@ export class JobStatusComponent implements OnInit, OnDestroy {
         const index = this.jobs.findIndex(j => j.job_id === job.job_id);
         if (index !== -1) {
           this.jobs[index] = { ...this.jobs[index], ...result };
+        }
+      },
+      error: (error: any) => {
+        console.error(`Error actualizando job ${job.job_id}:`, error);
+        job.status = 'ERROR';
+        job.status_description = 'Error al actualizar el estado del trabajo';
+      }
+    });
+  }
+
+  refreshCompletedJobStatus(job: any): void {
+    console.log(`Refrescando estado del job`, job);
+    job.status = 'LOADING';
+
+    this.productService.getJobStatus(job.job_id).subscribe({
+      next: (result: any) => {
+        const index = this.completedJobs.findIndex(j => j.job_id === job.job_id);
+        if (index !== -1) {
+          this.completedJobs[index] = { ...this.completedJobs[index], ...result };
         }
       },
       error: (error: any) => {
@@ -183,7 +285,10 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       })
       .catch(error => {
         console.error('Error descargando archivo:', error);
-        alert('Error al descargar el archivo');
+        this.snackBar.open('Error al descargar el archivo', 'Cerrar', {
+          duration: 3000,
+          verticalPosition: 'top'
+        });
       });
   }
 
@@ -195,9 +300,18 @@ export class JobStatusComponent implements OnInit, OnDestroy {
 
     const jobId = job.job_id;
     job.downloading = true;
+    this.loading = true;
     this.updateJobState(jobId, { downloading: true });
 
     try {
+      const presignedTriggered = await this.tryDownloadUsingPresignedLink(job);
+      if (presignedTriggered) {
+        job.downloading = false;
+        this.loading = false;
+        this.updateJobState(jobId, { downloading: false });
+        return;
+      }
+
       const zip = new JSZip();
       // Leer folder_structure desde channel_params
       const folderStructure = job?.channel_params?.folder_structure;
@@ -229,9 +343,11 @@ export class JobStatusComponent implements OnInit, OnDestroy {
               zip.file(file.output_filename, blob);
             }
           } else {
+            this.loading = false;
             console.error(`Error: blob vacio para ${file.output_filename}`);
           }
         } catch (error) {
+          this.loading = false;
           console.error(`Error descargando ${file.output_filename}:`, error);
         }
       }
@@ -245,11 +361,17 @@ export class JobStatusComponent implements OnInit, OnDestroy {
       const zipFilename = `${jobId}.zip`;
       saveAs(zipBlob, zipFilename);
 
-    } catch (error) {
+    } catch (error: any) {
+      this.loading = false;
       console.error('Error creando el ZIP:', error);
-      alert('Error al crear el archivo ZIP: ' + error);
+      const msg = (error && (error.message || `${error}`)) || 'Error al crear el archivo ZIP';
+      this.snackBar.open(msg, 'Cerrar', {
+        duration: 3500,
+        verticalPosition: 'top'
+      });
     } finally {
       job.downloading = false;
+      this.loading = false;
       this.updateJobState(jobId, { downloading: false });
     }
   }
@@ -316,41 +438,140 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     if (job?.original_image_url) return job.original_image_url;
     return null;
   }
-
   handleAction(action: string, job: any) {
-    if (action === 'refresh') { this.refreshJobStatus(job); }
-    if (action === 'download') { this.downloadAllFiles(job); }
-    if (action === 'link') { this.getDownloadUrl(job); }
-    if (action === 'delete') { this.removeJob(job.job_id); }
-    if (action === 'regenerate') {
-      // Navegar a productProcessingView con los parámetros del canal y los GTIN procesados
-      const params = { ...(job.channel_params || {}) };
-      // Extraer todos los gtin únicos de los archivos procesados
-      if (Array.isArray(job.processed_files)) {
-        const gtins = job.processed_files
-          .map((file: any) => {
-            // Buscar GTIN en el nombre del archivo (asume que el GTIN es la primera secuencia de 8-14 dígitos)
-            const match = file.output_filename.match(/\d{8,14}/);
-            return match ? match[0] : null;
-          })
-          .filter((gtin: string | null, idx: number, arr: any[]) => gtin && arr.indexOf(gtin) === idx);
-        if (gtins.length > 0) {
-          // Eliminar cualquier gtin existente en params
-          delete params.gtin;
-          // Navegar usando un objeto de queryParams con gtin repetido
-          const queryParams: any = { ...params };
-          // Angular permite pasar un array, pero para forzar gtin=...&gtin=... usamos un objeto especial
-          // que repite la clave gtin para cada valor
-          // Esto solo funciona si el router respeta el array como múltiples params
-          // Si no, se puede usar NavigationExtras.queryParamsHandling
-          // Pero aquí lo forzamos:
-          (queryParams as any)['gtin'] = gtins;
-          this.router.navigate(['/product-catalog'], { queryParams: queryParams });
-          return;
+    switch (action) {
+      case 'refresh':
+        // this.refreshJobStatus(job);
+        this.refreshCompletedJobStatus(job);
+        break;
+      case 'download':
+        this.downloadAllFiles(job);
+        break;
+      case 'link':
+        this.getDownloadUrl(job);
+        break;
+      case 'delete':
+        this.removeJob(job.job_id);
+        break;
+      case 'errors':
+        this.openErrorDetails(job);
+        break;
+      case 'regenerate': {
+        // Navegar a productProcessingView con los parametros del canal y los GTIN procesados
+        const params = { ...(job.channel_params || {}) };
+        if (Array.isArray(job.processed_files)) {
+          const gtins = job.processed_files
+            .map((file: any) => {
+              const match = file.output_filename.match(/\d{8,14}/);
+              return match ? match[0] : null;
+            })
+            .filter((gtin: string | null, idx: number, arr: any[]) => gtin && arr.indexOf(gtin) === idx);
+          if (gtins.length > 0) {
+            delete params.gtin;
+            const queryParams: any = { ...params };
+            (queryParams as any)['gtin'] = gtins;
+            this.router.navigate(['/product-catalog'], { queryParams: queryParams });
+            break;
+          }
         }
+        this.router.navigate(['/product-catalog'], { queryParams: params });
+        break;
       }
-      this.router.navigate(['/product-catalog'], { queryParams: params });
+      default:
+        break;
     }
+
+    if (job) {
+      job.selectedAction = null;
+    }
+  }
+
+  private openErrorDetails(job: any): void {
+    const errorsFromJob = Array.isArray(job?.errors) ? job.errors : [];
+    const errorsFromSummary = Array.isArray(job?.error_summary?.errors) ? job.error_summary.errors : [];
+    const errors = errorsFromJob.length ? errorsFromJob : errorsFromSummary;
+
+    if (!errors.length) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(JobErrorDetailsDialogComponent, {
+      width: '520px',
+      data: {
+        jobId: job?.job_id || '',
+        statusDescription: job?.status_description,
+        errors,
+        summary: job?.error_summary
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      if (job) {
+        job.selectedAction = null;
+      }
+    });
+  }
+
+  private async tryDownloadUsingPresignedLink(job: any): Promise<boolean> {
+    if (job?.zipDownloadUrl) {
+      this.triggerBrowserDownload(job.zipDownloadUrl, `${job.job_id}.zip`);
+      return true;
+    }
+
+    try {
+      const response = await firstValueFrom(this.productService.getJobDownloadUrl(job.job_id));
+      const downloadUrl = response?.zip_file_info?.download_url || response?.download_url;
+      if (!downloadUrl) {
+        return false;
+      }
+
+      job.zipDownloadUrl = downloadUrl;
+      this.triggerBrowserDownload(downloadUrl, `${job.job_id}.zip`);
+      return true;
+    } catch (error) {
+      console.error(`Error obteniendo link prefirmado para job ${job?.job_id}:`, error);
+      return false;
+    }
+  }
+
+  private triggerBrowserDownload(url: string, filename: string): void {
+    if (!url) {
+      return;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename || 'descarga.zip';
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }
+
+  async loadCompletedJobs() {
+    this.loading = true;
+    this.productService.getProcessingJobsByGln().subscribe({
+      next: (result: any) => {
+        this.loading = false;
+        if (typeof (result) === 'object') {
+          this.completedJobs = result.channels.filter((job: any) => {
+            const status = (job.status || '').toUpperCase();
+            return status !== 'PROCESSING' && status !== 'IN_PROGRESS' && status !== 'LOADING';
+          });
+          //('Jobs cargados desde localStorage:', this.jobs);
+          // this.initializeSelectedChannel();
+        }
+      },
+      error: (error: any) => {
+        this.loading = false;
+        console.error('Error cargando jobs procesados:', error);
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    })
   }
 
 }

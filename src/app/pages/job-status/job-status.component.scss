@@ -565,9 +565,29 @@
 .job-card--compact {
   padding: 0;
   border-radius: 12px;
+  position: relative;
 }
 
 /* ================== Responsive ================== */
+
+/* Overlay por tarjeta cuando hay acciones en curso */
+.job-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 10;
+
+  .overlay-text {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+  }
+}
 
 /* <= 1200px: compacta un poco, sigue repartido */
 @media (max-width: 1200px) {

@@ -1,0 +1,55 @@
+<div class="job-errors-dialog">
+  <div class="dialog-header">
+    <div class="header-icon">
+      <mat-icon>warning_amber</mat-icon>
+    </div>
+    <h2>Errores en el procesamiento</h2>
+    <p>{{ data.statusDescription || 'Encontramos incidencias que impidieron completar algunas imágenes.' }}</p>
+    <span class="job-id">Job ID: {{ data.jobId }}</span>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <section *ngIf="hasSummary" class="summary-card">
+      <div class="summary-title">
+        <mat-icon>analytics</mat-icon>
+        <span>Resumen de incidencias</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-item" *ngIf="data.summary?.total_errors !== undefined">
+          <span class="summary-label">Errores totales</span>
+          <span class="summary-value">{{ data.summary?.total_errors }}</span>
+        </div>
+        <div class="summary-item" *ngIf="data.summary?.failed_images_count !== undefined">
+          <span class="summary-label">Imágenes fallidas</span>
+          <span class="summary-value">{{ data.summary?.failed_images_count }}</span>
+        </div>
+      </div>
+      <ul *ngIf="data.summary?.common_issues?.length" class="summary-issues">
+        <li *ngFor="let issue of data.summary?.common_issues">{{ issue }}</li>
+      </ul>
+    </section>
+
+    <section class="errors-section">
+      <div class="errors-title">
+        <mat-icon color="warn">report</mat-icon>
+        <span>Errores recientes</span>
+      </div>
+
+      <div class="error-card" *ngFor="let item of data.errors; index as idx">
+        <div class="error-icon">
+          <mat-icon color="warn">error</mat-icon>
+        </div>
+        <div class="error-body">
+          <p class="error-message">{{ item.error }}</p>
+          <div class="error-meta" *ngIf="item.timestamp">
+            Registrado {{ item.timestamp | date:'M/d/yy, h:mm:ss a' }}
+          </div>
+        </div>
+      </div>
+    </section>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button type="button" (click)="close()">Cerrar</button>
+  </mat-dialog-actions>
+</div>

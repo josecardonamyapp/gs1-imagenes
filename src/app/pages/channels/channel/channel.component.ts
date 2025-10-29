@@ -30,6 +30,8 @@ export class ChannelComponent {
     displayedColumns = this.columns.map(c => c.key);
     channels = new MatTableDataSource<any>();
     isLoading = false;
+    private isAdminUser = false;
+    private userGln: string | null = null;
 
     constructor(
         private productService: ProductService,
@@ -38,12 +40,32 @@ export class ChannelComponent {
     ) { }
 
     ngOnInit(): void {
+        this.resolveUserAccess();
         this.getProductChannels();
     }
 
-    async getProductChannels() {
+    private resolveUserAccess(): void {
+        this.userGln = (localStorage.getItem('gln') || '').trim() || null;
+        let roles: any[] = [];
+
+        try {
+            const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]');
+            roles = Array.isArray(storedRoles) ? storedRoles : [];
+        } catch {
+            roles = [];
+        }
+
+        this.isAdminUser = roles.some(
+            (role: any) =>
+                typeof role === 'string' &&
+                (role.toLowerCase() === 'systemadmin' || role.toLowerCase().includes('admin'))
+        );
+    }
+
+    getProductChannels() {
         this.isLoading = true;
-        this.productService.productGetChannels().subscribe({
+        const glnParam = !this.isAdminUser && this.userGln ? this.userGln : undefined;
+        this.productService.productGetChannels(glnParam).subscribe({
             next: (result: any) => {
                 this.isLoading = false;
                 if (typeof (result) === 'object') {

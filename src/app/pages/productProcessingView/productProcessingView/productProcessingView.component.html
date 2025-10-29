@@ -2,20 +2,49 @@
     <h2 class="mb-4 text-center">Detalle de los Productos Seleccionados</h2>
     <!-- <p class="text-center"><strong>GTIN:</strong> {{ gtin }}</p> -->
 
-    <div class="row mb-5 pb-4">
+    <div class="row g-4 align-items-start">
 
-        <div class="col-md-4" style="max-height: 700px; overflow-y: auto;">
+        <div class="col-lg-4 col-md-6 mb-4 mb-md-0" style="max-height: 700px; overflow-y: auto;">
             <div class="card product-card d-flex flex-row align-items-center p-3 shadow-sm mb-4"
                 *ngFor="let product of products">
-                <img *ngIf="product.images?.length" [src]="product.images[0]?.uniformresourceidentifier"
-                    alt="Primera imagen" style="width: 120px; height: 120px; object-fit: contain;" class="me-3" />
+                <div class="product-card__thumb-wrapper me-3">
+                    <img *ngIf="product.images?.length"
+                        [src]="product.images[0]?.displayUrl || product.images[0]?.uniformresourceidentifier"
+                        [class.rotate-90]="product.images[0]?.rotateCssFallback === true"
+                        alt="Primera imagen"
+                        class="product-card__thumb" />
+                    <span class="product-card__thumb-badge" *ngIf="product.images?.length">
+                        {{ product.images.length }}
+                    </span>
+                </div>
 
-                <div class="flex-grow-1">
-                    <p class="mb-2">GTIN: {{ product.gtin }}</p>
-                    <h5 class="mb-1">{{ product.producName }}</h5>
-                    <p class="mb-2">Disponibilidad de imágenes: {{ product.images.length }} / {{ product.images.length
-                        }}</p>
-
+                <div class="flex-grow-1 product-card__content">
+                    <div class="product-card__meta mb-2">
+                        <!-- <span class="meta-item">
+                            <span class="meta-label">GTIN</span>
+                            <span class="meta-value">{{ product.gtin }}</span>
+                        </span>
+                        <span class="meta-divider" *ngIf="product.gln"></span>
+                        <span class="meta-item" *ngIf="product.gln">
+                            <span class="meta-label">GLN</span>
+                            <span class="meta-value">{{ product.gln }}</span>
+                        </span> -->
+                        <div class="product-card__gtin">GTIN: {{ product.gtin }}</div>
+                        <div class="card-title fw-semibold text-dark fs-6 mb-3 text-capitalize">
+                            {{ product.producName }}
+                        </div>
+                        <div class="product-card__gln" *ngIf="product.gln">GLN: {{ product.gln }}</div>
+                        <div class="card-title fw-semibold text-dark fs-6 mb-3 text-capitalize">
+                            {{ product.partyNameProvider }}
+                        </div>
+                    </div>
+                    <!-- <h5 class="product-card__title mb-2">{{ product.producName }}</h5> -->
+                    <p class="product-card__availability mb-0">
+                        <mat-icon class="availability-icon">photo_library</mat-icon>
+                        Disponibilidad de imágenes:
+                        <strong>{{ product.images.length }}</strong>
+                        / {{ product.images.length }}
+                    </p>
                 </div>
             </div>
         </div>
@@ -54,13 +83,6 @@
 
                 </div>
 
-                <!-- Mensaje de error -->
-                <div *ngIf="showError" class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <mat-icon class="me-2">error</mat-icon>
-                    {{ errorMessage }}
-                    <button type="button" class="btn-close" (click)="hideError()" aria-label="Close"></button>
-                </div>
-
                 <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
                 <div *ngIf="selectedChannel" class="d-flex align-items-start gap-4 mb-3">
@@ -69,64 +91,6 @@
                             {{ selectedChannel.width }} x {{ selectedChannel.height }} {{ selectedChannel.extension }}
                         </span>
                     </div>
-
-                    <!-- <div class="dimension-meta">
-                        <div class="row text-center text-md-start">
-                            <div class="col">
-                                <div class="label">Width (Ancho)</div>
-                                <div class="value">{{ selectedChannel.width }}px</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">Height (Largo)</div>
-                                <div class="value">{{ selectedChannel.height }}px</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">Extension</div>
-                                <div class="value">{{ selectedChannel.extension }}</div>
-                            </div>
-                        </div>
-
-                        <div class="row text-center text-md-start mt-3">
-                            <div class="col">
-                                <div class="label">Density</div>
-                                <div class="value">{{ selectedChannel.dpi }}</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">Max size</div>
-                                <div class="value">{{ selectedChannel.max_size_kb }}</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">GLN</div>
-                                <div class="value">{{ selectedChannel.gln }}</div>
-                            </div>
-                        </div>
-                        <div class="row text-center text-md-start mt-3">
-                            <div class="col">
-                                <div class="label">Tipo de adaptación</div>
-                                <div class="value">{{ selectedChannel.adaptation_type }}</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">Prefijo</div>
-                                <div class="value">{{ selectedChannel.rename_base }}</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">Separador</div>
-                                <div class="value">{{ selectedChannel.rename_separator }}</div>
-                            </div>
-
-                        </div>
-                        <div class="row text-center text-md-start mt-3">
-                            <div class="col">
-                                <div class="label">Inicio de secuencia</div>
-                                <div class="value">{{ selectedChannel.rename_start_index }}</div>
-                            </div>
-                            <div class="col">
-                                <div class="label">Encarpetado</div>
-                                <div class="value">{{ selectedChannel.folder_structure }}</div>
-                            </div>
-
-                        </div>
-                    </div> -->
 
                     <div class="dimension-meta flex-grow-1">
                         <div class="row text-center text-md-start mt-3">
@@ -193,15 +157,19 @@
                                         placeholder="Adaptación" disabled>
                                 </mat-form-field>
                             </div>
-                            <!-- <div class="col-md-4">
-                                <div class="label">Prefijo</div>
-                                <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput [(ngModel)]="selectedChannel.rename_base" placeholder="Prefijo"
-                                        [disabled]="disabledFormChannel">
-                                </mat-form-field>
-                            </div> -->
+                                                        <!-- <div class="col-md-4">
+                                                                <div class="label">
+                                                                    <span matTooltip="Texto que se antepone al sufijo. Solo aplica cuando seleccionas renombrado personalizado." matTooltipPosition="above">
+                                                                        Base del Renombrado
+                                                                    </span>
+                                                                </div>
+                                                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                                                        <input matInput [(ngModel)]="selectedChannel.rename_base" name="rename_base" placeholder="ej: producto_, imagen_"
+                                                                                [disabled]="disabledFormChannel">
+                                                                </mat-form-field>
+                                                        </div> -->
                             <div class="col-md-4">
-                                <div class="label">Tipo de Renombrado</div>
+                                <div class="label"><span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado requiere cargar un archivo con codigos e identificadores." matTooltipPosition="above">Tipo de Renombrado</span></div>
                                 <mat-form-field appearance="outline" class="w-100">
                                     <!-- <mat-label>Tipo de Renombrado</mat-label> -->
                                     <select matNativeControl [(ngModel)]="selectedChannel.renaming_type"
@@ -211,7 +179,7 @@
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
-                                <div class="label">Separador</div>
+                                <div class="label"><span matTooltip="Caracter que separa la base del sufijo. Ejemplos: _, -, ." matTooltipPosition="above">Separador</span></div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput [(ngModel)]="selectedChannel.rename_separator"
                                         placeholder="Separador" [disabled]="disabledFormChannel">
@@ -221,7 +189,7 @@
 
                         <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
-                                <div class="label">Inicio de secuencia</div>
+                                <div class="label"><span matTooltip="Numero o letra con el que deseas iniciar la secuencia del sufijo." matTooltipPosition="above">Inicio de secuencia</span></div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.rename_start_index"
                                         placeholder="Start Index" [disabled]="disabledFormChannel">
@@ -244,29 +212,29 @@
                             </div> -->
                             <div class="col-md-4">
                                 <label class="form-label">Color de Fondo</label>
-                                <fieldset [disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
+                                <div class="fieldset-color-picker" role="group" [class.disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
                                     <div class="color-picker-row">
                                         <button type="button" class="color-circle transparent-option"
                                             [ngClass]="{'selected': selectedChannel.background_color === 'transparent'}"
                                             matTooltip="Fondo transparente"
-                                            (click)="selectedChannel.background_color = 'transparent'">
+                                            (click)="selectedChannel.background_color = 'transparent'" [disabled]="disabledFormChannel">
                                         </button>
                                         <button type="button" class="color-circle"
                                             [ngClass]="{'selected': selectedChannel.background_color === '#FFFFFF'}"
                                             [style.background]="'#FFFFFF'"
-                                            (click)="selectedChannel.background_color = '#FFFFFF'"></button>
+                                            (click)="selectedChannel.background_color = '#FFFFFF'" [disabled]="disabledFormChannel"></button>
                                         <!-- <button type="button" class="color-circle" [ngClass]="{'selected': channel.background_color === '#F8F8FF'}" [style.background]="'#F8F8FF'" (click)="channel.background_color = '#F8F8FF'"></button> -->
                                         <button type="button" class="color-circle"
                                             [ngClass]="{'selected': selectedChannel.background_color === '#FFE4F0'}"
                                             [style.background]="'#FFE4F0'"
-                                            (click)="selectedChannel.background_color = '#FFE4F0'"></button>
+                                            (click)="selectedChannel.background_color = '#FFE4F0'" [disabled]="disabledFormChannel"></button>
                                         <div class="custom-color-picker-wrapper d-flex align-items-center"
                                             style="gap:6px;">
                                             <label class="color-circle custom-picker position-relative"
                                                 [style.background]="isCustomColor(selectedChannel.background_color) ? selectedChannel.background_color : '#fff'">
                                                 <input #colorInput type="color" [value]="getCustomColorValue()"
                                                     (input)="setCustomColor($event)"
-                                                    style="opacity:0;width:0;height:0;position:absolute;" />
+                                                    style="opacity:0;width:0;height:0;position:absolute;" [disabled]="disabledFormChannel"/>
                                                 <mat-icon *ngIf="!isCustomColor(selectedChannel.background_color)"
                                                     class="plus-icon"
                                                     style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;color:#1976d2;pointer-events:none;">add</mat-icon>
@@ -278,7 +246,7 @@
                                             </mat-icon>
                                         </div>
                                     </div>
-                                </fieldset>
+                                </div>
                             </div>
 
 
@@ -328,16 +296,20 @@
                         2 vistas o todas las vistas disponibles de cada código</span>
                 </div>
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <mat-form-field appearance="outline" class="tiny-input">
-                        <input matInput type="text" placeholder="Ingrese valor o seleccione" [(ngModel)]="imagesPerGtin"
-                            [matAutocomplete]="auto">
+                    <div class="row">
+                         <div class="col-md-8 mt-3">
+                            <mat-form-field appearance="outline" class="tiny-input">
+                                <input matInput type="text" placeholder="Ingrese valor o seleccione" [(ngModel)]="imagesPerGtin"
+                                    [matAutocomplete]="auto">
 
-                        <mat-autocomplete #auto="matAutocomplete">
-                            <mat-option *ngFor="let item of imagesOptions" [value]="item.value">
-                                {{ item.label }}
-                            </mat-option>
-                        </mat-autocomplete>
-                    </mat-form-field>
+                                <mat-autocomplete #auto="matAutocomplete">
+                                    <mat-option *ngFor="let item of imagesOptions" [value]="item.value">
+                                        {{ item.label }}
+                                    </mat-option>
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+                    </div>
                 </div>
 
 

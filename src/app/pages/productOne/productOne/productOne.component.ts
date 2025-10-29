@@ -1,6 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ProductService } from 'src/app/services/product.service';
+import { ProductService, SyncfoniaProduct } from 'src/app/services/product.service';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -17,6 +17,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { Channel } from 'src/app/model/channel';
+import { ChannelRequiredDialogComponent } from 'src/app/components/dialogs/channel-required-dialog/channel-required-dialog.component';
+import { extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
     selector: 'app-productOne',
@@ -33,7 +36,8 @@ import { Channel } from 'src/app/model/channel';
         MatInputModule,
         MatCheckboxModule,
         MatFormFieldModule,
-        ProcessResultComponent
+        ProcessResultComponent,
+        MatTooltipModule
     ],
     templateUrl: './productOne.component.html',
     styleUrls: ['./productOne.component.scss']
@@ -58,11 +62,13 @@ export class ProductOneComponent {
     }
 
     gtin: string | null = null;
+    gln: string | null = null;
     product: any = {
         gtin: '',
         producName: '',
         images: '',
-        currentIndex: 0
+        currentIndex: 0,
+        gln: ''
     };
     channels: any[] = [];
 
@@ -92,6 +98,10 @@ export class ProductOneComponent {
     errorMessage = '';
     showError = false;
 
+    // Propiedades para control de acceso por rol
+    private isAdminUser = false;
+    private userGln: string | null = null;
+
     constructor(
         private route: ActivatedRoute,
         private productService: ProductService,
@@ -101,6 +111,17 @@ export class ProductOneComponent {
 
     ngOnInit(): void {
         this.gtin = this.route.snapshot.paramMap.get('gtin');
+        const productKey = this.route.snapshot.queryParamMap.get('productKey');
+        const glnParam = this.route.snapshot.queryParamMap.get('gln');
+
+        if (productKey) {
+            this.gtin = extractGtinFromKey(productKey) || this.gtin;
+            this.gln = extractGlnFromKey(productKey) || null;
+        } else if (glnParam) {
+            this.gln = glnParam && glnParam.trim() !== '' ? glnParam : null;
+        }
+
+        this.initializeUserAccess();
         this.getPrductByGtin();
         this.getProductChannels();
 
@@ -114,49 +135,83 @@ export class ProductOneComponent {
     }
 
     async getPrductByGtin() {
-        this.productService.productGetByGtin(this.gtin).subscribe({
-            next: (result) => {
-                if (typeof (result) === 'object') {
+        this.isGenerating = true;
+        const gtinList = this.gtin ? [this.gtin] : [];
+        this.productService.productGetByGtin(gtinList, this.gln ? { gln: this.gln } : undefined).subscribe({
+            next: async (response) => {
+                this.isGenerating = false;
+                const normalizedProducts = this.productService.normalizeTradeItemsResponse(response);
 
-                    result.data.entities.attributes.map((element: any) => {
-
-                        const files = Array.isArray(element?.referencedfileheader) ? element.referencedfileheader : [];
-
-                        // Filtrar solo URLs que sean imagenes
-                        const imageUrls = files.filter((file: any) => {
-                            const url = file?.uniformresourceidentifier ?? '';
-                            return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
-                        });
-
-                        const descriptionInfo = element?.tradeitemdescriptioninformation ?? {};
-                        const description = typeof descriptionInfo.descriptionshort === 'string'
-                            ? descriptionInfo.descriptionshort
-                            : typeof descriptionInfo.descriptionShort === 'string'
-                                ? descriptionInfo.descriptionShort
-                                : '';
-
-                        const obj = {
-                            gtin: element?.gtin ?? '',
-                            producName: description,
-                            images: imageUrls,
-                            currentIndex: 0
-                        }
-                        // if (element.referencedfileheader != null) {
-                        this.product = obj;
-                        // }
-                    });
-
-                    // if (this.product?.images?.length > 0) {
-                    //     this.selectedImage = this.product.images[0].uniformresourceidentifier;
-                    // }
-                    //(this.product);
+                if (!normalizedProducts.length) {
+                    return;
                 }
+
+                const firstProduct = normalizedProducts
+                    .map((product: SyncfoniaProduct) => {
+                        const images = Array.isArray(product.images)
+                            ? product.images.filter(image => {
+                                const url = image?.uniformresourceidentifier ?? '';
+                                return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                            })
+                            : [];
+
+                        if (!images.length) {
+                            return null;
+                        }
+
+                        return {
+                            gtin: product.gtin,
+                            producName: product.producName,
+                            images,
+                            currentIndex: 0,
+                            gln: product.gln ?? '',
+                            image360Path: product.image360Path ?? null,
+                            brandName: product.brandName ?? '',
+                            functionalName: product.functionalName ?? '',
+                            attributes: product.attributes
+                        };
+                    })
+                    .find((item): item is any => Boolean(item));
+
+                if (firstProduct) {
+                    // Mostrar inmediatamente sin esperar detección
+                    const preparedImages: any[] = firstProduct.images.map((image: any) => ({
+                        ...image,
+                        displayUrl: image?.uniformresourceidentifier,
+                        rotateCssFallback: false
+                    }));
+                    firstProduct.images = preparedImages;
+                    this.product = firstProduct;
+                    // Seleccionar la primera imagen por defecto para la vista previa
+                    if (preparedImages.length && !this.selectedImage) {
+                        this.selectedImage = preparedImages[0].displayUrl || preparedImages[0].uniformresourceidentifier;
+                    }
+
+                    // Detectar orientación en segundo plano
+                    preparedImages.forEach((img: any) => {
+                        this.checkIfImageNeedsRotation(img?.uniformresourceidentifier)
+                            .then(needsRotation => {
+                                img.rotateCssFallback = needsRotation;
+                            })
+                            .catch(() => {
+                                img.rotateCssFallback = false;
+                            });
+                    });
+                }
+            },
+            error: (error) => {
+                this.isGenerating = false;
+                console.error('Error in loading product:', error);
+            },
+            complete: () => {
+                this.isGenerating = false;
             }
-        })
+        });
     }
 
     async getProductChannels() {
-        this.productService.productGetChannels().subscribe({
+        const glnParam = !this.isAdminUser && this.userGln ? this.userGln : undefined;
+        this.productService.productGetChannels(glnParam).subscribe({
             next: (result: any) => {
                 if (typeof (result) === 'object') {
                     this.channels = result.channels;
@@ -164,6 +219,24 @@ export class ProductOneComponent {
                 }
             }
         })
+    }
+
+    private initializeUserAccess(): void {
+        this.userGln = (localStorage.getItem('gln') || '').trim() || null;
+        let roles: any[] = [];
+
+        try {
+            const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]');
+            roles = Array.isArray(storedRoles) ? storedRoles : [];
+        } catch {
+            roles = [];
+        }
+
+        this.isAdminUser = roles.some(
+            (role: any) =>
+                typeof role === 'string' &&
+                (role.toLowerCase() === 'systemadmin' || role.toLowerCase().includes('admin'))
+        );
     }
 
     getPreviewStyle(format: any, gln: any) {
@@ -364,17 +437,45 @@ export class ProductOneComponent {
         return !!(this.selectedChannel && Object.keys(this.selectedChannel).length > 0 && this.selectedChannel.provider);
     }
 
+    private ensureChannelSelected(message: string): boolean {
+        if (this.hasSelectedChannel()) {
+            return true;
+        }
+
+        this.hideError();
+        this.openChannelRequiredDialog(message);
+        return false;
+    }
+
+    private openChannelRequiredDialog(message: string): void {
+        const dialogRef = this.dialog.open(ChannelRequiredDialogComponent, {
+            width: '420px',
+            data: {
+                message,
+                confirmText: 'Aceptar',
+                cancelText: 'Cancelar'
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(shouldEnable => {
+            if (shouldEnable) {
+                this.disabledFormChannel = false;
+            }
+        });
+    }
+
     toggleImage(url: string) {
         this.selectedImage = this.selectedImage === url ? null : url;
         console.log('img seleccionada', this.selectedImage)
     }
 
     processImg() {
-        if (!this.hasSelectedChannel()) {
-            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
             return;
         }
 
+        const storedGln: string | null = localStorage.getItem('gln');
+        const glnNumber = storedGln ? Number(storedGln) : null;
         this.isGenerating = true;
 
         const productToSend = this.buildProductPayload();
@@ -390,7 +491,8 @@ export class ProductOneComponent {
             images_url: productToSend,
             channel_params: channelParams,
             no_background: this.selectedChannel.background_color == 'transparent' ? true : false,
-            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
+            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false,
+            gln: glnNumber
         };
 
         console.log('Processing image with channel:', params);
@@ -438,11 +540,12 @@ export class ProductOneComponent {
     }
 
     processImgNoBackground() {
-        if (!this.hasSelectedChannel()) {
-            this.showErrorMessage('Debe seleccionar un canal antes de procesar.');
+        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
             return;
         }
 
+        const storedGln: string | null = localStorage.getItem('gln');
+        const glnNumber = storedGln ? Number(storedGln) : null;
         this.isGenerating = true;
 
         const productToSend = this.buildProductPayload();
@@ -458,7 +561,8 @@ export class ProductOneComponent {
             images_url: productToSend,
             channel_params: channelParams,
             no_background: true,
-            transparent_background: true
+            transparent_background: true,
+            gln: glnNumber
         };
 
         console.log('Processing image with no background:', params);
@@ -510,8 +614,7 @@ export class ProductOneComponent {
             return;
         }
 
-        if (!this.hasSelectedChannel()) {
-            this.showErrorMessage('Debe seleccionar un canal antes de procesar con IA');
+        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar con IA')) {
             return;
         }
 
@@ -614,5 +717,60 @@ export class ProductOneComponent {
         if (!target.closest('.ai-button-container') && !target.closest('.ai-dropdown-menu')) {
             this.showAIMenu = false;
         }
+    }
+
+    /**
+     * Verifica si la imagen actualmente seleccionada necesita rotación
+     */
+    isSelectedImageHorizontal(): boolean {
+        if (!this.selectedImage || !this.product?.images) {
+            return false;
+        }
+        const img = this.product.images.find(
+            (i: any) => (i.displayUrl || i.uniformresourceidentifier) === this.selectedImage
+        );
+        return img?.rotateCssFallback === true;
+    }
+
+    /**
+     * Detecta si una imagen necesita rotación (es horizontal).
+     * Solo verifica dimensiones, NO usa Canvas para evitar problemas de CORS.
+     * La rotación se aplicará con CSS en el template.
+     */
+    private checkIfImageNeedsRotation(imageUrl: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            if (!imageUrl || typeof imageUrl !== 'string') {
+                resolve(false);
+                return;
+            }
+
+            const img = new Image();
+            
+            // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
+            const timeoutId = setTimeout(() => {
+                console.warn(`Timeout checking orientation: ${imageUrl}`);
+                resolve(false);
+            }, 5000);
+
+            img.onload = () => {
+                clearTimeout(timeoutId);
+                // Si es horizontal (ancho > alto), necesita rotación CSS
+                const isHorizontal = img.width > img.height;
+                if (isHorizontal) {
+                    console.log(`🔄 Horizontal image detected (${img.width}x${img.height}): ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                }
+                resolve(isHorizontal);
+            };
+
+            img.onerror = () => {
+                clearTimeout(timeoutId);
+                console.warn(`Error loading image for orientation check: ${imageUrl}`);
+                resolve(false); // Si falla, no rotar
+            };
+
+            // NO configurar crossOrigin - solo queremos dimensiones
+            // Esto evita errores CORS porque no accedemos a los píxeles
+            img.src = imageUrl;
+        });
     }
 }

@@ -8,11 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Catalog, CatalogProduct, CatalogProductApiEntry, CreateCatalogApiPayload } from 'src/app/model/catalog';
+import { createProductKey, extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
 import { CatalogService } from 'src/app/services/catalog.service';
 
 export interface CreateCatalogDialogData {
   availableProducts: CatalogProduct[];
-  preselectedGtins: string[];
+  preselectedProductKeys: string[];
 }
 
 @Component({
@@ -95,12 +96,18 @@ export class CreateCatalogDialogComponent implements OnChanges {
     this.emitSelectionChange();
   }
 
-  isProductSelected(gtin: string): boolean {
-    return this.selectedProducts.some(product => product.gtin === gtin);
+  isProductSelected(gtin: string, gln?: string | null): boolean {
+    const key = createProductKey(gtin, gln);
+    return this.selectedProducts.some(product => this.getProductKey(product) === key);
   }
 
-  removeSelected(gtin: string): void {
-    this.selectedProducts = this.selectedProducts.filter(product => product.gtin !== gtin);
+  removeSelected(product: CatalogProduct): void {
+    const key = this.getProductKey(product);
+    if (!key) {
+      return;
+    }
+
+    this.selectedProducts = this.selectedProducts.filter(item => this.getProductKey(item) !== key);
     this.emitSelectionChange();
   }
 
@@ -143,56 +150,127 @@ export class CreateCatalogDialogComponent implements OnChanges {
     });
   }
 
+  private getProductKey(product: CatalogProduct | null | undefined): string {
+    if (!product?.gtin) {
+      return '';
+    }
+
+    if (product.key) {
+      return product.key;
+    }
+
+    return createProductKey(product.gtin, product.gln);
+  }
+
+  private normalizeProduct(product: CatalogProduct | null | undefined): CatalogProduct | null {
+    if (!product?.gtin) {
+      return null;
+    }
+
+    const key = this.getProductKey(product);
+    return product.key === key ? product : { ...product, key };
+  }
+
+  private ensureProductList(products: CatalogProduct[] | null | undefined): CatalogProduct[] {
+    return (products ?? [])
+      .map(product => this.normalizeProduct(product))
+      .filter((product): product is CatalogProduct => Boolean(product));
+  }
+
+  private buildPlaceholderFromKey(key: string): CatalogProduct {
+    const gtin = extractGtinFromKey(key);
+    const gln = extractGlnFromKey(key);
+
+    return {
+      gtin,
+      gln: gln || undefined,
+      key,
+      name: '',
+      images: []
+    };
+  }
+
   private initializeStateFromData(options: { resetForm: boolean }): void {
-    const incomingAvailable = [...(this.data?.availableProducts ?? [])];
-    const preselected = new Set(this.data?.preselectedGtins ?? []);
-    const currentSelections = new Map(this.selectedProducts.map(product => [product.gtin, product]));
-    const previousAvailable = new Map(this.availableProducts.map(product => [product.gtin, product]));
+    const incomingAvailable = this.ensureProductList(this.data?.availableProducts);
+    const preselectedKeys = new Set(this.data?.preselectedProductKeys ?? []);
+
+    const currentSelections = new Map<string, CatalogProduct>();
+    this.selectedProducts.forEach(product => {
+      const normalized = this.normalizeProduct(product);
+      if (!normalized) {
+        return;
+      }
+
+      const key = this.getProductKey(normalized);
+      if (key) {
+        currentSelections.set(key, normalized);
+      }
+    });
+
+    const previousAvailable = new Map<string, CatalogProduct>();
+    this.availableProducts.forEach(product => {
+      const normalized = this.normalizeProduct(product);
+      if (!normalized) {
+        return;
+      }
+
+      const key = this.getProductKey(normalized);
+      if (key && !previousAvailable.has(key)) {
+        previousAvailable.set(key, normalized);
+      }
+    });
 
     const mergedAvailable: CatalogProduct[] = [];
-    const seenGtins = new Set<string>();
+    const seenKeys = new Set<string>();
 
-    incomingAvailable.forEach(product => {
-      if (!product || !product.gtin || seenGtins.has(product.gtin)) {
+    const addIfNew = (product: CatalogProduct | null | undefined) => {
+      const normalized = this.normalizeProduct(product);
+      if (!normalized) {
         return;
       }
-      mergedAvailable.push(product);
-      seenGtins.add(product.gtin);
-    });
 
-    previousAvailable.forEach(product => {
-      if (!product || !product.gtin || seenGtins.has(product.gtin)) {
+      const key = this.getProductKey(normalized);
+      if (!key || seenKeys.has(key)) {
         return;
       }
-      mergedAvailable.push(product);
-      seenGtins.add(product.gtin);
-    });
+
+      seenKeys.add(key);
+      mergedAvailable.push(normalized);
+    };
+
+    incomingAvailable.forEach(addIfNew);
+    previousAvailable.forEach(product => addIfNew(product));
 
     const nextSelected = new Map<string, CatalogProduct>();
 
     mergedAvailable.forEach(product => {
-      if (!product?.gtin) {
+      const key = this.getProductKey(product);
+      if (!key) {
         return;
       }
 
-      const existing = currentSelections.get(product.gtin);
+      const existing = currentSelections.get(key);
       if (existing) {
-        nextSelected.set(product.gtin, existing);
-      } else if (preselected.has(product.gtin)) {
-        nextSelected.set(product.gtin, product);
+        nextSelected.set(key, existing);
+      } else if (preselectedKeys.has(key)) {
+        nextSelected.set(key, product);
       }
     });
 
-    currentSelections.forEach((product, gtin) => {
-      if (!nextSelected.has(gtin)) {
-        nextSelected.set(gtin, product);
+    currentSelections.forEach((product, key) => {
+      if (!nextSelected.has(key)) {
+        nextSelected.set(key, product);
       }
     });
 
-    preselected.forEach(gtin => {
-      if (!nextSelected.has(gtin)) {
-        const fallback = currentSelections.get(gtin) ?? mergedAvailable.find(item => item.gtin === gtin);
-        nextSelected.set(gtin, fallback ?? { gtin, name: '', images: [] });
+    preselectedKeys.forEach(key => {
+      if (!nextSelected.has(key)) {
+        const fallback =
+          currentSelections.get(key) ??
+          mergedAvailable.find(item => this.getProductKey(item) === key) ??
+          null;
+
+        nextSelected.set(key, fallback ?? this.buildPlaceholderFromKey(key));
       }
     });
 
@@ -218,7 +296,11 @@ export class CreateCatalogDialogComponent implements OnChanges {
   }
 
   private emitSelectionChange(): void {
-    this.selectionChange.emit(this.selectedProducts.map(product => product.gtin));
+    const keys = this.selectedProducts
+      .map(product => this.getProductKey(product))
+      .filter(key => Boolean(key));
+
+    this.selectionChange.emit(Array.from(new Set(keys)));
   }
 
   private resetFormState(options: { resetForm?: boolean } = {}): void {

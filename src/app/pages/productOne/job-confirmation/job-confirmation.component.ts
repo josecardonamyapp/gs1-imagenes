@@ -12,7 +12,7 @@ import { catchError, startWith, switchMap } from 'rxjs/operators';
 
 type ProgressMode = 'determinate' | 'indeterminate';
 
-const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'ERROR', 'CANCELED', 'CANCELLED'];
+const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'ERROR', 'CANCELED', 'CANCELLED', 'COMPLETED_WITH_ERRORS'];
 
 interface JobErrorItem {
   error: string;
@@ -47,9 +47,11 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
   estimatedRemainingText: string | null = null;
   pollingError = false;
   jobErrors: JobErrorItem[] = [];
+  redirectCountdown: number | null = null;
 
   private pollingSub?: Subscription;
   private elapsedTimerSub?: Subscription;
+  private countdownIntervalId?: any;
   private elapsedStopped = false;
   private readonly startTimestamp = Date.now();
   private createdAt?: Date;
@@ -76,6 +78,7 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.stopCountdown();
     this.elapsedStopped = true;
     this.elapsedTimerSub?.unsubscribe();
   }
@@ -166,7 +169,7 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
     if (normalized === 'COMPLETED') {
       return 'check_circle';
     }
-    if (normalized === 'FAILED' || normalized === 'ERROR') {
+    if (normalized === 'COMPLETED_WITH_ERRORS' || normalized === 'ERROR' || normalized === 'FAILED' || normalized === 'CANCELLED') {
       return 'error';
     }
     if (normalized === 'PROCESSING' || normalized === 'IN_PROGRESS') {
@@ -181,6 +184,11 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
 
   closeModal(): void {
     this.dialogRef.close(false);
+  }
+
+  cancelRedirect(): void {
+    this.stopCountdown();
+    this.redirectCountdown = null;
   }
 
   private startPollingJob(jobId: string): void {
@@ -205,9 +213,21 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
         this.pollingError = false;
         this.applyJobPayload(result);
 
+        const upperStatus = (this.status || '').toUpperCase();
+        console.log(`Job ${jobId} status: ${upperStatus}`);
+
+        // 👇 Aquí se detecta cuando el job terminó (completado o con errores)
+        if (upperStatus === 'COMPLETED' || upperStatus === 'COMPLETED_WITH_ERRORS') {
+          // ✅ Eliminar el jobId del localStorage
+          const jobs = JSON.parse(localStorage.getItem('processing_jobs') || '[]');
+          const updatedJobs = jobs.filter((id: string) => id !== jobId);
+          localStorage.setItem('processing_jobs', JSON.stringify(updatedJobs));
+        }
+
         if (TERMINAL_STATUSES.includes((this.status || '').toUpperCase())) {
           this.stopPolling();
-    this.elapsedStopped = true;
+          this.elapsedStopped = true;
+          this.startRedirectCountdown();
         }
       });
   }
@@ -216,6 +236,32 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
     if (this.pollingSub) {
       this.pollingSub.unsubscribe();
       this.pollingSub = undefined;
+    }
+  }
+
+  private startRedirectCountdown(): void {
+    // Solo iniciar countdown si completó exitosamente o con errores
+    const upperStatus = (this.status || '').toUpperCase();
+    if (upperStatus !== 'COMPLETED' && upperStatus !== 'COMPLETED_WITH_ERRORS') {
+      return;
+    }
+
+    this.redirectCountdown = 5;
+
+    this.countdownIntervalId = setInterval(() => {
+      if (this.redirectCountdown === null || this.redirectCountdown <= 0) {
+        this.stopCountdown();
+        this.dialogRef.close(true); // Auto-navega a /jobs
+        return;
+      }
+      this.redirectCountdown--;
+    }, 1000);
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownIntervalId) {
+      clearInterval(this.countdownIntervalId);
+      this.countdownIntervalId = undefined;
     }
   }
 

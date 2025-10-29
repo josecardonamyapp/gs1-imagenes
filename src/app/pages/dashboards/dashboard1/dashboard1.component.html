@@ -5,18 +5,18 @@
         <button
           mat-stroked-button
           color="primary"
-          (click)="selectedGtins.length ? clearAllGtins() : selectAllGtins()"
+          (click)="selectedProductKeys.length ? clearAllGtins() : selectAllGtins()"
           [disabled]="!filtered.length"
         >
-          {{ selectedGtins.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+          {{ selectedProductKeys.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
         </button>
         <button
           mat-raised-button
           color="accent"
           (click)="processSelectedImages()"
-          [disabled]="selectedGtins.length <= 0"
+          [disabled]="selectedProductKeys.length <= 0"
         >
-          Procesar seleccionadas ({{ selectedGtins.length }})
+          Procesar seleccionadas ({{ selectedProductKeys.length }})
         </button>
       </div>
       <button
@@ -51,16 +51,16 @@
             id="btn-seleccionar-todos"
             mat-stroked-button
             color="primary"
-            (click)="selectedGtins.length ? clearAllGtins() : selectAllGtins()"
+            (click)="selectedProductKeys.length ? clearAllGtins() : selectAllGtins()"
             [disabled]="!filtered.length">
-            {{ selectedGtins.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+            {{ selectedProductKeys.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
           </button>
           <button
             mat-raised-button
             color="accent"
             (click)="processSelectedImages()"
-            [disabled]="selectedGtins.length <= 0">
-            Procesar seleccionadas ({{ selectedGtins.length }})
+            [disabled]="selectedProductKeys.length <= 0">
+            Procesar seleccionadas ({{ selectedProductKeys.length }})
           </button>
         </div>
       </header>
@@ -131,7 +131,7 @@
         </div>
       </section>
     </div>
-    <div class="product-list">
+    <div class="product-list" *ngIf="filtered.length > 0; else emptyState">
       <div class="product-results__toolbar">
         <div class="product-results__count">
           {{ filtered.length === 1 ? '1 producto disponible' : filtered.length + ' productos disponibles' }}
@@ -140,17 +140,17 @@
       </div>
       <div class="product-grid">
         <div class="product-grid__list">
-          <ng-container *ngFor="let product of filtered; trackBy: trackByGtin">
+          <ng-container *ngFor="let product of filtered; trackBy: trackByGtin" >
             <div class="product-grid__item">
               <div
                 class="card product-card h-100 shadow border-0 rounded-4 bg-white text-start"
                 role="button"
-                [class.selected]="isGtinSelected(product.gtin)"
+                [class.selected]="isGtinSelected(product.gtin, product.gln)"
                 [class.no-click]="!product.images?.length"
                 [attr.aria-label]="'Seleccionar ' + (product.producName || product.gtin)"
-                [attr.aria-pressed]="isGtinSelected(product.gtin)"
-                (click)="product.images?.length && toggleGtinSelection(product.gtin)">
-                <div class="product-card__selected-flag" *ngIf="isGtinSelected(product.gtin)">
+                [attr.aria-pressed]="isGtinSelected(product.gtin, product.gln)"
+                (click)="product.images?.length && toggleGtinSelection(product.gtin, product.gln)">
+                <div class="product-card__selected-flag" *ngIf="isGtinSelected(product.gtin, product.gln)">
                   <mat-icon>check_circle</mat-icon>
                   <span>Seleccionado</span>
                 </div>
@@ -158,9 +158,9 @@
                   <mat-checkbox
                     class="selection-checkbox"
                     color="primary"
-                    [checked]="isGtinSelected(product.gtin)"
+                    [checked]="isGtinSelected(product.gtin, product.gln)"
                     [disabled]="!product.images?.length"
-                    (change)="onProductSelectionChange($event, product.gtin)">
+                    (change)="onProductSelectionChange($event, product.gtin, product.gln)">
                   </mat-checkbox>
                 </div>
                 <div class="product-card__status">
@@ -173,10 +173,11 @@
                   <div class="carousel-loading-overlay" *ngIf="product.isImageLoading">
                     <mat-progress-spinner diameter="32" strokeWidth="4" mode="indeterminate"></mat-progress-spinner>
                   </div>
-                  <ng-container *ngIf="product.images?.length > 0; else noImage">
+                  <ng-container *ngIf="product.images?.length > 0; else noImage" id="carousel-imagenes">
                     <div class="position-relative">
                       <img
-                        [src]="product.images[product.currentIndex]?.uniformresourceidentifier"
+                        [src]="product.images[product.currentIndex]?.displayUrl || product.images[product.currentIndex]?.uniformresourceidentifier"
+                        [class.rotate-90]="product.images[product.currentIndex]?.rotateCssFallback === true"
                         alt="{{ product.producName }}"
                         loading="lazy"
                         class="card-img-top p-3 mx-auto d-block mb-3"
@@ -201,11 +202,15 @@
                 </div>
                 <div class="card-body d-flex flex-column pb-3">
                   <div class="product-card__gtin">GTIN: {{ product.gtin }}</div>
-                  <h4 class="card-title fw-semibold text-dark fs-6 mb-3 text-capitalize">
+                  <div class="card-title fw-semibold text-dark fs-6 mb-3 text-capitalize">
                     {{ product.producName }}
-                  </h4>
-                  <div class="product-card__actions mt-auto">
-                    <button mat-button class="custom-orange-button" (click)="goToDetail(product.gtin)">
+                  </div>
+                  <div class="product-card__gln" *ngIf="product.gln">GLN: {{ product.gln }}</div>
+                  <div class="card-title fw-semibold text-dark fs-6 mb-3 text-capitalize">
+                    {{ product.partyNameProvider }}
+                  </div>
+                  <div class="product-card__actions mt-auto" id="informacion-tarjeta">
+                    <button mat-button class="custom-orange-button" (click)="goToDetail(product.gtin, product.gln)">
                       <strong class="gs1-subtitles">Mas info</strong>
                       <span class="arrow-icon">&gt;</span>
                     </button>
@@ -234,7 +239,7 @@
     <!-- ...el contenido de la grid y panel ya está incluido arriba, elimina duplicados y cierres innecesarios... -->
 
   <ng-template #emptyState>
-    <div class="product-results__empty">
+    <div class="product-results__empty" id="tarjeta-producto-1">
       <mat-icon>search</mat-icon>
       <h3>Comienza pegando los codigos que quieres procesar</h3>
       <p>Cuando encontremos coincidencias, apareceran aqui para que puedas seleccionarlas.</p>

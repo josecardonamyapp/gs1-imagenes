@@ -1,0 +1,17 @@
+<h2 mat-dialog-title class="channel-required-dialog__title">
+  <mat-icon color="warn">warning</mat-icon>
+  <span>{{ title }}</span>
+</h2>
+
+<mat-dialog-content class="channel-required-dialog__content">
+  <p>{{ message }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="onCancel()">
+    {{ cancelText }}
+  </button>
+  <button mat-raised-button color="primary" type="button" (click)="onConfirm()">
+    {{ confirmText }}
+  </button>
+</mat-dialog-actions>
