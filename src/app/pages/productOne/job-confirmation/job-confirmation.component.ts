@@ -117,6 +117,27 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
     return this.statusMessage || this.status || 'Procesando imágenes...';
   }
 
+  get estimatedTimeMessage(): string {
+    // Si el job ya terminó
+    if (this.isTerminalStatus) {
+      return 'Procesamiento finalizado.';
+    }
+    
+    // Si hay tiempo estimado del API, usar ese valor como máximo del rango
+    if (this.estimatedRemainingSeconds != null && this.estimatedRemainingSeconds > 0) {
+      const minutes = Math.ceil(this.estimatedRemainingSeconds / 60);
+      return `Este proceso puede tardar entre 1 y ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}. Mantén esta ventana abierta mientras completamos el procesamiento.`;
+    }
+    
+    // Si hay texto de tiempo restante personalizado
+    if (this.estimatedRemainingText) {
+      return `Tiempo estimado: ${this.estimatedRemainingText}. Mantén esta ventana abierta mientras completamos el procesamiento.`;
+    }
+    
+    // Mensaje por defecto si no hay estimación del API
+    return 'Este proceso puede tardar entre 2 y 5 minutos. Mantén esta ventana abierta mientras completamos el procesamiento.';
+  }
+
   get heroSpinnerMode(): ProgressMode {
     return this.isTerminalStatus ? 'determinate' : 'indeterminate';
   }

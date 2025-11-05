@@ -425,7 +425,17 @@ export class JobStatusComponent implements OnInit, OnDestroy {
   }
 
   getUpdatedAt(job: any): Date | string {
-    return job?.timing?.updated_at || job?.timing?.created_at || new Date();
+    // Primero intenta con updated_at en nivel raíz o dentro de timing
+    const updatedAt = job?.updated_at || job?.timing?.updated_at;
+    if (updatedAt) return updatedAt;
+    
+    // Si no hay updated_at, usa created_at en nivel raíz o dentro de timing
+    const createdAt = job?.created_at || job?.timing?.created_at;
+    if (createdAt) return createdAt;
+    
+    // Fallback a la fecha actual (esto solo debería pasar si no hay ningún campo de fecha)
+    console.warn('Job sin fecha de actualización ni creación:', job?.job_id);
+    return new Date();
   }
 
   /** Obtiene una miniatura: puedes ajustar estas fuentes según tu modelo */
@@ -560,8 +570,6 @@ export class JobStatusComponent implements OnInit, OnDestroy {
             const status = (job.status || '').toUpperCase();
             return status !== 'PROCESSING' && status !== 'IN_PROGRESS' && status !== 'LOADING';
           });
-          //('Jobs cargados desde localStorage:', this.jobs);
-          // this.initializeSelectedChannel();
         }
       },
       error: (error: any) => {

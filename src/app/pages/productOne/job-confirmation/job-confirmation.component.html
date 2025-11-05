@@ -47,7 +47,7 @@
       </div>
 
       <p class="hero-note">
-        Este proceso puede tardar entre 2 y 5 minutos. Mantén esta ventana abierta mientras completamos el procesamiento.
+        {{ estimatedTimeMessage }}
       </p>
 
       <div class="hero-redirect-notice" *ngIf="redirectCountdown !== null">
@@ -118,7 +118,7 @@
 
     <div class="info-box">
       <mat-icon>info</mat-icon>
-      <p>El procesamiento continÃºa en segundo plano. Puedes abrir la vista de Jobs para ver mÃ¡s detalles o descargar los resultados cuando finalice.</p>
+      <p>El procesamiento continúa en segundo plano. Puedes abrir la vista de Jobs para ver más detalles o descargar los resultados cuando finalice.</p>
     </div>
   </div>
 

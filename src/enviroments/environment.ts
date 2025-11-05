@@ -40,7 +40,7 @@
    cognitoAppClientId: '1vssagkagt57pfu7t9mg4em22l',
    identityPoolId: 'us-east-1:3ba2c1be-376a-4599-9c0c-810463f9bb9d',
    cognitoDomain: 'gs1-imagenes-prod.auth.us-east-1.amazoncognito.com',
-   cognitoRedirectSignIn: 'http:',
+   cognitoRedirectSignIn: 'https://d2llewd7ov3p5q.cloudfront.net',
    cognitoRedirectSignOut: 'https://d2llewd7ov3p5q.cloudfront.net',
    cognitoResponseType: 'code',
    apicadenas: 'http://apisync.syncfonia.com/',
