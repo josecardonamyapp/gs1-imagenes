@@ -6,7 +6,7 @@
         <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
             <div class="preview-pane">
                 <div class="thumbnail-list me-3">
-                    <img *ngFor="let img of product.images" 
+                    <img *ngFor="let img of product.images"
                         [src]="img.displayUrl || img.uniformresourceidentifier"
                         [class.rotate-90]="img.rotateCssFallback === true"
                         (click)="toggleImage(img.displayUrl || img.uniformresourceidentifier)"
@@ -16,7 +16,7 @@
 
                 <div class="preview-stage text-center">
                     <ng-container *ngIf="selectedImage; else noImage">
-                        <img [src]="selectedImage" 
+                        <img [src]="selectedImage"
                              [class.rotate-90]="isSelectedImageHorizontal()"
                              alt="{{ product.producName }}" class="main-preview-img img-fluid" />
                     </ng-container>
@@ -190,7 +190,7 @@
 
                         <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
-                                <span class="label" matTooltip="Numero o letra con el que deseas iniciar la secuencia del sufijo." matTooltipPosition="above">Inicio de secuencia</span>
+                                <span class="label" matTooltip="Numero o letra con el que deseas iniciar la secuencia del sufijo." matTooltipPosition="above">Inicio de secuencia de sufijo</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" name="channelStartIndex"
                                         [(ngModel)]="selectedChannel.rename_start_index"
@@ -248,7 +248,8 @@
                             </div>
 
                             <div class="col-md-4">
-                                <span class="label">Encarpetado</span>
+                                <!-- <span class="label"> <span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado requiere cargar un archivo con codigos e identificadores." matTooltipPosition="above"></span> Encarpetado</span> -->
+                                <span class="label" matTooltip="Selecciona la forma en como deseas que se guarden las imagenes una vez procesadas" matTooltipPosition="above">Encarpetado</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <mat-select name="channelFolderStructure" [(ngModel)]="selectedChannel.folder_structure"
                                         [ngModelOptions]="{ standalone: true }" [disabled]="disabledFormChannel">

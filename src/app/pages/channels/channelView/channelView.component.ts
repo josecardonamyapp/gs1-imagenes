@@ -68,7 +68,7 @@ export class ChannelViewComponent {
         max_size_kb: 0,
         adaptation_type: '',
         renaming_type: 'standard',
-        rename_base: '',
+        rename_base: 'GTIN',
         rename_separator: '',
         rename_start_index: 0,
         folder_structure: 1,
