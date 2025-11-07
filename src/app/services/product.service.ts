@@ -196,7 +196,8 @@ export class ProductService {
                 return headers ? [headers] : [];
             })
             .map((header: any) => this.normalizeFileHeader(header))
-            .filter((header: ({ uniformresourceidentifier: string } & Record<string, any>) | null): header is { uniformresourceidentifier: string } & Record<string, any> => Boolean(header));
+            .filter((header: ({ uniformresourceidentifier: string } & Record<string, any>) | null): header is { uniformresourceidentifier: string } & Record<string, any> => Boolean(header))
+            .sort((a: any, b: any) => this.compareImagesByFileName(a.filename, b.filename));
 
         const descriptionEntry = extensions.find((ext: any) => this.isType(ext?.__type, 'TradeItemDescriptionInformation'));
         const descriptionShort = this.extractTextFromSection(descriptionEntry?.DescriptionShort);
@@ -340,5 +341,38 @@ export class ProductService {
             return false;
         }
         return value.toLowerCase().includes(expected.toLowerCase());
+    }
+
+    /**
+     * Compara dos nombres de archivo para ordenar imágenes por el número después del primer punto.
+     * Ejemplo: "00875754004785.1.jpg" → orden 1, "00875754004785.2.jpg" → orden 2
+     */
+    private compareImagesByFileName(filenameA: string, filenameB: string): number {
+        const extractOrderNumber = (filename: string): number => {
+            if (!filename || typeof filename !== 'string') {
+                return 999999; // Archivos sin nombre van al final
+            }
+
+            // Extraer el número después del primer punto
+            // Ejemplo: "00875754004785.1.jpg" → "1"
+            const match = filename.match(/\.(\d+)\./);
+            
+            if (match && match[1]) {
+                return parseInt(match[1], 10);
+            }
+
+            // Si no hay patrón .N., intentar extraer cualquier número
+            const numberMatch = filename.match(/(\d+)/);
+            if (numberMatch && numberMatch[1]) {
+                return parseInt(numberMatch[1], 10);
+            }
+
+            return 999999; // Si no hay número, va al final
+        };
+
+        const orderA = extractOrderNumber(filenameA);
+        const orderB = extractOrderNumber(filenameB);
+
+        return orderA - orderB;
     }
 }

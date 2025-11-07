@@ -17,6 +17,7 @@ import { CreateCatalogDialogComponent, CreateCatalogDialogData } from './create-
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TourModule } from 'src/app/core/tour/tour.module';
+import * as EXIF from 'exif-js';
 
 // import { DriverTourService } from 'src/app/core/tour/driver-tour.service';
 
@@ -61,6 +62,7 @@ export class AppDashboard1Component implements OnInit {
   catalogPanelData: CreateCatalogDialogData | null = null;
   catalogSelected: any = null;
   showToolbar = true;
+  hiddenProductsCount = 0; // Contador de productos ocultos por imágenes inaccesibles
 
   @ViewChild('toolbar') toolbarRef?: ElementRef<HTMLDivElement>;
   @ViewChild('toolbarToggle', { static: true }) toolbarToggleRef?: ElementRef<HTMLButtonElement>;
@@ -248,6 +250,9 @@ export class AppDashboard1Component implements OnInit {
       return;
     }
 
+    // Resetear contador de productos ocultos
+    this.hiddenProductsCount = 0;
+
     this.isGenerating = true;
 
     try {
@@ -293,6 +298,9 @@ export class AppDashboard1Component implements OnInit {
 
         const filteredProducts = fetchedProducts.filter((product): product is any => product !== null);
 
+        // Validar accesibilidad de imágenes y filtrar productos (ESPERAR a que termine)
+        await this.validateAndFilterProductImages(filteredProducts);
+
         // Detectar orientación en segundo plano después de mostrar los productos
         filteredProducts.forEach((product) => {
           product.images.forEach((image: any, index: number) => {
@@ -310,9 +318,13 @@ export class AppDashboard1Component implements OnInit {
         const productsByKey = new Map(
           this.products.map(product => [createProductKey(product.gtin, product.gln), product])
         );
-        filteredProducts.forEach((product: any) => {
-          productsByKey.set(createProductKey(product.gtin, product.gln), product);
-        });
+        
+        // Solo agregar productos que tienen imágenes accesibles
+        filteredProducts
+          .filter(product => product.images && product.images.length > 0)
+          .forEach((product: any) => {
+            productsByKey.set(createProductKey(product.gtin, product.gln), product);
+          });
 
         this.products = Array.from(productsByKey.values()).map(product => this.prepareProductForDisplay(product));
         console.log('products', this.products)
@@ -342,6 +354,20 @@ export class AppDashboard1Component implements OnInit {
           this.filtered = this.products.map(product => this.prepareProductForDisplay(product));
         }
         this.autoToggleToolbarOnResults();
+
+        // Mostrar mensaje si hay productos con imágenes inaccesibles
+        if (this.hiddenProductsCount > 0) {
+          const mensaje = this.hiddenProductsCount === 1 
+            ? '1 producto fue omitido porque todas sus imágenes son inaccesibles.'
+            : `${this.hiddenProductsCount} productos fueron omitidos porque todas sus imágenes son inaccesibles.`;
+          
+          this.snackBar.open(mensaje, 'Cerrar', {
+            duration: 5000,
+            verticalPosition: 'top',
+            horizontalPosition: 'center',
+            panelClass: ['warning-snackbar']
+          });
+        }
 
         if (fetchedProducts.length !== normalizedProducts.length) {
           this.snackBar.open('Varios GTINs fueron omitidos durante la carga, ya que no disponen de imágenes asociadas en Syncfonía.', 'Cerrar', {
@@ -819,6 +845,39 @@ export class AppDashboard1Component implements OnInit {
   }
 
   /**
+   * Valida accesibilidad de imágenes y filtra productos/imágenes inaccesibles
+   */
+  private async validateAndFilterProductImages(products: any[]): Promise<void> {
+    for (const product of products) {
+      const accessibleImages = [];
+      let inaccessibleCount = 0;
+
+      // Validar cada imagen del producto
+      for (const image of product.images) {
+        const imageUrl = image?.uniformresourceidentifier;
+        if (imageUrl) {
+          const isAccessible = await this.checkImageAccessibility(imageUrl);
+          if (isAccessible) {
+            accessibleImages.push(image);
+          } else {
+            inaccessibleCount++;
+          }
+        }
+      }
+
+      // Actualizar el producto con las imágenes accesibles
+      product.images = accessibleImages;
+      product.inaccessibleImagesCount = inaccessibleCount;
+      product.hasInaccessibleImages = inaccessibleCount > 0;
+
+      // Si el producto no tiene imágenes accesibles, incrementar contador
+      if (accessibleImages.length === 0) {
+        this.hiddenProductsCount++;
+      }
+    }
+  }
+
+  /**
    * Detecta si una imagen necesita rotación (es horizontal).
    * Solo verifica dimensiones, NO usa Canvas para evitar problemas de CORS.
    * La rotación se aplicará con CSS en el template.
@@ -831,31 +890,82 @@ export class AppDashboard1Component implements OnInit {
       }
 
       const img = new Image();
+      img.crossOrigin = 'anonymous'; // Necesario para leer EXIF
       
       // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
       const timeoutId = setTimeout(() => {
-        console.warn(`Timeout checking orientation: ${imageUrl}`);
+        console.warn(`⏱️ Timeout checking EXIF orientation: ${imageUrl}`);
         resolve(false);
       }, 5000);
 
       img.onload = () => {
         clearTimeout(timeoutId);
-        // Si es horizontal (ancho > alto), necesita rotación CSS
-        const isHorizontal = img.width > img.height;
-        if (isHorizontal) {
-          console.log(`🔄 Horizontal image detected (${img.width}x${img.height}): ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+        
+        try {
+          // Leer datos EXIF
+          EXIF.getData(img as any, function(this: any) {
+            const orientation = EXIF.getTag(this, 'Orientation');
+            
+            // Valores de orientación EXIF:
+            // 1 = Normal (0°)
+            // 3 = Rotada 180°
+            // 6 = Rotada 90° CW (necesita rotación)
+            // 8 = Rotada 90° CCW (necesita rotación)
+            const needsRotation = orientation === 6 || orientation === 8;
+            
+            if (orientation) {
+              console.log(`� EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+            } else {
+              console.log(`ℹ️ No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+            }
+            
+            resolve(needsRotation);
+          });
+        } catch (error) {
+          console.warn(`⚠️ Error reading EXIF data: ${imageUrl}`, error);
+          resolve(false); // Si falla la lectura EXIF, no rotar
         }
-        resolve(isHorizontal);
       };
 
       img.onerror = () => {
         clearTimeout(timeoutId);
-        console.warn(`Error loading image for orientation check: ${imageUrl}`);
+        console.warn(`❌ Error loading image for EXIF check: ${imageUrl}`);
         resolve(false); // Si falla, no rotar
       };
 
-      // NO configurar crossOrigin - solo queremos dimensiones
-      // Esto evita errores CORS porque no accedemos a los píxeles
+      img.src = imageUrl;
+    });
+  }
+
+  /**
+   * Verifica si una imagen es accesible (no retorna Access Denied)
+   */
+  private checkImageAccessibility(imageUrl: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!imageUrl || typeof imageUrl !== 'string') {
+        resolve(false);
+        return;
+      }
+
+      const img = new Image();
+      
+      // Timeout: si tarda más de 5 segundos, considerar inaccesible
+      const timeoutId = setTimeout(() => {
+        console.warn(`⏱️ Timeout checking accessibility: ${imageUrl}`);
+        resolve(false);
+      }, 5000);
+
+      img.onload = () => {
+        clearTimeout(timeoutId);
+        resolve(true); // ✅ Imagen accesible
+      };
+
+      img.onerror = () => {
+        clearTimeout(timeoutId);
+        console.warn(`❌ Image not accessible: ${imageUrl}`);
+        resolve(false); // ❌ Imagen inaccesible (Access Denied, 404, etc.)
+      };
+
       img.src = imageUrl;
     });
   }

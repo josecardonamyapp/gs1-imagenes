@@ -20,6 +20,8 @@ import { Channel } from 'src/app/model/channel';
 import { ChannelRequiredDialogComponent } from 'src/app/components/dialogs/channel-required-dialog/channel-required-dialog.component';
 import { extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import * as EXIF from 'exif-js';
 
 @Component({
     selector: 'app-productOne',
@@ -37,7 +39,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         MatCheckboxModule,
         MatFormFieldModule,
         ProcessResultComponent,
-        MatTooltipModule
+        MatTooltipModule,
+        MatAutocompleteModule
     ],
     templateUrl: './productOne.component.html',
     styleUrls: ['./productOne.component.scss']
@@ -73,11 +76,15 @@ export class ProductOneComponent {
     channels: any[] = [];
 
     selectedFormat = 'Sams';
-    imagesPerGtin = 1;
+    imagesPerGtin: number | string = 1;
+    imagesOptions = [
+        { value: 1, label: '1' },
+        { value: 2, label: '2' },
+        { value: 'Todos', label: 'Todos' }
+    ];
 
     selectedTab = 0;
 
-    selectedImage: string | null = null;
     // selectedChannel: Channel | null = null;
     selectedChannel = {} as Channel;
     selectedChannelProvider: string | null = null;
@@ -101,6 +108,9 @@ export class ProductOneComponent {
     // Propiedades para control de acceso por rol
     private isAdminUser = false;
     private userGln: string | null = null;
+
+    // Propiedad para renombrado personalizado
+    customRenameValue: string = '';
 
     constructor(
         private route: ActivatedRoute,
@@ -182,10 +192,6 @@ export class ProductOneComponent {
                     }));
                     firstProduct.images = preparedImages;
                     this.product = firstProduct;
-                    // Seleccionar la primera imagen por defecto para la vista previa
-                    if (preparedImages.length && !this.selectedImage) {
-                        this.selectedImage = preparedImages[0].displayUrl || preparedImages[0].uniformresourceidentifier;
-                    }
 
                     // Detectar orientación en segundo plano
                     preparedImages.forEach((img: any) => {
@@ -281,6 +287,13 @@ export class ProductOneComponent {
 
     cancelChannel(): void {
         this.disabledFormChannel = true;
+    }
+
+    onRenamingTypeChange(): void {
+        // Si se cambia a "Estándar", resetear el valor personalizado
+        if (this.selectedChannel.renaming_type !== 'custom') {
+            this.customRenameValue = '';
+        }
     }
 
     private initializeSelectedChannel(): void {
@@ -416,21 +429,25 @@ export class ProductOneComponent {
     }
 
     private buildProductPayload(): any {
-        if (this.selectedImage) {
-            const selectedImgObj = this.product.images.find(
-                (img: any) => img.uniformresourceidentifier === this.selectedImage
-            );
-
-            return {
-                ...this.product,
-                images: selectedImgObj ? [selectedImgObj] : []
-            };
-        }
-
-        return {
+        // Crear una copia del producto
+        const productCopy = {
             ...this.product,
             images: Array.isArray(this.product.images) ? [...this.product.images] : []
         };
+
+        // Aplicar filtro de imágenes por GTIN
+        let imagesPerGtinNum = Number(this.imagesPerGtin);
+
+        if (this.imagesPerGtin === 'Todos') {
+            // Procesar todas las imágenes
+            productCopy.images = productCopy.images;
+        }
+        else if (!isNaN(imagesPerGtinNum) && imagesPerGtinNum > 0) {
+            // Procesar solo las primeras N imágenes
+            productCopy.images = productCopy.images.slice(0, imagesPerGtinNum);
+        }
+
+        return productCopy;
     }
 
     hasSelectedChannel(): boolean {
@@ -464,11 +481,6 @@ export class ProductOneComponent {
         });
     }
 
-    toggleImage(url: string) {
-        this.selectedImage = this.selectedImage === url ? null : url;
-        console.log('img seleccionada', this.selectedImage)
-    }
-
     processImg() {
         if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
             return;
@@ -487,13 +499,18 @@ export class ProductOneComponent {
             return;
         }
 
-        const params = {
+        const params: any = {
             images_url: productToSend,
             channel_params: channelParams,
             no_background: true,
             transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false,
             gln: glnNumber
         };
+
+        // Agregar valor de renombrado personalizado si existe
+        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameValue.trim()) {
+            params.custom_rename_value = this.customRenameValue.trim();
+        }
 
         console.log('Processing image with channel:', params);
         this.productService.productProcessImg(params).subscribe({
@@ -557,13 +574,18 @@ export class ProductOneComponent {
             return;
         }
 
-        const params = {
+        const params: any = {
             images_url: productToSend,
             channel_params: channelParams,
             no_background: true,
             not_apply_transformations: true,
             gln: glnNumber
         };
+
+        // Agregar valor de renombrado personalizado si existe
+        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameValue.trim()) {
+            params.custom_rename_value = this.customRenameValue.trim();
+        }
 
         console.log('Processing image with no background:', params);
         this.productService.productProcessImg(params).subscribe({
@@ -634,11 +656,16 @@ export class ProductOneComponent {
         channelParams.height = 1024;
         channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
 
-        const params = {
+        const params: any = {
             images_url: productToSend,
             channel_params: channelParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
         };
+
+        // Agregar valor de renombrado personalizado si existe
+        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameValue.trim()) {
+            params.custom_rename_value = this.customRenameValue.trim();
+        }
 
         console.log('Processing image with AI background:', params);
         this.productService.productProcessImg(params).subscribe({
@@ -720,15 +747,14 @@ export class ProductOneComponent {
     }
 
     /**
-     * Verifica si la imagen actualmente seleccionada necesita rotación
+     * Verifica si la primera imagen necesita rotación
      */
     isSelectedImageHorizontal(): boolean {
-        if (!this.selectedImage || !this.product?.images) {
+        if (!this.product?.images || this.product.images.length === 0) {
             return false;
         }
-        const img = this.product.images.find(
-            (i: any) => (i.displayUrl || i.uniformresourceidentifier) === this.selectedImage
-        );
+        // Siempre usar la primera imagen
+        const img = this.product.images[0];
         return img?.rotateCssFallback === true;
     }
 
@@ -745,31 +771,49 @@ export class ProductOneComponent {
             }
 
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // Necesario para leer EXIF
 
             // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
             const timeoutId = setTimeout(() => {
-                console.warn(`Timeout checking orientation: ${imageUrl}`);
+                console.warn(`⏱️ Timeout checking EXIF orientation: ${imageUrl}`);
                 resolve(false);
             }, 5000);
 
             img.onload = () => {
                 clearTimeout(timeoutId);
-                // Si es horizontal (ancho > alto), necesita rotación CSS
-                const isHorizontal = img.width > img.height;
-                if (isHorizontal) {
-                    console.log(`🔄 Horizontal image detected (${img.width}x${img.height}): ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                
+                try {
+                    // Leer datos EXIF
+                    EXIF.getData(img as any, function(this: any) {
+                        const orientation = EXIF.getTag(this, 'Orientation');
+                        
+                        // Valores de orientación EXIF:
+                        // 1 = Normal (0°)
+                        // 3 = Rotada 180°
+                        // 6 = Rotada 90° CW (necesita rotación)
+                        // 8 = Rotada 90° CCW (necesita rotación)
+                        const needsRotation = orientation === 6 || orientation === 8;
+                        
+                        if (orientation) {
+                            console.log(`� EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                        } else {
+                            console.log(`ℹ️ No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                        }
+                        
+                        resolve(needsRotation);
+                    });
+                } catch (error) {
+                    console.warn(`⚠️ Error reading EXIF data: ${imageUrl}`, error);
+                    resolve(false); // Si falla la lectura EXIF, no rotar
                 }
-                resolve(isHorizontal);
             };
 
             img.onerror = () => {
                 clearTimeout(timeoutId);
-                console.warn(`Error loading image for orientation check: ${imageUrl}`);
+                console.warn(`❌ Error loading image for EXIF check: ${imageUrl}`);
                 resolve(false); // Si falla, no rotar
             };
 
-            // NO configurar crossOrigin - solo queremos dimensiones
-            // Esto evita errores CORS porque no accedemos a los píxeles
             img.src = imageUrl;
         });
     }

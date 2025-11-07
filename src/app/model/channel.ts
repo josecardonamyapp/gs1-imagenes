@@ -15,5 +15,6 @@ export interface Channel {
     rename_start_index: number;
     folder_structure: number;
     background: boolean;
-    transparent_background: boolean
+    transparent_background: boolean;
+    margin?: number; // Margen en píxeles
 }

@@ -41,6 +41,14 @@
       (click)="$event.stopPropagation()"
     >
       <header class="dashboard-header">
+        <!-- Banner informativo de productos ocultos -->
+        <div class="info-banner" *ngIf="hiddenProductsCount > 0">
+          <mat-icon>info</mat-icon>
+          <span>
+            {{ hiddenProductsCount }} producto(s) oculto(s) por no tener imágenes accesibles
+          </span>
+        </div>
+
         <div class="dashboard-header__info">
           <h1>Redimensiona las fotos de producto para tus socios comerciales</h1>
           <p>Asegúrate que los códigos existan en Syncfonía con sus respectivas imágenes</p>
@@ -154,6 +162,13 @@
                   <mat-icon>check_circle</mat-icon>
                   <span>Seleccionado</span>
                 </div>
+
+                <!-- Badge de advertencia para imágenes inaccesibles -->
+                <div class="product-card__warning-badge" *ngIf="product.hasInaccessibleImages">
+                  <mat-icon>warning</mat-icon>
+                  <span>{{ product.inaccessibleImagesCount }} imagen(es) no disponible(s)</span>
+                </div>
+
                 <div class="selection-indicator" *ngIf="product.images?.length" (click)="$event.stopPropagation()">
                   <mat-checkbox
                     class="selection-checkbox"

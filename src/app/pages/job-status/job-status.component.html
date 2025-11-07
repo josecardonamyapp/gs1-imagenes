@@ -57,7 +57,6 @@
               <mat-option value="errors" *ngIf="job.errors?.length || job.error_summary?.total_errors">
                 Ver detalle de errores
               </mat-option>
-              <!-- <mat-option value="regenerate">Regenerar</mat-option> -->
               <mat-option value="delete" [disabled]="job.status === 'PROCESSING'">Eliminar</mat-option>
             </mat-select>
           </mat-form-field>
@@ -129,7 +128,7 @@
               <mat-option value="errors" *ngIf="job.errors?.length || job.error_summary?.total_errors">
                 Ver detalle de errores
               </mat-option>
-              <!-- <mat-option value="regenerate">Regenerar</mat-option> -->
+              <mat-option value="regenerate">Regenerar</mat-option>
               <mat-option value="delete" [disabled]="job.status === 'PROCESSING'">Eliminar</mat-option>
             </mat-select>
           </mat-form-field>

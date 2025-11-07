@@ -4,7 +4,7 @@
 
     <div class="row g-4 align-items-start">
 
-        <div class="col-lg-4 col-md-6 mb-4 mb-md-0" style="max-height: 700px; overflow-y: auto;">
+        <div class="col-lg-4 col-md-6 mb-4 mb-md-0 product-images-container">
             <div class="card product-card d-flex flex-row align-items-center p-3 shadow-sm mb-4"
                 *ngFor="let product of products">
                 <div class="product-card__thumb-wrapper me-3">
@@ -56,7 +56,7 @@
 
                     <mat-form-field appearance="outline" class="w-100">
                         <mat-label>Canales</mat-label>
-                        <mat-select name="channel" required (selectionChange)="getChannel($event)">
+                        <mat-select name="channel" required [(ngModel)]="selectedChannel.provider" (selectionChange)="getChannel($event)">
                             <mat-option *ngFor="let channel of channels" [value]="channel.provider">
                                 {{ channel.provider }}
                             </mat-option>
@@ -95,14 +95,14 @@
                     <div class="dimension-meta flex-grow-1">
                         <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
-                                <div class="label">Width (Ancho)</div>
+                                <div class="label" matTooltip="Ancho de la imagen en píxeles" matTooltipPosition="above">Width (Ancho)</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.width"
                                         placeholder="Width (px)" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
                             <div class="col-md-4">
-                                <div class="label">Height (Largo)</div>
+                                <div class="label" matTooltip="Alto de la imagen en píxeles" matTooltipPosition="above">Height (Largo)</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.height"
                                         placeholder="Height (px)" [disabled]="disabledFormChannel">
@@ -110,25 +110,28 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="label">Extension</div>
-                                <!-- <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput [(ngModel)]="selectedChannel.extension" placeholder="Extension">
-                                </mat-form-field> -->
                                 <mat-form-field appearance="outline" class="w-100">
-                                    <mat-label>Extensión</mat-label>
-                                    <select matNativeControl [(ngModel)]="selectedChannel.extension" name="extension"
-                                        required [disabled]="disabledFormChannel">
-                                        <option value="jpg">jpg</option>
-                                        <option value="jpeg">jpeg</option>
-                                        <option value="png">png</option>
-                                        <option value="webp">webp</option>
-                                    </select>
+                                    <mat-select [(ngModel)]="selectedChannel.extension" name="extension"
+                                        [disabled]="disabledFormChannel">
+                                        <mat-option value="jpg">jpg</mat-option>
+                                        <mat-option value="jpeg">jpeg</mat-option>
+                                        <mat-option value="png">png</mat-option>
+                                        <mat-option value="webp">webp</mat-option>
+                                    </mat-select>
                                 </mat-form-field>
                             </div>
                         </div>
 
                         <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
-                                <div class="label">Density (DPIs)</div>
+                                <div class="label" matTooltip="Margen en píxeles que se agregará alrededor de la imagen" matTooltipPosition="above">Margen</div>
+                                <mat-form-field appearance="outline" class="w-100 small-input">
+                                    <input matInput type="number" [(ngModel)]="selectedChannel.margin"
+                                        placeholder="Margen (px)" [disabled]="disabledFormChannel" min="0">
+                                </mat-form-field>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="label" matTooltip="Resolución en puntos por pulgada" matTooltipPosition="above">Density (DPIs)</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" [(ngModel)]="selectedChannel.dpi" placeholder="DPI"
                                         [disabled]="disabledFormChannel">
@@ -141,15 +144,16 @@
                                         placeholder="Max KB" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
+                        </div>
+
+                        <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
                                 <div class="label">GLN</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput [(ngModel)]="selectedChannel.gln" placeholder="GLN" disabled>
                                 </mat-form-field>
                             </div>
-                        </div>
 
-                        <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
                                 <div class="label">Tipo de adaptación</div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
@@ -171,13 +175,36 @@
                             <div class="col-md-4">
                                 <div class="label"><span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado requiere cargar un archivo con codigos e identificadores." matTooltipPosition="above">Tipo de Renombrado</span></div>
                                 <mat-form-field appearance="outline" class="w-100">
-                                    <!-- <mat-label>Tipo de Renombrado</mat-label> -->
-                                    <select matNativeControl [(ngModel)]="selectedChannel.renaming_type"
-                                        name="renaming_type" required [disabled]="disabledFormChannel">
-                                        <option value="Estándar">Estándar</option>
-                                    </select>
+                                    <mat-select [(ngModel)]="selectedChannel.renaming_type"
+                                        name="renaming_type" [disabled]="disabledFormChannel"
+                                        (selectionChange)="onRenamingTypeChange()">
+                                        <mat-option value="Estándar">Estándar</mat-option>
+                                        <mat-option value="custom">Personalizado</mat-option>
+                                    </mat-select>
                                 </mat-form-field>
+                                
+                                <!-- Botones para renombrado personalizado -->
+                                <div class="custom-renaming-actions d-flex gap-2 mt-2" *ngIf="selectedChannel.renaming_type === 'custom'">
+                                    <button mat-raised-button color="primary" class="flex-grow-1" type="button" 
+                                            (click)="fileInput.click()" [disabled]="disabledFormChannel">
+                                        <mat-icon class="me-2">upload_file</mat-icon>
+                                        Cargar Archivo
+                                    </button>
+                                    <button mat-stroked-button color="primary" class="flex-grow-1" type="button" 
+                                            (click)="downloadCustomTemplate()">
+                                        <mat-icon class="me-2">download</mat-icon>
+                                        Descargar Plantilla
+                                    </button>
+                                    <input #fileInput type="file" accept=".csv,.xlsx,.xls,.txt" class="d-none" 
+                                           (change)="onCustomFileSelected($event)" />
+                                </div>
+                                <div class="custom-renaming-file text-muted small mt-2" *ngIf="customRenameFileName && selectedChannel.renaming_type === 'custom'">
+                                    Archivo seleccionado: <strong>{{ customRenameFileName }}</strong>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
                                 <div class="label"><span matTooltip="Caracter que separa la base del sufijo. Ejemplos: _, -, ." matTooltipPosition="above">Separador</span></div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
@@ -185,9 +212,7 @@
                                         placeholder="Separador" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
-                        </div>
 
-                        <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
                                 <div class="label"><span matTooltip="Numero o letra con el que deseas iniciar la secuencia del sufijo." matTooltipPosition="above">Inicio de secuencia</span></div>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
@@ -195,21 +220,22 @@
                                         placeholder="Start Index" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
-                            <!-- <div class="col-md-4">
-                                <div class="label">Encarpetado</div>
-                                <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput [(ngModel)]="selectedChannel.folder_structure"
-                                        placeholder="Folder structure" disabled>
-                                </mat-form-field>
-                            </div> -->
-                            <!-- <div class="col-md-4">
-                                <div class="label">Color de Fondo</div>
-                                <mat-form-field appearance="outline" class="w-100">
-                                    <input matInput type="color" [(ngModel)]="selectedChannel.background_color"
-                                        name="background_color" [disabled]="disabledFormChannel" />
 
+                            <div class="col-md-4">
+                                <div class="label">Encarpetado</div>
+                                <mat-form-field appearance="outline" class="w-100">
+                                    <mat-select [(ngModel)]="selectedChannel.folder_structure"
+                                        [disabled]="disabledFormChannel">
+                                        <mat-option *ngFor="let structure of folderStructures"
+                                            [value]="structure.value">
+                                            {{ structure.label }}
+                                        </mat-option>
+                                    </mat-select>
                                 </mat-form-field>
-                            </div> -->
+                            </div>
+                        </div>
+
+                        <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
                                 <label class="form-label">Color de Fondo</label>
                                 <div class="fieldset-color-picker" role="group" [class.disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
@@ -248,21 +274,8 @@
                                     </div>
                                 </div>
                             </div>
-
-
-                            <div class="col-md-4">
-                                <div class="label">Encarpetado</div>
-                                <mat-form-field appearance="outline" class="w-100">
-                                    <mat-select [(ngModel)]="selectedChannel.folder_structure"
-                                        [disabled]="disabledFormChannel">
-                                        <mat-option *ngFor="let structure of folderStructures"
-                                            [value]="structure.value">
-                                            {{ structure.label }}
-                                        </mat-option>
-                                    </mat-select>
-                                </mat-form-field>
-                            </div>
                         </div>
+
                     </div>
 
                 </div>

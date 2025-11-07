@@ -18,6 +18,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { JobErrorDetailsDialogComponent } from './job-error-details-dialog/job-error-details-dialog.component';
 import { catchError } from 'rxjs/operators';
+import { createProductKey } from '../../utils/product-key';
 
 const JSZip = require('jszip');
 
@@ -467,23 +468,41 @@ export class JobStatusComponent implements OnInit, OnDestroy {
         this.openErrorDetails(job);
         break;
       case 'regenerate': {
-        // Navegar a productProcessingView con los parametros del canal y los GTIN procesados
+        // Navegar a productProcessingView con los parametros del canal y los productKeys (GTIN+GLN)
         const params = { ...(job.channel_params || {}) };
-        if (Array.isArray(job.processed_files)) {
+        
+        if (Array.isArray(job.processed_files) && job.processed_files.length > 0) {
+          // Extraer GTINs únicos de los archivos procesados
           const gtins = job.processed_files
             .map((file: any) => {
               const match = file.output_filename.match(/\d{8,14}/);
               return match ? match[0] : null;
             })
             .filter((gtin: string | null, idx: number, arr: any[]) => gtin && arr.indexOf(gtin) === idx);
+          
           if (gtins.length > 0) {
+            // Obtener el GLN del canal (si existe)
+            const channelGln = job.channel_params?.gln || null;
+            
+            // Crear productKeys usando la utilidad createProductKey
+            const productKeys = gtins.map((gtin: string) => {
+              // Formato: "gtin::gln"
+              return `${gtin}::${channelGln || ''}`;
+            });
+            
             delete params.gtin;
+            delete params.gln;
+            
             const queryParams: any = { ...params };
-            (queryParams as any)['gtin'] = gtins;
+            queryParams['productKey'] = productKeys;
+            
+            console.log('Regenerating with productKeys:', productKeys);
             this.router.navigate(['/product-catalog'], { queryParams: queryParams });
             break;
           }
         }
+        
+        // Fallback: si no hay archivos procesados, navegar solo con los params del canal
         this.router.navigate(['/product-catalog'], { queryParams: params });
         break;
       }

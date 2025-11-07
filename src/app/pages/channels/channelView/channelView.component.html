@@ -63,7 +63,9 @@
                                     <mat-form-field appearance="outline" class="w-100">
                                         <mat-label>Width (Ancho)</mat-label>
                                         <input matInput type="number" [(ngModel)]="channel.width" name="width" required
-                                            min="1" />
+                                            min="1" 
+                                            matTooltip="Ancho de la imagen en píxeles"
+                                            matTooltipPosition="above" />
                                         <span matSuffix class="p-6">px</span>
                                     </mat-form-field>
                                 </div>
@@ -71,7 +73,9 @@
                                     <mat-form-field appearance="outline" class="w-100">
                                         <mat-label>Height (Alto)</mat-label>
                                         <input matInput type="number" [(ngModel)]="channel.height" name="height"
-                                            required min="1" />
+                                            required min="1" 
+                                            matTooltip="Alto de la imagen en píxeles"
+                                            matTooltipPosition="above" />
                                         <span matSuffix class="p-6">px</span>
                                     </mat-form-field>
                                 </div>
@@ -100,14 +104,26 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <mat-form-field appearance="outline" class="w-100">
+                                        <mat-label>Margen</mat-label>
+                                        <input matInput type="number" [(ngModel)]="channel.margin" name="margin"
+                                            min="0" 
+                                            matTooltip="Margen en píxeles que se agregará alrededor de la imagen"
+                                            matTooltipPosition="above" />
+                                        <span matSuffix class="p-6">px</span>
+                                    </mat-form-field>
+                                </div>
+                                <div class="col-md-4 mb-3">
                                     <mat-form-field appearance="outline" class="w-100">
                                         <mat-label>Density (DPIs)</mat-label>
                                         <input matInput type="number" [(ngModel)]="channel.dpi" name="dpi" required
-                                            min="1" />
+                                            min="1" 
+                                            matTooltip="Resolución en puntos por pulgada"
+                                            matTooltipPosition="above" />
                                     </mat-form-field>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <mat-form-field appearance="outline" class="w-100">
                                         <mat-label>Tamaño Máximo</mat-label>
                                         <input matInput type="number" [(ngModel)]="channel.max_size_kb"

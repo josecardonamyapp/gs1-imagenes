@@ -23,6 +23,8 @@ import { ChannelRequiredDialogComponent } from 'src/app/components/dialogs/chann
 import { firstValueFrom } from 'rxjs';
 import { createProductKey, extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import * as XLSX from 'xlsx';
+import * as EXIF from 'exif-js';
 
 @Component({
     selector: 'app-productOne',
@@ -103,6 +105,11 @@ export class productProcessingViewComponent {
     // Propiedades para control de acceso por rol
     private isAdminUser = false;
     private userGln: string | null = null;
+
+    // Propiedades para archivo de renombrado personalizado
+    customRenameFile: File | null = null;
+    customRenameFileName: string | null = null;
+    customRenameData: any[] = []; // JSON con los datos del Excel parseado
 
     constructor(
         private route: ActivatedRoute,
@@ -280,9 +287,9 @@ export class productProcessingViewComponent {
     }
 
     /**
-     * Detecta si una imagen necesita rotación (es horizontal).
-     * Solo verifica dimensiones, NO usa Canvas para evitar problemas de CORS.
-     * La rotación se aplicará con CSS en el template.
+     * Detecta si una imagen necesita rotación basándose en metadatos EXIF.
+     * Los valores EXIF Orientation 6 y 8 indican que la imagen necesita rotación.
+     * Si no hay datos EXIF, asume que la orientación es correcta.
      */
     private checkIfImageNeedsRotation(imageUrl: string): Promise<boolean> {
         return new Promise((resolve) => {
@@ -292,31 +299,49 @@ export class productProcessingViewComponent {
             }
 
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // Necesario para leer EXIF
 
             // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
             const timeoutId = setTimeout(() => {
-                console.warn(`Timeout checking orientation: ${imageUrl}`);
+                console.warn(`⏱️ Timeout checking EXIF orientation: ${imageUrl}`);
                 resolve(false);
             }, 5000);
 
             img.onload = () => {
                 clearTimeout(timeoutId);
-                // Si es horizontal (ancho > alto), necesita rotación CSS
-                const isHorizontal = img.width > img.height;
-                if (isHorizontal) {
-                    console.log(`🔄 Horizontal image detected (${img.width}x${img.height}): ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                
+                try {
+                    // Leer datos EXIF
+                    EXIF.getData(img as any, function(this: any) {
+                        const orientation = EXIF.getTag(this, 'Orientation');
+                        
+                        // Valores de orientación EXIF:
+                        // 1 = Normal (0°)
+                        // 3 = Rotada 180°
+                        // 6 = Rotada 90° CW (necesita rotación)
+                        // 8 = Rotada 90° CCW (necesita rotación)
+                        const needsRotation = orientation === 6 || orientation === 8;
+                        
+                        if (orientation) {
+                            console.log(`� EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                        } else {
+                            console.log(`ℹ️ No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                        }
+                        
+                        resolve(needsRotation);
+                    });
+                } catch (error) {
+                    console.warn(`⚠️ Error reading EXIF data: ${imageUrl}`, error);
+                    resolve(false); // Si falla la lectura EXIF, no rotar
                 }
-                resolve(isHorizontal);
             };
 
             img.onerror = () => {
                 clearTimeout(timeoutId);
-                console.warn(`Error loading image for orientation check: ${imageUrl}`);
+                console.warn(`❌ Error loading image for EXIF check: ${imageUrl}`);
                 resolve(false); // Si falla, no rotar
             };
 
-            // NO configurar crossOrigin - solo queremos dimensiones
-            // Esto evita errores CORS porque no accedemos a los píxeles
             img.src = imageUrl;
         });
     }
@@ -539,23 +564,60 @@ export class productProcessingViewComponent {
         return [];
     }
 
-    hexToRgb(hex: string): Array<number> {
-        // Eliminar el símbolo '#' si está presente
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
+    private hexToRgb(hex: string): number[] {
+        if (!hex) {
+            return [255, 255, 255];
+        }
+
+        const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
+        if (normalized.length !== 6) {
+            return [255, 255, 255];
+        }
+
+        const r = parseInt(normalized.slice(0, 2), 16);
+        const g = parseInt(normalized.slice(2, 4), 16);
+        const b = parseInt(normalized.slice(4, 6), 16);
+
+        if ([r, g, b].some(value => Number.isNaN(value))) {
+            return [255, 255, 255];
+        }
 
         return [r, g, b];
     }
 
-    componentToHex(c: number): string {
+    private componentToHex(c: number): string {
         const hex = c.toString(16);
         return hex.length === 1 ? '0' + hex : hex;
     }
 
-    rgbToHex(backgroundColor: string): string {
-        const [r, g, b] = backgroundColor.split(',').map(Number);
-        return '#' + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
+    private rgbToHex(color: string): string {
+        if (!color) {
+            return '#FFFFFF';
+        }
+
+        const parts = color.split(',').map(part => parseInt(part.trim(), 10));
+        if (parts.length !== 3 || parts.some(part => Number.isNaN(part))) {
+            return '#FFFFFF';
+        }
+
+        return '#' + parts.map(part => this.componentToHex(part)).join('');
+    }
+
+    private normalizeBackgroundColor(color: string | null | undefined): string {
+        if (!color) {
+            return '255,255,255';
+        }
+
+        if (color.startsWith('#')) {
+            return this.hexToRgb(color).join(',');
+        }
+
+        const parts = color.split(',').map(part => part.trim());
+        if (parts.length === 3 && parts.every(part => part !== '' && !Number.isNaN(Number(part)))) {
+            return parts.join(',');
+        }
+
+        return color;
     }
 
     async getProductChannels() {
@@ -648,25 +710,32 @@ export class productProcessingViewComponent {
         const storedGln: string | null = localStorage.getItem('gln');
         const glnNumber = storedGln ? Number(storedGln) : null;
         this.isGenerating = true;
-        // console.log('Processing image with channel:', this.selectedFolderStructure);
-        // console.log('Selected channel:', this.getGtins());
-        if(this.selectedChannel.background_color != 'transparent'){
-            this.selectedChannel.background_color = this.hexToRgb(this.selectedChannel.background_color).join(',') // Convert hex to RGB
-        }
 
         console.log('Selected folder structure:', this.selectedChannel);
         const productNames = product.map((p: any) => p.producName).join(', ');
 
+        // Crear una copia de selectedChannel con el background_color normalizado
+        const channelParams = {
+            ...this.selectedChannel,
+            background_color: this.selectedChannel.background_color !== 'transparent' 
+                ? this.normalizeBackgroundColor(this.selectedChannel.background_color)
+                : 'transparent'
+        };
 
-        const params = {
+        const params: any = {
             images_url: product,
-            channel_params: this.selectedChannel,
+            channel_params: channelParams,
             no_background: true,
             // transparent_background: false,
             is_multiple_processing: true,
             product_names: productNames,
             gln: glnNumber,
             transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
+        };
+
+        // Agregar datos de renombrado personalizado si existen
+        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameData.length > 0) {
+            params.custom_rename_data = this.customRenameData;
         }
 
         console.log('Processing image with params:', params);
@@ -745,7 +814,7 @@ export class productProcessingViewComponent {
         const glnNumber = storedGln ? Number(storedGln) : null;
 
         this.isGenerating = true;
-        const params = {
+        const params: any = {
             images_url: product,
             channel_params: this.selectedChannel,
             no_background: true,
@@ -754,6 +823,11 @@ export class productProcessingViewComponent {
             product_names: product.map((p: any) => p.producName).join(', '),
             gln: glnNumber,
             // folder_structure: this.selectedFolderStructure,
+        };
+
+        // Agregar datos de renombrado personalizado si existen
+        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameData.length > 0) {
+            params.custom_rename_data = this.customRenameData;
         }
 
         this.productService.productProcessImg(params).subscribe({
@@ -851,10 +925,15 @@ export class productProcessingViewComponent {
         channelParams.height = 1024;
         channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
 
-        const params = {
+        const params: any = {
             images_url: product,
             channel_params: channelParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
+        };
+
+        // Agregar datos de renombrado personalizado si existen
+        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameData.length > 0) {
+            params.custom_rename_data = this.customRenameData;
         }
 
         console.log('Processing image with AI background:', params);
@@ -956,6 +1035,84 @@ export class productProcessingViewComponent {
                 this.disabledFormChannel = false;
             }
         });
+    }
+
+    onRenamingTypeChange(): void {
+        // Si se cambia a "Estándar", resetear el archivo cargado
+        if (this.selectedChannel.renaming_type !== 'custom') {
+            this.customRenameFile = null;
+            this.customRenameFileName = null;
+            this.customRenameData = [];
+        }
+    }
+
+    // Métodos para plantilla de renombrado personalizado
+    onCustomFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement | null;
+        const file = input?.files && input.files.length > 0 ? input.files[0] : null;
+        
+        if (!file) {
+            this.customRenameFile = null;
+            this.customRenameFileName = null;
+            this.customRenameData = [];
+            return;
+        }
+
+        this.customRenameFile = file;
+        this.customRenameFileName = file.name;
+
+        // Leer y parsear el archivo Excel
+        this.parseExcelFile(file);
+    }
+
+    private parseExcelFile(file: File): void {
+        const reader = new FileReader();
+        
+        reader.onload = (e: any) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Leer la primera hoja
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convertir a JSON
+                const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+                
+                // Validar y mapear las columnas esperadas
+                this.customRenameData = jsonData.map((row: any) => ({
+                    gtin: row['Gtin'] || row['GTIN'] || row['gtin'] || '',
+                    renameId: row['ID de Renombre'] || row['ID_de_Renombre'] || row['renameId'] || '',
+                    applyToFolder: row['Aplicar Renombre a Carpeta'] || row['Aplicar_Renombre_a_Carpeta'] || row['applyToFolder'] || false
+                })).filter(item => item.gtin); // Filtrar filas sin GTIN
+                
+                console.log('Excel parseado correctamente:', this.customRenameData);
+                this.showErrorMessage(`Archivo cargado: ${this.customRenameData.length} registros encontrados`);
+            } catch (error) {
+                console.error('Error al parsear el archivo Excel:', error);
+                this.showErrorMessage('Error al leer el archivo. Verifique que sea un archivo Excel válido.');
+                this.customRenameData = [];
+            }
+        };
+
+        reader.onerror = () => {
+            this.showErrorMessage('Error al leer el archivo');
+            this.customRenameData = [];
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+
+    downloadCustomTemplate(): void {
+        const templateUrl = 'https://gs1-images-process-bucket.s3.us-east-1.amazonaws.com/template/Plantilla+Renombrado.xlsx';
+        
+        const anchor = document.createElement('a');
+        anchor.href = templateUrl;
+        anchor.download = 'Plantilla Renombrado.xlsx';
+        anchor.target = '_blank'; // Abrir en nueva pestaña si la descarga directa falla
+        anchor.rel = 'noopener noreferrer';
+        anchor.click();
     }
 
     @HostListener('document:click', ['$event'])

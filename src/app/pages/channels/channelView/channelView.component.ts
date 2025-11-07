@@ -63,12 +63,13 @@ export class ChannelViewComponent {
         width: 0,
         height: 0,
         extension: '',
+        margin: 0,
         dpi: 0,
         background_color: 'transparent', // Default transparent background
         max_size_kb: 0,
         adaptation_type: '',
         renaming_type: 'standard',
-        rename_base: '',
+        rename_base: 'GTIN',
         rename_separator: '',
         rename_start_index: 0,
         folder_structure: 1,
@@ -113,6 +114,7 @@ export class ChannelViewComponent {
                     width: parseInt(params['width'] || '0'),
                     height: parseInt(params['height'] || '0'),
                     extension: params['extension'] || '',
+                    margin: parseInt(params['margin'] || '0'),
                     dpi: parseInt(params['dpi'] || '0'),
                     background_color: this.rgbToHex(params['background_color']) || 'transparent', // Default transparent background
                     max_size_kb: parseInt(params['max_size_kb'] || '0'),
