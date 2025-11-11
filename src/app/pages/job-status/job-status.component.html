@@ -23,7 +23,7 @@
             {{ job.total_gtins + ' GTINs Procesandose...' }}
           </div>
           <div class="title" *ngIf="job.status == 'COMPLETED'" [matTooltip]="job.total_gtins + ' GTINs Procesados'">
-            {{ job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.total_gtins + ' GTIN Procesado' }}
+            {{ job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.gtin }}
           </div>
           <div class="gtin">GTIN: {{ job.total_gtins }} </div>
         </div>
@@ -93,10 +93,10 @@
           <div class="title" *ngIf="job.status != 'COMPLETED'" [matTooltip]="job.total_gtins + ' GTINs Procesandose…'">
             {{ job.total_gtins + ' GTINs Procesandose...' }}
           </div>
-          <div class="title" *ngIf="job.status == 'COMPLETED'" [matTooltip]="job.total_gtins + ' GTINs Procesados'">
-            {{ job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.total_gtins + ' GTIN Procesado' }}
+          <div class="title" *ngIf="job.status == 'COMPLETED'" [matTooltip]="job.product_name || (job.total_gtins + ' GTINs Procesados')">
+            {{ job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.product_name }}
           </div>
-          <div class="gtin">GTIN: {{ job.total_gtins }} </div>
+          <div class="gtin">GTIN: {{ job.total_gtins > 1 ? job.total_gtins : job.gtin }} </div>
         </div>
 
         <!-- 3) Actualizado + Fecha -->
