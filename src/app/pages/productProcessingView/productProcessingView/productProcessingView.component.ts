@@ -784,7 +784,7 @@ export class productProcessingViewComponent {
 
         const params: any = {
             images_url: product,
-            channels_params: channelsParams,
+            channel_params: channelsParams,
             no_background: true,
             is_multiple_processing: true,
             product_names: productNames,
@@ -882,7 +882,7 @@ export class productProcessingViewComponent {
 
         const params: any = {
             images_url: product,
-            channels_params: channelsParams,
+            channel_params: channelsParams,
             no_background: true,
             not_apply_transformations: true,
             is_multiple_processing: true,
@@ -996,7 +996,7 @@ export class productProcessingViewComponent {
 
         const params: any = {
             images_url: product,
-            channels_params: channelsParams,
+            channel_params: channelsParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
         };
 

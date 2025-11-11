@@ -577,7 +577,7 @@ export class ProductOneComponent {
 
         const params: any = {
             images_url: productToSend,
-            channels_params: channelsParams,
+            channel_params: channelsParams,
             no_background: true,
             transparent_background: channelsParams.some(ch => ch.background_color === 'transparent'),
             gln: glnNumber
@@ -652,7 +652,7 @@ export class ProductOneComponent {
 
         const params: any = {
             images_url: productToSend,
-            channels_params: channelsParams,
+            channel_params: channelsParams,
             no_background: true,
             not_apply_transformations: true,
             gln: glnNumber
@@ -735,7 +735,7 @@ export class ProductOneComponent {
 
         const params: any = {
             images_url: productToSend,
-            channels_params: channelsParams,
+            channel_params: channelsParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
         };
 
