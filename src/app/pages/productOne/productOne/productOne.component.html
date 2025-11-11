@@ -46,10 +46,10 @@
                 <div class="d-flex align-items-center gap-2">
                     <mat-form-field appearance="outline" class="w-100">
                         <mat-label>Canales</mat-label>
-                        <mat-select name="channelSelector" required [(ngModel)]="selectedChannelProvider"
+                        <mat-select multiple name="channelSelector" required [(ngModel)]="selectedChannelIds"
                             (selectionChange)="onChannelSelectionChange($event.value)"
                             [ngModelOptions]="{ standalone: true }">
-                            <mat-option *ngFor="let channel of channels" [value]="channel.provider">
+                            <mat-option *ngFor="let channel of channels" [value]="channel.channelID">
                                 {{ channel.provider }}
                             </mat-option>
                         </mat-select>
@@ -59,7 +59,8 @@
                         mat-raised-button
                         color="primary"
                         (click)="editChannel()"
-                        [disabled]="!hasSelectedChannel()"
+                        [disabled]="!canEditChannel()"
+                        [matTooltip]="selectedChannelIds.length > 1 ? 'Solo se puede editar cuando hay un canal seleccionado' : ''"
                     >
                         <mat-icon>edit</mat-icon>
                     </button>
@@ -74,13 +75,33 @@
                     </button>
                 </div>
 
+                <!-- Chips para visualizar canales seleccionados -->
+                <div *ngIf="selectedChannelIds.length > 0" class="mb-3">
+                    <div class="d-flex flex-wrap gap-2">
+                        <mat-chip 
+                            *ngFor="let channelId of selectedChannelIds" 
+                            class="channel-chip"
+                            [class.active]="activeChannelIdForView === channelId"
+                            [style.cursor]="selectedChannelIds.length > 1 ? 'pointer' : 'default'"
+                            (click)="onChipClick(channelId)">
+                            {{ getChannelNameById(channelId) }}
+                        </mat-chip>
+                    </div>
+                </div>
+
+                <!-- Indicador de visualización (solo lectura) -->
+                <div *ngIf="selectedChannelIds.length > 1 && activeChannelIdForView" class="view-mode-indicator mb-3">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Visualizando: <strong>{{ getChannelNameById(activeChannelIdForView) }}</strong> (solo lectura)</span>
+                </div>
+
                 <!-- <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="getChannel($event)" class="mb-3">
                     <mat-tab *ngFor="let channel of channels" [label]="channel.provider"> -->
-                <!-- <div *ngIf="selectedChannel" class="channel-details mb-3"> -->
-                <div *ngIf="selectedChannel" class="d-flex align-items-start gap-4 mb-3">
-                    <div class="dimension-preview" [ngStyle]="getPreviewStyle(selectedChannel, selectedChannel.gln)">
+                <!-- <div *ngIf="channelForEditing" class="channel-details mb-3"> -->
+                <div *ngIf="channelForEditing && channelForEditing.channelID" class="d-flex align-items-start gap-4 mb-3">
+                    <div class="dimension-preview" [ngStyle]="getPreviewStyle(channelForEditing, channelForEditing.gln)">
                         <span class="dimension-label-inside">
-                            {{ selectedChannel.width }} x {{ selectedChannel.height }} {{ selectedChannel.extension }}
+                            {{ channelForEditing.width }} x {{ channelForEditing.height }} {{ channelForEditing.extension }}
                         </span>
                     </div>
 
@@ -89,7 +110,7 @@
                             <div class="col-md-4">
                                 <span class="label" matTooltip="Ancho de la imagen en píxeles" matTooltipPosition="above">Width (Ancho)</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput type="number" name="channelWidth" [(ngModel)]="selectedChannel.width"
+                                    <input matInput type="number" name="channelWidth" [(ngModel)]="channelForEditing.width"
                                         [ngModelOptions]="{ standalone: true }" placeholder="Width (px)"
                                         [disabled]="disabledFormChannel">
                                 </mat-form-field>
@@ -98,7 +119,7 @@
                             <div class="col-md-4">
                                 <span class="label" matTooltip="Alto de la imagen en píxeles" matTooltipPosition="above">Height (Largo)</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput type="number" name="channelHeight" [(ngModel)]="selectedChannel.height"
+                                    <input matInput type="number" name="channelHeight" [(ngModel)]="channelForEditing.height"
                                         [ngModelOptions]="{ standalone: true }" placeholder="Height (px)"
                                         [disabled]="disabledFormChannel">
                                 </mat-form-field>
@@ -107,7 +128,7 @@
                             <div class="col-md-4">
                                 <span class="label">Extension</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <mat-select name="channelExtension" [(ngModel)]="selectedChannel.extension"
+                                    <mat-select name="channelExtension" [(ngModel)]="channelForEditing.extension"
                                         [ngModelOptions]="{ standalone: true }" [disabled]="disabledFormChannel">
                                         <mat-option value="jpg">jpg</mat-option>
                                         <mat-option value="jpeg">jpeg</mat-option>
@@ -122,7 +143,7 @@
                             <div class="col-md-4">
                                 <span class="label" matTooltip="Margen en píxeles que se agregará alrededor de la imagen" matTooltipPosition="above">Margen</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput type="number" name="channelMargin" [(ngModel)]="selectedChannel.margin"
+                                    <input matInput type="number" name="channelMargin" [(ngModel)]="channelForEditing.margin"
                                         [ngModelOptions]="{ standalone: true }" placeholder="Margen (px)"
                                         [disabled]="disabledFormChannel" min="0">
                                 </mat-form-field>
@@ -131,7 +152,7 @@
                             <div class="col-md-4">
                                 <span class="label" matTooltip="Resolución en puntos por pulgada" matTooltipPosition="above">Density (DPIs)</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput type="number" name="channelDpi" [(ngModel)]="selectedChannel.dpi"
+                                    <input matInput type="number" name="channelDpi" [(ngModel)]="channelForEditing.dpi"
                                         [ngModelOptions]="{ standalone: true }" placeholder="DPI"
                                         [disabled]="disabledFormChannel">
                                 </mat-form-field>
@@ -141,7 +162,7 @@
                                 <span class="label">Max size (KB)</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" name="channelMaxSize"
-                                        [(ngModel)]="selectedChannel.max_size_kb" [ngModelOptions]="{ standalone: true }"
+                                        [(ngModel)]="channelForEditing.max_size_kb" [ngModelOptions]="{ standalone: true }"
                                         placeholder="Max size" [disabled]="disabledFormChannel">
                                 </mat-form-field>
                             </div>
@@ -151,7 +172,7 @@
                             <div class="col-md-4">
                                 <span class="label">GLN</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput name="channelGln" [(ngModel)]="selectedChannel.gln"
+                                    <input matInput name="channelGln" [(ngModel)]="channelForEditing.gln"
                                         [ngModelOptions]="{ standalone: true }" placeholder="GLN" disabled>
                                 </mat-form-field>
                             </div>
@@ -159,7 +180,7 @@
                             <div class="col-md-4">
                                 <span class="label">Tipo de adaptacion</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <input matInput name="channelAdaptation" [(ngModel)]="selectedChannel.adaptation_type"
+                                    <input matInput name="channelAdaptation" [(ngModel)]="channelForEditing.adaptation_type"
                                         [ngModelOptions]="{ standalone: true }" disabled>
                                 </mat-form-field>
                             </div>
@@ -167,7 +188,7 @@
                             <div class="col-md-4">
                                 <div class="label"><span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado permite ingresar un valor personalizado." matTooltipPosition="above">Tipo de Renombrado</span></div>
                                 <mat-form-field appearance="outline" class="w-100">
-                                    <mat-select [(ngModel)]="selectedChannel.renaming_type"
+                                    <mat-select [(ngModel)]="channelForEditing.renaming_type"
                                         name="renaming_type" [disabled]="disabledFormChannel"
                                         (selectionChange)="onRenamingTypeChange()">
                                         <mat-option value="Estándar">Estándar</mat-option>
@@ -176,7 +197,7 @@
                                 </mat-form-field>
                                 
                                 <!-- Input para renombrado personalizado -->
-                                <mat-form-field appearance="outline" class="w-100 mt-2" *ngIf="selectedChannel.renaming_type === 'custom'">
+                                <mat-form-field appearance="outline" class="w-100 mt-2" *ngIf="channelForEditing.renaming_type === 'custom'">
                                     <mat-label>Valor personalizado</mat-label>
                                     <input matInput [(ngModel)]="customRenameValue" 
                                            name="customRenameValue"
@@ -191,7 +212,7 @@
                                 <span class="label" matTooltip="Caracter que separa la base del sufijo. Ejemplos: _, -, ." matTooltipPosition="above">Separador</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput name="channelRenameSeparator"
-                                        [(ngModel)]="selectedChannel.rename_separator"
+                                        [(ngModel)]="channelForEditing.rename_separator"
                                         [ngModelOptions]="{ standalone: true }" placeholder="Separador"
                                         [disabled]="disabledFormChannel">
                                 </mat-form-field>
@@ -201,7 +222,7 @@
                                 <span class="label" matTooltip="Numero o letra con el que deseas iniciar la secuencia del sufijo." matTooltipPosition="above">Inicio de secuencia de sufijo</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <input matInput type="number" name="channelStartIndex"
-                                        [(ngModel)]="selectedChannel.rename_start_index"
+                                        [(ngModel)]="channelForEditing.rename_start_index"
                                         [ngModelOptions]="{ standalone: true }" placeholder="Inicio"
                                         [disabled]="disabledFormChannel">
                                 </mat-form-field>
@@ -210,7 +231,7 @@
                             <div class="col-md-4">
                                 <span class="label">Encarpetado</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <mat-select name="channelFolderStructure" [(ngModel)]="selectedChannel.folder_structure"
+                                    <mat-select name="channelFolderStructure" [(ngModel)]="channelForEditing.folder_structure"
                                         [ngModelOptions]="{ standalone: true }" [disabled]="disabledFormChannel">
                                         <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
                                             {{ structure.label }}
@@ -223,29 +244,29 @@
                         <div class="row text-center text-md-start mt-3">
                             <div class="col-md-4">
                                 <span class="form-label">Color de Fondo</span>
-                                <div class="fieldset-color-picker" role="group" [class.disabled]="selectedChannel.adaptation_type === 'Remover_Fondo'">
+                                <div class="fieldset-color-picker" role="group" [class.disabled]="channelForEditing.adaptation_type === 'Remover_Fondo'">
                                     <div class="color-picker-row">
                                         <button type="button" class="color-circle transparent-option"
-                                            [ngClass]="{'selected': selectedChannel.background_color === 'transparent'}"
+                                            [ngClass]="{'selected': channelForEditing.background_color === 'transparent'}"
                                             matTooltip="Fondo transparente"
-                                            (click)="selectedChannel.background_color = 'transparent'" [disabled]="disabledFormChannel">
+                                            (click)="channelForEditing.background_color = 'transparent'" [disabled]="disabledFormChannel">
                                         </button>
                                         <button type="button" class="color-circle"
-                                            [ngClass]="{'selected': selectedChannel.background_color === '#FFFFFF'}"
+                                            [ngClass]="{'selected': channelForEditing.background_color === '#FFFFFF'}"
                                             [style.background]="'#FFFFFF'"
-                                            (click)="selectedChannel.background_color = '#FFFFFF'" [disabled]="disabledFormChannel"></button>
+                                            (click)="channelForEditing.background_color = '#FFFFFF'" [disabled]="disabledFormChannel"></button>
                                         <!-- <button type="button" class="color-circle" [ngClass]="{'selected': channel.background_color === '#F8F8FF'}" [style.background]="'#F8F8FF'" (click)="channel.background_color = '#F8F8FF'"></button> -->
                                         <button type="button" class="color-circle"
-                                            [ngClass]="{'selected': selectedChannel.background_color === '#FFE4F0'}"
+                                            [ngClass]="{'selected': channelForEditing.background_color === '#FFE4F0'}"
                                             [style.background]="'#FFE4F0'"
-                                            (click)="selectedChannel.background_color = '#FFE4F0'" [disabled]="disabledFormChannel"></button>
+                                            (click)="channelForEditing.background_color = '#FFE4F0'" [disabled]="disabledFormChannel"></button>
                                         <div class="custom-color-picker-wrapper d-flex align-items-center">
                                             <label class="color-circle custom-picker position-relative"
-                                                [style.background]="isCustomColor(selectedChannel.background_color) ? selectedChannel.background_color : '#fff'">
+                                                [style.background]="isCustomColor(channelForEditing.background_color) ? channelForEditing.background_color : '#fff'">
                                                 <input #colorInput type="color" [value]="getCustomColorValue()"
                                                     (input)="setCustomColor($event)"
                                                     style="opacity:0;width:0;height:0;position:absolute;" [disabled]="disabledFormChannel"/>
-                                                <mat-icon *ngIf="!isCustomColor(selectedChannel.background_color)"
+                                                <mat-icon *ngIf="!isCustomColor(channelForEditing.background_color)"
                                                     class="plus-icon"
                                                     style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;color:#1976d2;pointer-events:none;">add</mat-icon>
                                             </label>
@@ -263,7 +284,7 @@
                                 <!-- <span class="label"> <span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado requiere cargar un archivo con codigos e identificadores." matTooltipPosition="above"></span> Encarpetado</span> -->
                                 <span class="label" matTooltip="Selecciona la forma en como deseas que se guarden las imagenes una vez procesadas" matTooltipPosition="above">Encarpetado</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
-                                    <mat-select name="channelFolderStructure" [(ngModel)]="selectedChannel.folder_structure"
+                                    <mat-select name="channelFolderStructure" [(ngModel)]="channelForEditing.folder_structure"
                                         [ngModelOptions]="{ standalone: true }" [disabled]="disabledFormChannel">
                                         <mat-option *ngFor="let structure of folderStructures" [value]="structure.value">
                                             {{ structure.label }}
@@ -430,3 +451,4 @@
         </mat-progress-spinner>
     </div>
 </div>
+

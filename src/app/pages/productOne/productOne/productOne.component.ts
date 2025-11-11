@@ -21,6 +21,7 @@ import { ChannelRequiredDialogComponent } from 'src/app/components/dialogs/chann
 import { extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatChipsModule } from '@angular/material/chips';
 import * as EXIF from 'exif-js';
 
 @Component({
@@ -40,7 +41,8 @@ import * as EXIF from 'exif-js';
         MatFormFieldModule,
         ProcessResultComponent,
         MatTooltipModule,
-        MatAutocompleteModule
+        MatAutocompleteModule,
+        MatChipsModule
     ],
     templateUrl: './productOne.component.html',
     styleUrls: ['./productOne.component.scss']
@@ -56,12 +58,12 @@ export class ProductOneComponent {
     // Obtener el valor para el input color
     getCustomColorValue(): string {
         // Si el color actual es custom, mostrarlo, si no, negro
-        return this.isCustomColor(this.selectedChannel.background_color) ? this.selectedChannel.background_color : '#000000';
+        return this.isCustomColor(this.channelForEditing.background_color) ? this.channelForEditing.background_color : '#000000';
     }
 
     // Al seleccionar un color personalizado
     setCustomColor(event: any) {
-        this.selectedChannel.background_color = event.target.value;
+        this.channelForEditing.background_color = event.target.value;
     }
 
     gtin: string | null = null;
@@ -85,8 +87,10 @@ export class ProductOneComponent {
 
     selectedTab = 0;
 
-    // selectedChannel: Channel | null = null;
-    selectedChannel = {} as Channel;
+    // Multi-channel selection
+    selectedChannelIds: number[] = [];
+    channelForEditing = {} as Channel;
+    activeChannelIdForView: number | null = null; // Canal activo para visualización (sin edición)
     selectedChannelProvider: string | null = null;
     disabledFormChannel = true;
     folderStructures = [
@@ -118,6 +122,12 @@ export class ProductOneComponent {
         private router: Router,
         private dialog: MatDialog
     ) { }
+
+    // Helper para obtener el nombre del canal por ID
+    getChannelNameById(channelId: number): string {
+        const channel = this.channels?.find(ch => ch.channelID === channelId);
+        return channel?.provider || `Canal ${channelId}`;
+    }
 
     ngOnInit(): void {
         this.gtin = this.route.snapshot.paramMap.get('gtin');
@@ -273,25 +283,66 @@ export class ProductOneComponent {
     }
 
 
-    onChannelSelectionChange(provider: string): void {
-        this.selectChannelByProvider(provider);
+    onChannelSelectionChange(selectedIds: number[]): void {
+        this.selectedChannelIds = selectedIds || [];
+        this.activeChannelIdForView = null; // Limpiar visualización al cambiar selección
+        
+        // Si solo hay un canal seleccionado, permitir edición
+        if (this.selectedChannelIds.length === 1) {
+            const channel = this.channels.find(ch => ch.channelID === this.selectedChannelIds[0]);
+            if (channel) {
+                this.channelForEditing = this.prepareChannelForEditing(channel);
+                this.activeChannelIdForView = this.selectedChannelIds[0];
+                this.disabledFormChannel = true;
+                
+                if (channel?.gln) {
+                    this.product['gln'] = channel.gln;
+                }
+            }
+        } else {
+            // Si hay múltiples canales, limpiar el canal de edición
+            this.channelForEditing = {} as Channel;
+            this.disabledFormChannel = true;
+        }
+    }
+
+    onChipClick(channelId: number): void {
+        // Solo permitir vista en modo multi-canal (no habilita edición)
+        if (this.selectedChannelIds.length > 1) {
+            this.activeChannelIdForView = channelId;
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            if (channel) {
+                this.channelForEditing = this.prepareChannelForEditing(channel);
+                // Asegurar que permanezca deshabilitado
+                this.disabledFormChannel = true;
+            }
+        }
+    }
+
+    canEditChannel(): boolean {
+        return this.selectedChannelIds.length === 1;
     }
 
     editChannel(): void {
-        if (!this.selectedChannel) {
-            return;
+        if (this.canEditChannel()) {
+            this.disabledFormChannel = false;
         }
-
-        this.disabledFormChannel = false;
     }
 
     cancelChannel(): void {
+        // Restaurar los valores originales del canal
+        if (this.selectedChannelIds.length === 1) {
+            const originalChannel = this.channels.find(ch => ch.channelID === this.selectedChannelIds[0]);
+            if (originalChannel) {
+                this.channelForEditing = this.prepareChannelForEditing(originalChannel);
+            }
+        }
         this.disabledFormChannel = true;
     }
 
     onRenamingTypeChange(): void {
         // Si se cambia a "Estándar", resetear el valor personalizado
-        if (this.selectedChannel.renaming_type !== 'custom') {
+        if (this.channelForEditing.renaming_type !== 'custom') {
             this.customRenameValue = '';
         }
     }
@@ -303,20 +354,23 @@ export class ProductOneComponent {
 
     private selectChannelByProvider(provider: string | null | undefined): void {
         if (!provider) {
-            this.selectedChannel = {} as Channel;
+            this.channelForEditing = {} as Channel;
             this.selectedChannelProvider = null;
+            this.selectedChannelIds = [];
             return;
         }
 
         const channel = this.channels.find(item => item?.provider === provider);
         if (!channel) {
-            this.selectedChannel = {} as Channel;
+            this.channelForEditing = {} as Channel;
             this.selectedChannelProvider = provider;
+            this.selectedChannelIds = [];
             return;
         }
 
         this.selectedChannelProvider = channel.provider;
-        this.selectedChannel = this.prepareChannelForEditing(channel);
+        this.selectedChannelIds = [channel.channelID];
+        this.channelForEditing = this.prepareChannelForEditing(channel);
         this.disabledFormChannel = true;
 
         if (channel?.gln) {
@@ -405,27 +459,49 @@ export class ProductOneComponent {
     }
 
     private buildChannelPayload(): any {
-        if (!this.selectedChannel) {
+        if (!this.channelForEditing || !this.channelForEditing.channelID) {
             return null;
         }
 
         const payload: any = {
-            ...this.selectedChannel,
-            width: Number(this.selectedChannel.width) || 0,
-            height: Number(this.selectedChannel.height) || 0,
-            dpi: Number(this.selectedChannel.dpi) || 0,
-            max_size_kb: Number(this.selectedChannel.max_size_kb) || 0,
-            rename_start_index: Number(this.selectedChannel.rename_start_index) || 0,
-            folder_structure: Number.isNaN(Number(this.selectedChannel.folder_structure))
+            ...this.channelForEditing,
+            width: Number(this.channelForEditing.width) || 0,
+            height: Number(this.channelForEditing.height) || 0,
+            dpi: Number(this.channelForEditing.dpi) || 0,
+            max_size_kb: Number(this.channelForEditing.max_size_kb) || 0,
+            rename_start_index: Number(this.channelForEditing.rename_start_index) || 0,
+            folder_structure: Number.isNaN(Number(this.channelForEditing.folder_structure))
                 ? (this.folderStructures[0]?.value ?? 1)
-                : Number(this.selectedChannel.folder_structure)
+                : Number(this.channelForEditing.folder_structure)
         };
 
-        if(this.selectedChannel.background_color != 'transparent'){
-            payload.background_color = this.normalizeBackgroundColor(this.selectedChannel.background_color);
+        if(this.channelForEditing.background_color != 'transparent'){
+            payload.background_color = this.normalizeBackgroundColor(this.channelForEditing.background_color);
         }
 
         return payload;
+    }
+
+    private buildChannelsPayload(): any[] {
+        return this.selectedChannelIds.map(channelId => {
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            if (!channel) return null;
+            
+            return {
+                ...channel,
+                width: Number(channel.width) || 0,
+                height: Number(channel.height) || 0,
+                dpi: Number(channel.dpi) || 0,
+                max_size_kb: Number(channel.max_size_kb) || 0,
+                rename_start_index: Number(channel.rename_start_index) || 0,
+                folder_structure: Number.isNaN(Number(channel.folder_structure))
+                    ? (this.folderStructures[0]?.value ?? 1)
+                    : Number(channel.folder_structure),
+                background_color: channel.background_color !== 'transparent' 
+                    ? this.normalizeBackgroundColor(channel.background_color)
+                    : 'transparent'
+            };
+        }).filter(ch => ch !== null);
     }
 
     private buildProductPayload(): any {
@@ -451,7 +527,7 @@ export class ProductOneComponent {
     }
 
     hasSelectedChannel(): boolean {
-        return !!(this.selectedChannel && Object.keys(this.selectedChannel).length > 0 && this.selectedChannel.provider);
+        return this.selectedChannelIds.length > 0;
     }
 
     private ensureChannelSelected(message: string): boolean {
@@ -482,7 +558,7 @@ export class ProductOneComponent {
     }
 
     processImg() {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
         }
 
@@ -491,24 +567,24 @@ export class ProductOneComponent {
         this.isGenerating = true;
 
         const productToSend = this.buildProductPayload();
-        const channelParams = this.buildChannelPayload();
+        const channelsParams = this.buildChannelsPayload();
 
-        if (!channelParams) {
+        if (!channelsParams.length) {
             this.isGenerating = false;
-            this.showErrorMessage('No fue posible preparar los parametros del canal.');
+            this.showErrorMessage('No fue posible preparar los parametros de los canales.');
             return;
         }
 
         const params: any = {
             images_url: productToSend,
-            channel_params: channelParams,
+            channels_params: channelsParams,
             no_background: true,
-            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false,
+            transparent_background: channelsParams.some(ch => ch.background_color === 'transparent'),
             gln: glnNumber
         };
 
         // Agregar valor de renombrado personalizado si existe
-        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameValue.trim()) {
+        if (this.channelForEditing.renaming_type === 'custom' && this.customRenameValue.trim()) {
             params.custom_rename_value = this.customRenameValue.trim();
         }
 
@@ -557,7 +633,7 @@ export class ProductOneComponent {
     }
 
     processImgNoBackground() {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
         }
 
@@ -566,24 +642,24 @@ export class ProductOneComponent {
         this.isGenerating = true;
 
         const productToSend = this.buildProductPayload();
-        const channelParams = this.buildChannelPayload();
+        const channelsParams = this.buildChannelsPayload();
 
-        if (!channelParams) {
+        if (!channelsParams.length) {
             this.isGenerating = false;
-            this.showErrorMessage('No fue posible preparar los parametros del canal.');
+            this.showErrorMessage('No fue posible preparar los parametros de los canales.');
             return;
         }
 
         const params: any = {
             images_url: productToSend,
-            channel_params: channelParams,
+            channels_params: channelsParams,
             no_background: true,
             not_apply_transformations: true,
             gln: glnNumber
         };
 
         // Agregar valor de renombrado personalizado si existe
-        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameValue.trim()) {
+        if (this.channelForEditing.renaming_type === 'custom' && this.customRenameValue.trim()) {
             params.custom_rename_value = this.customRenameValue.trim();
         }
 
@@ -636,7 +712,7 @@ export class ProductOneComponent {
             return;
         }
 
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar con IA')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar con IA')) {
             return;
         }
 
@@ -644,26 +720,27 @@ export class ProductOneComponent {
         this.hideError();
 
         const productToSend = this.buildProductPayload();
-        const channelParams: any = this.buildChannelPayload();
+        const channelsParams = this.buildChannelsPayload().map(ch => ({
+            ...ch,
+            width: 1024,
+            height: 1024,
+            AI_background_prompt: this.aiBackgroundPrompt.trim()
+        }));
 
-        if (!channelParams) {
+        if (!channelsParams.length) {
             this.isGenerating = false;
-            this.showErrorMessage('No fue posible preparar los parametros del canal.');
+            this.showErrorMessage('No fue posible preparar los parametros de los canales.');
             return;
         }
 
-        channelParams.width = 1024;
-        channelParams.height = 1024;
-        channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
-
         const params: any = {
             images_url: productToSend,
-            channel_params: channelParams,
+            channels_params: channelsParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
         };
 
         // Agregar valor de renombrado personalizado si existe
-        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameValue.trim()) {
+        if (this.channelForEditing.renaming_type === 'custom' && this.customRenameValue.trim()) {
             params.custom_rename_value = this.customRenameValue.trim();
         }
 

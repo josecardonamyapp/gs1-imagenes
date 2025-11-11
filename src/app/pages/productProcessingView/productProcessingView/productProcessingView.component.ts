@@ -23,6 +23,7 @@ import { ChannelRequiredDialogComponent } from 'src/app/components/dialogs/chann
 import { firstValueFrom } from 'rxjs';
 import { createProductKey, extractGlnFromKey, extractGtinFromKey } from 'src/app/utils/product-key';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule } from '@angular/material/chips';
 import * as XLSX from 'xlsx';
 import * as EXIF from 'exif-js';
 
@@ -42,7 +43,8 @@ import * as EXIF from 'exif-js';
         MatOption,
         MatSelect,
         MatAutocompleteModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatChipsModule
     ],
     templateUrl: './productProcessingView.component.html',
     styleUrls: ['./productProcessingView.component.scss']
@@ -58,12 +60,12 @@ export class productProcessingViewComponent {
     // Obtener el valor para el input color
     getCustomColorValue(): string {
         // Si el color actual es custom, mostrarlo, si no, negro
-        return this.isCustomColor(this.selectedChannel.background_color) ? this.selectedChannel.background_color : '#000000';
+        return this.isCustomColor(this.channelForEditing.background_color) ? this.channelForEditing.background_color : '#000000';
     }
 
     // Al seleccionar un color personalizado
     setCustomColor(event: any) {
-        this.selectedChannel.background_color = event.target.value;
+        this.channelForEditing.background_color = event.target.value;
     }
 
     gtin: string | null = null;
@@ -72,7 +74,11 @@ export class productProcessingViewComponent {
     channelStyles: { [key: string]: any } = {};
     disabledFormChannel = false;
     selectedImage: string = '';
-    selectedChannel = {} as Channel;
+    
+    // Multi-channel selection
+    selectedChannelIds: number[] = [];
+    channelForEditing = {} as Channel;
+    activeChannelIdForView: number | null = null; // Canal activo para visualización (sin edición)
 
     isGenerating = false;
 
@@ -118,12 +124,18 @@ export class productProcessingViewComponent {
         private dialog: MatDialog
     ) { }
 
+    // Helper para obtener el nombre del canal por ID
+    getChannelNameById(channelId: number): string {
+        const channel = this.channels?.find(ch => ch.channelID === channelId);
+        return channel?.provider || `Canal ${channelId}`;
+    }
+
     ngOnInit(): void {
         this.route.queryParams.subscribe(params => {
             // Si viene de regenerar, cargar la parametrización del canal
             if (params && params['channelID']) {
-                // Asignar los parámetros del canal a selectedChannel
-                this.selectedChannel = {
+                // Asignar los parámetros del canal a channelForEditing
+                this.channelForEditing = {
                     channelID: Number(params['channelID']) || 0,
                     gln: Number(params['gln']) || 0,
                     provider: params['provider'] || '',
@@ -142,6 +154,7 @@ export class productProcessingViewComponent {
                     background: false,
                     transparent_background: false
                 };
+                this.selectedChannelIds = [Number(params['channelID'])];
                 this.selectedFolderStructure = Number(params['folder_structure']) || 1;
                 this.imagesPerGtin = params['imagesPerGtin'] || 1;
                 this.disabledFormChannel = true;
@@ -420,19 +433,62 @@ export class productProcessingViewComponent {
     }
     */
 
-    getChannel(event: any) {
-        const channel = this.channels.find(channel => channel.provider === event.value);
-        channel.background_color = this.rgbToHex(channel.background_color) || '#FFFFFF',
-        this.selectedChannel = channel;
-        this.disabledFormChannel = true;
-        console.log('channel', this.selectedChannel)
+    getChannel(selectedIds: number[]) {
+        this.selectedChannelIds = selectedIds || [];
+        this.activeChannelIdForView = null; // Limpiar visualización al cambiar selección
+        
+        // Si solo hay un canal seleccionado, permitir edición
+        if (this.selectedChannelIds.length === 1) {
+            const channel = this.channels.find(ch => ch.channelID === this.selectedChannelIds[0]);
+            if (channel) {
+                channel.background_color = this.rgbToHex(channel.background_color) || '#FFFFFF';
+                this.channelForEditing = { ...channel };
+                this.activeChannelIdForView = this.selectedChannelIds[0];
+                this.disabledFormChannel = true;
+            }
+        } else {
+            // Si hay múltiples canales, limpiar el canal de edición
+            this.channelForEditing = {} as Channel;
+            this.disabledFormChannel = true;
+        }
+        
+        console.log('Selected channels:', this.selectedChannelIds);
+    }
+
+    onChipClick(channelId: number): void {
+        // Solo permitir vista en modo multi-canal (no habilita edición)
+        if (this.selectedChannelIds.length > 1) {
+            this.activeChannelIdForView = channelId;
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            if (channel) {
+                const channelCopy = { ...channel };
+                channelCopy.background_color = this.rgbToHex(channelCopy.background_color) || '#FFFFFF';
+                this.channelForEditing = channelCopy;
+                // Asegurar que permanezca deshabilitado
+                this.disabledFormChannel = true;
+            }
+        }
+    }
+
+    canEditChannel(): boolean {
+        return this.selectedChannelIds.length === 1;
     }
 
     editChannel() {
-        this.disabledFormChannel = false;
+        if (this.canEditChannel()) {
+            this.disabledFormChannel = false;
+        }
     }
 
     cancelChannel() {
+        // Restaurar los valores originales del canal
+        if (this.selectedChannelIds.length === 1) {
+            const originalChannel = this.channels.find(ch => ch.channelID === this.selectedChannelIds[0]);
+            if (originalChannel) {
+                this.channelForEditing = { ...originalChannel };
+                this.channelForEditing.background_color = this.rgbToHex(originalChannel.background_color) || '#FFFFFF';
+            }
+        }
         this.disabledFormChannel = true;
     }
 
@@ -673,7 +729,7 @@ export class productProcessingViewComponent {
     }
 
     sendToProcess() {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
         }
 
@@ -703,7 +759,7 @@ export class productProcessingViewComponent {
     }
 
     processImg(product: any) {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
         }
 
@@ -711,30 +767,33 @@ export class productProcessingViewComponent {
         const glnNumber = storedGln ? Number(storedGln) : null;
         this.isGenerating = true;
 
-        console.log('Selected folder structure:', this.selectedChannel);
         const productNames = product.map((p: any) => p.producName).join(', ');
 
-        // Crear una copia de selectedChannel con el background_color normalizado
-        const channelParams = {
-            ...this.selectedChannel,
-            background_color: this.selectedChannel.background_color !== 'transparent' 
-                ? this.normalizeBackgroundColor(this.selectedChannel.background_color)
-                : 'transparent'
-        };
+        // Preparar array de channel_params para cada canal seleccionado
+        const channelsParams = this.selectedChannelIds.map(channelId => {
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            if (!channel) return null;
+            
+            return {
+                ...channel,
+                background_color: channel.background_color !== 'transparent' 
+                    ? this.normalizeBackgroundColor(channel.background_color)
+                    : 'transparent'
+            };
+        }).filter(ch => ch !== null);
 
         const params: any = {
             images_url: product,
-            channel_params: channelParams,
+            channels_params: channelsParams,
             no_background: true,
-            // transparent_background: false,
             is_multiple_processing: true,
             product_names: productNames,
             gln: glnNumber,
-            transparent_background: this.selectedChannel.background_color == 'transparent' ? true : false
+            transparent_background: channelsParams.some(ch => ch.background_color === 'transparent')
         };
 
         // Agregar datos de renombrado personalizado si existen
-        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameData.length > 0) {
+        if (this.channelForEditing.renaming_type === 'custom' && this.customRenameData.length > 0) {
             params.custom_rename_data = this.customRenameData;
         }
 
@@ -784,7 +843,7 @@ export class productProcessingViewComponent {
     }
 
     sendToProcessNoBackground() {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
         }
 
@@ -807,26 +866,32 @@ export class productProcessingViewComponent {
     }
 
     processImgNoBackground(product: any) {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar.')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
         }
         const storedGln: string | null = localStorage.getItem('gln');
         const glnNumber = storedGln ? Number(storedGln) : null;
 
         this.isGenerating = true;
+        
+        // Preparar array de channel_params para cada canal seleccionado
+        const channelsParams = this.selectedChannelIds.map(channelId => {
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            return channel ? { ...channel } : null;
+        }).filter(ch => ch !== null);
+
         const params: any = {
             images_url: product,
-            channel_params: this.selectedChannel,
+            channels_params: channelsParams,
             no_background: true,
             not_apply_transformations: true,
             is_multiple_processing: true,
             product_names: product.map((p: any) => p.producName).join(', '),
             gln: glnNumber,
-            // folder_structure: this.selectedFolderStructure,
         };
 
         // Agregar datos de renombrado personalizado si existen
-        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameData.length > 0) {
+        if (this.channelForEditing.renaming_type === 'custom' && this.customRenameData.length > 0) {
             params.custom_rename_data = this.customRenameData;
         }
 
@@ -879,7 +944,7 @@ export class productProcessingViewComponent {
             return;
         }
 
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar con IA')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar con IA')) {
             return;
         }
 
@@ -907,7 +972,7 @@ export class productProcessingViewComponent {
     }
 
     processImgWithAI(product: any) {
-        if (!this.ensureChannelSelected('Debe seleccionar un canal antes de procesar con IA')) {
+        if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar con IA')) {
             return;
         }
 
@@ -916,23 +981,27 @@ export class productProcessingViewComponent {
         // Parsear las dimensiones seleccionadas
         const [aiWidth, aiHeight] = this.aiImageDimensionsSelected.split('x').map(Number);
 
-        // Crear channel_params con las dimensiones de IA
-        const channelParams: any = {
-            ...this.selectedChannel
-        };
-
-        channelParams.width = 1024;
-        channelParams.height = 1024;
-        channelParams.AI_background_prompt = this.aiBackgroundPrompt.trim();
+        // Preparar array de channel_params para cada canal seleccionado
+        const channelsParams = this.selectedChannelIds.map(channelId => {
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            if (!channel) return null;
+            
+            return {
+                ...channel,
+                width: 1024,
+                height: 1024,
+                AI_background_prompt: this.aiBackgroundPrompt.trim()
+            };
+        }).filter(ch => ch !== null);
 
         const params: any = {
             images_url: product,
-            channel_params: channelParams,
+            channels_params: channelsParams,
             AI_background_prompt: this.aiBackgroundPrompt.trim()
         };
 
         // Agregar datos de renombrado personalizado si existen
-        if (this.selectedChannel.renaming_type === 'custom' && this.customRenameData.length > 0) {
+        if (this.channelForEditing.renaming_type === 'custom' && this.customRenameData.length > 0) {
             params.custom_rename_data = this.customRenameData;
         }
 
@@ -1007,7 +1076,7 @@ export class productProcessingViewComponent {
     }
 
     hasSelectedChannel(): boolean {
-        return !!(this.selectedChannel && Object.keys(this.selectedChannel).length > 0 && this.selectedChannel.provider);
+        return this.selectedChannelIds.length > 0;
     }
 
     private ensureChannelSelected(message: string): boolean {
@@ -1039,7 +1108,7 @@ export class productProcessingViewComponent {
 
     onRenamingTypeChange(): void {
         // Si se cambia a "Estándar", resetear el archivo cargado
-        if (this.selectedChannel.renaming_type !== 'custom') {
+        if (this.channelForEditing.renaming_type !== 'custom') {
             this.customRenameFile = null;
             this.customRenameFileName = null;
             this.customRenameData = [];
@@ -1087,8 +1156,22 @@ export class productProcessingViewComponent {
                     applyToFolder: row['Aplicar Renombre a Carpeta'] || row['Aplicar_Renombre_a_Carpeta'] || row['applyToFolder'] || false
                 })).filter(item => item.gtin); // Filtrar filas sin GTIN
                 
+                // Validar que todos los productos visibles en pantalla tengan su renombrado en la plantilla
+                const validationResult = this.validateTemplateHasAllProducts();
+                
+                if (!validationResult.isValid) {
+                    console.error('Productos faltantes en la plantilla:', validationResult.missingGtins);
+                    this.showErrorMessage(
+                        `⚠️ Faltan ${validationResult.missingGtins.length} producto(s) en la plantilla: ${validationResult.missingGtins.join(', ')}`
+                    );
+                    this.customRenameData = [];
+                    this.customRenameFile = null;
+                    this.customRenameFileName = null;
+                    return;
+                }
+                
                 console.log('Excel parseado correctamente:', this.customRenameData);
-                this.showErrorMessage(`Archivo cargado: ${this.customRenameData.length} registros encontrados`);
+                this.showErrorMessage(`✅ Archivo cargado: ${this.customRenameData.length} registros válidos`);
             } catch (error) {
                 console.error('Error al parsear el archivo Excel:', error);
                 this.showErrorMessage('Error al leer el archivo. Verifique que sea un archivo Excel válido.');
@@ -1102,6 +1185,25 @@ export class productProcessingViewComponent {
         };
 
         reader.readAsArrayBuffer(file);
+    }
+
+    /**
+     * Valida que todos los productos visibles en pantalla tengan su renombrado en la plantilla cargada
+     */
+    private validateTemplateHasAllProducts(): { isValid: boolean; missingGtins: string[] } {
+        // Obtener todos los GTINs de los productos visibles en pantalla
+        const visibleGtins = this.products.map(product => product.gtin).filter(gtin => gtin);
+        
+        // Obtener los GTINs que están en la plantilla
+        const templateGtins = new Set(this.customRenameData.map(item => item.gtin));
+        
+        // Encontrar GTINs que están en pantalla pero no en la plantilla
+        const missingGtins = visibleGtins.filter(gtin => !templateGtins.has(gtin));
+        
+        return {
+            isValid: missingGtins.length === 0,
+            missingGtins
+        };
     }
 
     downloadCustomTemplate(): void {
