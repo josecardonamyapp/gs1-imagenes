@@ -36,6 +36,19 @@ export class AppLoginComponent {
 
   async ngOnInit() {
 
+    // Verificar si acabamos de hacer logout
+    const logoutInProgress = sessionStorage.getItem('logout_in_progress');
+    if (logoutInProgress === 'true') {
+      console.log('Logout detectado en login component, limpiando...');
+      sessionStorage.removeItem('logout_in_progress');
+      
+      // Limpiar el code de la URL si existe
+      if (window.location.search.includes('code=')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      return; // No continuar con el flujo de autenticación
+    }
+
     // this.loading = true;
     await this.userService.socialSignInListener();
 
@@ -77,8 +90,9 @@ export class AppLoginComponent {
             duration: 9000,
             panelClass: ['snackbar-warn']
           });
-          await this.userService.logout();
-          window.location.href = 'https://psi.gs1mexico.org/';
+          
+          // Usar logoutAndRedirect para cerrar sesión completamente y redirigir
+          await this.userService.logoutAndRedirect('https://psi.gs1mexico.org/');
           return;
         }
       }

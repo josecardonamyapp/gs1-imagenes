@@ -41,12 +41,16 @@
    identityPoolId: 'us-east-1:3ba2c1be-376a-4599-9c0c-810463f9bb9d',
    cognitoDomain: 'gs1-imagenes-prod.auth.us-east-1.amazoncognito.com',
   //  cognitoRedirectSignIn: 'https://d2llewd7ov3p5q.cloudfront.net',
-   cognitoRedirectSignIn: 'http://localhost:8200/',
-   cognitoRedirectSignOut: 'http://localhost:8200/',
+   cognitoRedirectSignIn: 'https://d2llewd7ov3p5q.cloudfront.net',
+   cognitoRedirectSignOut: 'https://d2llewd7ov3p5q.cloudfront.net',
    cognitoResponseType: 'code',
    apicadenas: 'http://apisync.syncfonia.com/',
    api:"https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/",
-   domainUrl: "http://localhost:8200/"
+   apiSyncfonia: 'https://api.syncfonia.com/api/v1/',
+   syncfoniaToken: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4',
+   auth0Domain: 'prod-gs1mx.us.auth0.com',
+   auth0ClientId: 'RB3srb6dbiU0kCSGr0iCuzhA069JfUHH',
+   domainUrl: "https://d2llewd7ov3p5q.cloudfront.net"
  }
 
  // prod

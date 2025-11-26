@@ -132,11 +132,56 @@ export class productProcessingViewComponent {
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(params => {
-            // Si viene de regenerar, cargar la parametrización del canal
-            if (params && params['channelID']) {
+            // Si viene de regenerar con multi-canal (channel_params como array JSON)
+            if (params && params['channel_params']) {
+                try {
+                    const channelParamsArray = JSON.parse(params['channel_params']);
+                    if (Array.isArray(channelParamsArray) && channelParamsArray.length > 0) {
+                        // Multi-canal: cargar todos los IDs y el primero para edición
+                        this.selectedChannelIds = channelParamsArray.map((ch: any) => Number(ch.channelID || ch.channel_id));
+                        
+                        // Cargar el primer canal para edición
+                        const firstChannel = channelParamsArray[0];
+                        const firstChannelId = Number(firstChannel.channelID || firstChannel.channel_id) || 0;
+                        
+                        this.channelForEditing = {
+                            channelID: firstChannelId,
+                            gln: Number(firstChannel.gln) || 0,
+                            provider: firstChannel.provider || '',
+                            width: Number(firstChannel.width || firstChannel.canvas_width) || 0,
+                            height: Number(firstChannel.height || firstChannel.canvas_height) || 0,
+                            extension: firstChannel.extension || '',
+                            dpi: Number(firstChannel.dpi) || 0,
+                            background_color: firstChannel.background_color || '#FFFFFF',
+                            max_size_kb: Number(firstChannel.max_size_kb) || 0,
+                            adaptation_type: firstChannel.adaptation_type || '',
+                            renaming_type: firstChannel.renaming_type || '',
+                            rename_base: firstChannel.rename_base || '',
+                            rename_separator: firstChannel.rename_separator || '',
+                            rename_start_index: Number(firstChannel.rename_start_index) || 0,
+                            folder_structure: Number(firstChannel.folder_structure) || 1,
+                            background: false,
+                            transparent_background: false
+                        };
+                        
+                        // Establecer el chip activo para visualización
+                        this.activeChannelIdForView = firstChannelId;
+                        
+                        this.selectedFolderStructure = Number(firstChannel.folder_structure) || 1;
+                        this.imagesPerGtin = firstChannel.imagesPerGtin || 1;
+                        this.disabledFormChannel = true;
+                    }
+                } catch (error) {
+                    console.error('Error parsing channel_params:', error);
+                }
+            }
+            // Compatibilidad: Si viene de regenerar con canal único (formato antiguo)
+            else if (params && params['channelID']) {
+                const channelId = Number(params['channelID']) || 0;
+                
                 // Asignar los parámetros del canal a channelForEditing
                 this.channelForEditing = {
-                    channelID: Number(params['channelID']) || 0,
+                    channelID: channelId,
                     gln: Number(params['gln']) || 0,
                     provider: params['provider'] || '',
                     width: Number(params['width']) || 0,
@@ -154,7 +199,9 @@ export class productProcessingViewComponent {
                     background: false,
                     transparent_background: false
                 };
-                this.selectedChannelIds = [Number(params['channelID'])];
+                
+                this.selectedChannelIds = [channelId];
+                this.activeChannelIdForView = channelId;
                 this.selectedFolderStructure = Number(params['folder_structure']) || 1;
                 this.imagesPerGtin = params['imagesPerGtin'] || 1;
                 this.disabledFormChannel = true;
@@ -235,15 +282,17 @@ export class productProcessingViewComponent {
         glnOverride: string | null
     ): Promise<void> {
         try {
+            // ✅ Usar paginación automática (divide en batches de 250 si es necesario)
             const response = await firstValueFrom(
-                this.productService.productGetByGtin(gtinList, glnOverride ? { gln: glnOverride } : undefined)
+                this.productService.productGetByGtinPaginated(gtinList, glnOverride ? { gln: glnOverride } : undefined)
             );
             const normalizedProducts = this.productService.normalizeTradeItemsResponse(response);
 
             if (!normalizedProducts.length) {
                 return;
             }
-            // Procesar productos y preparar imágenes para visualización vertical
+            
+            // Procesar productos y preparar imágenes
             for (const product of normalizedProducts as SyncfoniaProduct[]) {
                 const rawImages = Array.isArray(product.images)
                     ? product.images.filter((image: any) => {
@@ -256,11 +305,10 @@ export class productProcessingViewComponent {
                     continue;
                 }
 
-                // Preparar imágenes sin esperar la detección (mostrar de inmediato)
+                // ✅ Simplificado: Solo copiar las imágenes sin procesamiento EXIF
+                // La orientación se maneja automáticamente via CSS (image-orientation: from-image)
                 const preparedImages: any[] = rawImages.map((image: any) => ({
-                    ...image,
-                    displayUrl: image?.uniformresourceidentifier,
-                    rotateCssFallback: false
+                    ...image
                 }));
 
                 const selectionGln = this.getSelectedGlnForGtin(product.gtin, glnOverride);
@@ -271,6 +319,8 @@ export class productProcessingViewComponent {
                     gtin: product.gtin,
                     producName: product.producName,
                     images: preparedImages,
+                    totalImagesCount: preparedImages.length,  // 🆕 Para mostrar badge
+                    visibleImages: preparedImages.slice(0, 1),  // 🆕 Solo primera imagen para display
                     currentIndex: 0,
                     image360Path: (product as any).image360Path ?? null,
                     brandName: product.brandName ?? '',
@@ -281,17 +331,6 @@ export class productProcessingViewComponent {
 
                 const key = createProductKey(mappedProduct.gtin, mappedProduct.gln);
                 aggregatedProducts.set(key, mappedProduct);
-
-                // Detectar orientación en segundo plano y actualizar flags
-                preparedImages.forEach((img: any) => {
-                    this.checkIfImageNeedsRotation(img?.uniformresourceidentifier)
-                        .then(needsRotation => {
-                            img.rotateCssFallback = needsRotation;
-                        })
-                        .catch(() => {
-                            img.rotateCssFallback = false;
-                        });
-                });
             }
         } catch (error) {
             const glnLabel = glnOverride ?? 'default';
@@ -299,139 +338,9 @@ export class productProcessingViewComponent {
         }
     }
 
-    /**
-     * Detecta si una imagen necesita rotación basándose en metadatos EXIF.
-     * Los valores EXIF Orientation 6 y 8 indican que la imagen necesita rotación.
-     * Si no hay datos EXIF, asume que la orientación es correcta.
-     */
-    private checkIfImageNeedsRotation(imageUrl: string): Promise<boolean> {
-        return new Promise((resolve) => {
-            if (!imageUrl || typeof imageUrl !== 'string') {
-                resolve(false);
-                return;
-            }
-
-            const img = new Image();
-            img.crossOrigin = 'anonymous'; // Necesario para leer EXIF
-
-            // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
-            const timeoutId = setTimeout(() => {
-                console.warn(`⏱️ Timeout checking EXIF orientation: ${imageUrl}`);
-                resolve(false);
-            }, 5000);
-
-            img.onload = () => {
-                clearTimeout(timeoutId);
-                
-                try {
-                    // Leer datos EXIF
-                    EXIF.getData(img as any, function(this: any) {
-                        const orientation = EXIF.getTag(this, 'Orientation');
-                        
-                        // Valores de orientación EXIF:
-                        // 1 = Normal (0°)
-                        // 3 = Rotada 180°
-                        // 6 = Rotada 90° CW (necesita rotación)
-                        // 8 = Rotada 90° CCW (necesita rotación)
-                        const needsRotation = orientation === 6 || orientation === 8;
-                        
-                        if (orientation) {
-                            console.log(`� EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
-                        } else {
-                            console.log(`ℹ️ No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
-                        }
-                        
-                        resolve(needsRotation);
-                    });
-                } catch (error) {
-                    console.warn(`⚠️ Error reading EXIF data: ${imageUrl}`, error);
-                    resolve(false); // Si falla la lectura EXIF, no rotar
-                }
-            };
-
-            img.onerror = () => {
-                clearTimeout(timeoutId);
-                console.warn(`❌ Error loading image for EXIF check: ${imageUrl}`);
-                resolve(false); // Si falla, no rotar
-            };
-
-            img.src = imageUrl;
-        });
-    }
-
-    // FUNCIÓN ANTERIOR COMENTADA - Se usaba Canvas pero causaba errores CORS
-    /*
-    // Genera una versión para mostrar vertical si la imagen es horizontal.
-    // Intenta rotar con canvas (si CORS lo permite). Si no, retorna la URL original y un flag para rotar con CSS.
-    private prepareDisplayImage(imageUrl: string): Promise<{ src: string; rotateCssFallback?: boolean }> {
-        return new Promise((resolve) => {
-            if (!imageUrl || typeof imageUrl !== 'string') {
-                resolve({ src: imageUrl });
-                return;
-            }
-
-            const img = new Image();
-            const done = (src: string, rotateCssFallback = false) => resolve({ src, rotateCssFallback });
-
-            // Timeout de seguridad: 8 segundos
-            const timeoutId = setTimeout(() => {
-                console.warn(`Timeout loading image: ${imageUrl}`);
-                done(imageUrl, true);
-            }, 8000);
-
-            img.onload = () => {
-                clearTimeout(timeoutId);
-                const isLandscape = img.width > img.height; // horizontal
-
-                if (!isLandscape) {
-                    done(imageUrl);
-                    return;
-                }
-
-                // Intentar rotar con canvas para entregar una vista vertical directa
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.height;
-                    canvas.height = img.width;
-                    const ctx = canvas.getContext('2d');
-
-                    if (!ctx) {
-                        console.warn('Canvas context not available, using CSS fallback');
-                        done(imageUrl, true);
-                        return;
-                    }
-
-                    ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.rotate(Math.PI / 2); // 90 grados
-                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-                    // Elegir mime según extensión
-                    const lower = imageUrl.toLowerCase();
-                    const mime = lower.endsWith('.png') ? 'image/png' : 'image/jpeg';
-                    const dataUrl = canvas.toDataURL(mime, 0.92);
-
-                    console.log(`✓ Canvas rotation successful for: ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
-                    done(dataUrl);
-                } catch (e) {
-                    // Si canvas falla (p.ej. CORS), usamos la url original y rotamos con CSS en la vista
-                    console.warn('Canvas rotation failed, using CSS fallback:', e);
-                    done(imageUrl, true);
-                }
-            };
-
-            img.onerror = (error) => {
-                clearTimeout(timeoutId);
-                console.error('Error loading image:', imageUrl, error);
-                done(imageUrl, true); // usar original con rotación CSS si no carga
-            };
-
-            // IMPORTANTE: Configurar crossOrigin ANTES de asignar src
-            // Usar 'anonymous' para permitir canvas con imágenes de S3
-            img.crossOrigin = 'anonymous';
-            img.src = imageUrl;
-        });
-    }
-    */
+    // ℹ️ EXIF orientation detection REMOVED
+    // Now handled automatically via CSS: image-orientation: from-image
+    // This eliminates 1000+ HTTP requests on load and improves performance
 
     getChannel(selectedIds: number[]) {
         this.selectedChannelIds = selectedIds || [];
@@ -728,6 +637,33 @@ export class productProcessingViewComponent {
         };
     }
 
+    private buildChannelsPayload(): any[] {
+        return this.selectedChannelIds.map(channelId => {
+            const channel = this.channels.find(ch => ch.channelID === channelId);
+            if (!channel) return null;
+            
+            // Si este canal es el que está siendo editado, usar los valores de channelForEditing
+            const isBeingEdited = this.channelForEditing && this.channelForEditing.channelID === channelId;
+            const sourceChannel = isBeingEdited ? this.channelForEditing : channel;
+            
+            return {
+                ...sourceChannel,
+                width: Number(sourceChannel.width) || 0,
+                height: Number(sourceChannel.height) || 0,
+                dpi: Number(sourceChannel.dpi) || 0,
+                max_size_kb: Number(sourceChannel.max_size_kb) || 0,
+                rename_start_index: Number(sourceChannel.rename_start_index) || 0,
+                folder_structure: Number.isNaN(Number(sourceChannel.folder_structure))
+                    ? 1
+                    : Number(sourceChannel.folder_structure),
+                background_color: sourceChannel.background_color !== 'transparent' 
+                    ? this.normalizeBackgroundColor(sourceChannel.background_color)
+                    : 'transparent',
+                renaming_type: sourceChannel.renaming_type || 'standard'
+            };
+        }).filter(ch => ch !== null);
+    }
+
     sendToProcess() {
         if (!this.ensureChannelSelected('Debe seleccionar al menos un canal antes de procesar.')) {
             return;
@@ -769,18 +705,8 @@ export class productProcessingViewComponent {
 
         const productNames = product.map((p: any) => p.producName).join(', ');
 
-        // Preparar array de channel_params para cada canal seleccionado
-        const channelsParams = this.selectedChannelIds.map(channelId => {
-            const channel = this.channels.find(ch => ch.channelID === channelId);
-            if (!channel) return null;
-            
-            return {
-                ...channel,
-                background_color: channel.background_color !== 'transparent' 
-                    ? this.normalizeBackgroundColor(channel.background_color)
-                    : 'transparent'
-            };
-        }).filter(ch => ch !== null);
+        // Usar buildChannelsPayload() para obtener los parámetros con valores editados
+        const channelsParams = this.buildChannelsPayload();
 
         const params: any = {
             images_url: product,
@@ -874,11 +800,8 @@ export class productProcessingViewComponent {
 
         this.isGenerating = true;
         
-        // Preparar array de channel_params para cada canal seleccionado
-        const channelsParams = this.selectedChannelIds.map(channelId => {
-            const channel = this.channels.find(ch => ch.channelID === channelId);
-            return channel ? { ...channel } : null;
-        }).filter(ch => ch !== null);
+        // Usar buildChannelsPayload() para obtener los parámetros con valores editados
+        const channelsParams = this.buildChannelsPayload();
 
         const params: any = {
             images_url: product,
@@ -981,18 +904,13 @@ export class productProcessingViewComponent {
         // Parsear las dimensiones seleccionadas
         const [aiWidth, aiHeight] = this.aiImageDimensionsSelected.split('x').map(Number);
 
-        // Preparar array de channel_params para cada canal seleccionado
-        const channelsParams = this.selectedChannelIds.map(channelId => {
-            const channel = this.channels.find(ch => ch.channelID === channelId);
-            if (!channel) return null;
-            
-            return {
-                ...channel,
-                width: 1024,
-                height: 1024,
-                AI_background_prompt: this.aiBackgroundPrompt.trim()
-            };
-        }).filter(ch => ch !== null);
+        // Usar buildChannelsPayload() pero sobrescribir propiedades específicas para IA
+        const channelsParams = this.buildChannelsPayload().map(ch => ({
+            ...ch,
+            width: 1024,
+            height: 1024,
+            AI_background_prompt: this.aiBackgroundPrompt.trim()
+        }));
 
         const params: any = {
             images_url: product,
@@ -1149,12 +1067,31 @@ export class productProcessingViewComponent {
                 // Convertir a JSON
                 const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
                 
+                console.log('📄 Datos crudos del Excel:', jsonData);
+                
                 // Validar y mapear las columnas esperadas
-                this.customRenameData = jsonData.map((row: any) => ({
-                    gtin: row['Gtin'] || row['GTIN'] || row['gtin'] || '',
-                    renameId: row['ID de Renombre'] || row['ID_de_Renombre'] || row['renameId'] || '',
-                    applyToFolder: row['Aplicar Renombre a Carpeta'] || row['Aplicar_Renombre_a_Carpeta'] || row['applyToFolder'] || false
-                })).filter(item => item.gtin); // Filtrar filas sin GTIN
+                this.customRenameData = jsonData.map((row: any) => {
+                    // Obtener el GTIN y convertirlo a string limpio
+                    let rawGtin = row['Gtin'] || row['GTIN'] || row['gtin'] || '';
+                    
+                    // Convertir a string y limpiar espacios
+                    let gtin = String(rawGtin).trim();
+                    
+                    // Si es número en notación científica o tiene decimales, convertirlo correctamente
+                    if (typeof rawGtin === 'number') {
+                        gtin = Math.floor(rawGtin).toString();
+                    }
+                    
+                    console.log('🔍 GTIN parseado:', { raw: rawGtin, tipo: typeof rawGtin, limpio: gtin });
+                    
+                    return {
+                        gtin: gtin,
+                        renameId: row['ID de Renombre'] || row['ID_de_Renombre'] || row['renameId'] || '',
+                        applyToFolder: row['Aplicar Renombre a Carpeta'] || row['Aplicar_Renombre_a_Carpeta'] || row['applyToFolder'] || false
+                    };
+                }).filter(item => item.gtin); // Filtrar filas sin GTIN
+                
+                console.log('📋 GTINs en la plantilla:', this.customRenameData.map(item => item.gtin));
                 
                 // Validar que todos los productos visibles en pantalla tengan su renombrado en la plantilla
                 const validationResult = this.validateTemplateHasAllProducts();
@@ -1192,13 +1129,21 @@ export class productProcessingViewComponent {
      */
     private validateTemplateHasAllProducts(): { isValid: boolean; missingGtins: string[] } {
         // Obtener todos los GTINs de los productos visibles en pantalla
-        const visibleGtins = this.products.map(product => product.gtin).filter(gtin => gtin);
+        const visibleGtins = this.products.map(product => String(product.gtin).trim()).filter(gtin => gtin);
         
-        // Obtener los GTINs que están en la plantilla
-        const templateGtins = new Set(this.customRenameData.map(item => item.gtin));
+        console.log('🖥️ GTINs en pantalla:', visibleGtins);
+        
+        // Obtener los GTINs que están en la plantilla (ya normalizados en parseExcelFile)
+        const templateGtins = new Set(this.customRenameData.map(item => String(item.gtin).trim()));
+        
+        console.log('📋 GTINs en plantilla (Set):', Array.from(templateGtins));
         
         // Encontrar GTINs que están en pantalla pero no en la plantilla
-        const missingGtins = visibleGtins.filter(gtin => !templateGtins.has(gtin));
+        const missingGtins = visibleGtins.filter(gtin => {
+            const found = templateGtins.has(gtin);
+            console.log(`🔎 Buscando "${gtin}" en plantilla: ${found ? '✅ Encontrado' : '❌ No encontrado'}`);
+            return !found;
+        });
         
         return {
             isValid: missingGtins.length === 0,

@@ -11,6 +11,10 @@ export const environment = {
   cognitoResponseType: 'code',
   apicadenas: 'http://apisync.syncfonia.com/',
   api:"https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/",
+  apiSyncfonia: 'https://api.syncfonia.com/api/v1/',
+  syncfoniaToken: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4',
+  auth0Domain: 'prod-gs1mx.us.auth0.com',
+  auth0ClientId: 'RB3srb6dbiU0kCSGr0iCuzhA069JfUHH',
   domainUrl: "https://d2kl9s2ao8r880.cloudfront.net"
   // apiregistry: 'https://6d6j5r4cdl.execute-api.us-east-1.amazonaws.com/',
 }

@@ -65,6 +65,7 @@ export class UserService {
     private succedded = false;
     public authStatusChanged = new Subject<boolean>();
     public loggedIn: boolean;
+    private isLoggingOut = false; // Flag para evitar auto-login después de logout
     // private AWS = require('aws-sdk');
     // public static GOOGLE = CognitoHostedUIIdentityProvider.Google;
     private authStates: Subject<CognitoUser | any> = new Subject<CognitoUser | any>();
@@ -83,6 +84,23 @@ export class UserService {
     }
 
     initAuth() {
+        // Verificar si acabamos de hacer logout
+        const logoutInProgress = sessionStorage.getItem('logout_in_progress');
+        
+        if (logoutInProgress === 'true') {
+            console.log('Logout completado, limpiando flags...');
+            sessionStorage.removeItem('logout_in_progress');
+            this.isLoggingOut = false;
+            this.authStatusChanged.next(false);
+            
+            // Si hay un code en la URL (de Auth0), limpiar la URL
+            if (window.location.search.includes('code=')) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            return;
+        }
+        
+        this.isLoggingOut = false;
         this.isAuthenticated().subscribe(auth => this.authStatusChanged.next(auth));
     }
 
@@ -193,6 +211,12 @@ export class UserService {
 
     socialSignInListener() {
         Hub.listen('auth', async ({ payload }) => {
+            // Si estamos en proceso de logout, ignorar eventos de autenticación
+            if (this.isLoggingOut) {
+                console.log('Evento de auth ignorado: logout en progreso');
+                return;
+            }
+
             if (payload.event === 'signedIn') {
                 //('Evento signedIn:', payload);
 
@@ -243,17 +267,71 @@ export class UserService {
     }
 
     async logout() {
+        // Marcar que estamos haciendo logout
+        this.isLoggingOut = true;
+        
         try {
+            // 1. Cerrar sesión en Cognito (limpia sesiones en todos los dispositivos)
             await signOut({ global: true });
+            console.log('Sesión de Cognito cerrada exitosamente');
         } catch (error) {
-            console.error('Error al cerrar sesion en Cognito:', error);
+            console.error('Error al cerrar sesión en Cognito:', error);
         } finally {
+            // 2. Limpiar localStorage y sessionStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // 3. Marcar en sessionStorage que hicimos logout (para evitar auto-login)
+            sessionStorage.setItem('logout_in_progress', 'true');
+            
+            // 4. Construir URL de Cognito logout con federated para cerrar Auth0
             const cognitoDomain = environment.cognitoDomain.startsWith('http')
                 ? environment.cognitoDomain
                 : `https://${environment.cognitoDomain}`;
-            const logoutUrl = `${cognitoDomain}/logout?client_id=${environment.cognitoAppClientId}` +
-                `&logout_uri=${encodeURIComponent(environment.domainUrl)}&federated=1`;
+            
+            // 5. Usar Cognito logout con federated=true para que cierre Auth0 también
+            const logoutUrl = `${cognitoDomain}/logout?` +
+                `client_id=${environment.cognitoAppClientId}` +
+                `&logout_uri=${encodeURIComponent(environment.domainUrl)}` +
+                `&federated`;
+            
+            // 6. Redirigir a Cognito que a su vez cerrará Auth0
+            console.log('Redirigiendo para cerrar sesión federada completa...');
+            window.location.href = logoutUrl;
+        }
+    }
 
+    async logoutAndRedirect(redirectUrl: string) {
+        // Marcar que estamos haciendo logout
+        this.isLoggingOut = true;
+        
+        try {
+            // 1. Cerrar sesión en Cognito (limpia sesiones en todos los dispositivos)
+            await signOut({ global: true });
+            console.log('Sesión de Cognito cerrada exitosamente');
+        } catch (error) {
+            console.error('Error al cerrar sesión en Cognito:', error);
+        } finally {
+            // 2. Limpiar localStorage y sessionStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // 3. Marcar en sessionStorage que hicimos logout (para evitar auto-login)
+            sessionStorage.setItem('logout_in_progress', 'true');
+            
+            // 4. Construir URL de Cognito logout con federated para cerrar Auth0
+            const cognitoDomain = environment.cognitoDomain.startsWith('http')
+                ? environment.cognitoDomain
+                : `https://${environment.cognitoDomain}`;
+            
+            // 5. Usar la URL de redirección externa como logout_uri
+            const logoutUrl = `${cognitoDomain}/logout?` +
+                `client_id=${environment.cognitoAppClientId}` +
+                `&logout_uri=${encodeURIComponent(redirectUrl)}` +
+                `&federated`;
+            
+            // 6. Redirigir a Cognito que cerrará Auth0 y luego redirigirá a la URL externa
+            console.log('Cerrando sesión y redirigiendo a:', redirectUrl);
             window.location.href = logoutUrl;
         }
     }

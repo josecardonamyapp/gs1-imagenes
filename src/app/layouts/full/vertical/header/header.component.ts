@@ -69,7 +69,9 @@ export class HeaderComponent {
   userLastName = "";
   email = "";
   roles=[] as any;
+  profilePicture = "/assets/images/profile/user-1.jpg"; // Imagen por defecto
   welcomeMessage = 'Bienvenido Usuario';
+  isLoggingOut = false; // Flag para mostrar loading durante logout
 
   public selectedLanguage: any = {
     language: 'English',
@@ -112,6 +114,13 @@ export class HeaderComponent {
   }
 
   async ngOnInit() {
+    // Verificar si acabamos de hacer logout
+    const logoutInProgress = sessionStorage.getItem('logout_in_progress');
+    if (logoutInProgress === 'true') {
+      console.log('Logout detectado en header component, no cargar usuario');
+      return; // No continuar con el flujo de autenticación
+    }
+
     // this.loading = true;
     await this.userService.socialSignInListener();
 
@@ -124,6 +133,12 @@ export class HeaderComponent {
         this.userFirstName = String(userattributes["custom:userFirstName"]);
         this.userLastName = String(userattributes["custom:userLastName"]);
         this.email = String(userattributes["email"]);
+        
+        // Obtener la imagen de perfil si existe
+        if (userattributes["picture"]) {
+          this.profilePicture = String(userattributes["picture"]);
+        }
+        
         const raw = String(userattributes["custom:userRole"]);
         const roles = raw
           .replace(/[\[\]\s]/g, '') 
@@ -180,6 +195,7 @@ export class HeaderComponent {
 
 
   logout() {
+    this.isLoggingOut = true;
     this.userService.logout();
   }
 

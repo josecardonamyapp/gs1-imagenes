@@ -256,6 +256,104 @@
   color: #0f172a;
 }
 
+// Indicador de validación en segundo plano
+.product-results__validation-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 8px;
+  margin-left: 1rem;
+  animation: pulse-glow 2s ease-in-out infinite;
+  
+  .validation-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #d97706;
+    animation: rotate 2s linear infinite;
+  }
+  
+  .validation-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #92400e;
+    white-space: nowrap;
+  }
+  
+  .validation-progress-bar {
+    width: 120px;
+    height: 4px;
+    border-radius: 2px;
+    
+    ::ng-deep .mat-progress-bar-fill::after {
+      background-color: #f59e0b;
+    }
+    
+    ::ng-deep .mat-progress-bar-buffer {
+      background-color: #fde68a;
+    }
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// Contador de imágenes cargadas
+.product-results__image-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-left: 1rem;
+  
+  .counter-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #64748b;
+  }
+  
+  .counter-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+    white-space: nowrap;
+  }
+  
+  .counter-progress {
+    width: 100px;
+    height: 4px;
+    border-radius: 2px;
+    
+    ::ng-deep .mat-progress-bar-fill::after {
+      background-color: #10b981;
+    }
+    
+    ::ng-deep .mat-progress-bar-buffer {
+      background-color: #e2e8f0;
+    }
+  }
+}
+
 .product-results__spacer {
   flex: 1 1 auto;
 }
@@ -686,6 +784,15 @@
 
 
 /* --- Image orientation helpers --- */
+
+/* 🆕 CSS AUTOMÁTICO: El navegador maneja la orientación EXIF sin JavaScript */
+/* Esto funciona en navegadores modernos (Chrome 81+, Firefox 26+, Safari 13.1+) */
+/* ✅ HABILITADO: Corrige automáticamente la orientación de imágenes con metadata EXIF */
+img {
+  image-orientation: from-image; /* Respeta metadatos EXIF automáticamente */
+}
+
+/* Fallback manual: Solo se aplica si JS detecta que necesita rotación por dimensiones */
 .rotate-90 {
   transform: rotate(90deg);
   transform-origin: center center;

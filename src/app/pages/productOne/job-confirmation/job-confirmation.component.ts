@@ -324,6 +324,7 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
   }
 
   private updateProgressMetrics(progress: any, job: any): void {
+    // � Usar los valores directamente del API sin cálculos
     if (typeof progress?.total_images === 'number') {
       this.totalImages = Math.max(0, progress.total_images);
     }

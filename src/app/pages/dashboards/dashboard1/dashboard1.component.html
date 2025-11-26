@@ -41,13 +41,15 @@
       (click)="$event.stopPropagation()"
     >
       <header class="dashboard-header">
-        <!-- Banner informativo de productos ocultos -->
+        <!-- COMENTADO: Banner de productos ocultos por validación de accesibilidad (ya no se usa) -->
+        <!--
         <div class="info-banner" *ngIf="hiddenProductsCount > 0">
           <mat-icon>info</mat-icon>
           <span>
             {{ hiddenProductsCount }} producto(s) oculto(s) por no tener imágenes accesibles
           </span>
         </div>
+        -->
 
         <div class="dashboard-header__info">
           <h1>Redimensiona las fotos de producto para tus socios comerciales</h1>
@@ -144,12 +146,45 @@
         <div class="product-results__count">
           {{ filtered.length === 1 ? '1 producto disponible' : filtered.length + ' productos disponibles' }}
         </div>
+        
+        <!-- COMENTADO: Indicador de validación de accesibilidad (ya no se usa con FileFormatName) -->
+        <!--
+        <div class="product-results__validation-progress" *ngIf="isValidating">
+          <mat-icon class="validation-icon">verified</mat-icon>
+          <span class="validation-text">
+            Validando imágenes: {{ validatedImagesCount }} / {{ totalImagesToValidate }}
+          </span>
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="(validatedImagesCount / totalImagesToValidate) * 100"
+            class="validation-progress-bar">
+          </mat-progress-bar>
+        </div>
+        -->
+        
+        <!-- Contador de imágenes cargadas (lazy loading) -->
+        <div class="product-results__image-counter" *ngIf="totalImagesCount > 0">
+          <mat-icon class="counter-icon">image</mat-icon>
+          <span class="counter-text">
+            {{ loadedImagesCount }} / {{ totalImagesCount }} imágenes cargadas
+          </span>
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="(loadedImagesCount / totalImagesCount) * 100"
+            class="counter-progress">
+          </mat-progress-bar>
+        </div>
+        
         <span class="product-results__spacer"></span>
       </div>
+      
       <div class="product-grid">
         <div class="product-grid__list">
           <ng-container *ngFor="let product of filtered; trackBy: trackByGtin" >
-            <div class="product-grid__item">
+            <div 
+              class="product-grid__item"
+              [attr.data-product-key]="createProductKey(product.gtin, product.gln)"
+              #productCard>
               <div
                 class="card product-card h-100 shadow border-0 rounded-4 bg-white text-start"
                 role="button"
@@ -195,6 +230,7 @@
                         [class.rotate-90]="product.images[product.currentIndex]?.rotateCssFallback === true"
                         alt="{{ product.producName }}"
                         loading="lazy"
+                        decoding="async"
                         class="card-img-top p-3 mx-auto d-block mb-3"
                         style="height: 180px; object-fit: contain;"
                         (load)="onProductImageLoad(product)"

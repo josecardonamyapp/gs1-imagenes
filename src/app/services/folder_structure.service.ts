@@ -15,6 +15,6 @@ export class FolderStructureService {
 
   getFolderStructureList(): Observable<any> {
     // const headers = new HttpHeaders({ 'Access-Control-Allow-Origin': '*' });
-    return this.http.get('https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/folder-structures');
+    return this.http.get(this.baseUrl + 'folder-structures');
   }
 }

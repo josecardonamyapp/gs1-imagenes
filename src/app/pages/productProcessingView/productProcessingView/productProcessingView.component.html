@@ -8,13 +8,12 @@
             <div class="card product-card d-flex flex-row align-items-center p-3 shadow-sm mb-4"
                 *ngFor="let product of products">
                 <div class="product-card__thumb-wrapper me-3">
-                    <img *ngIf="product.images?.length"
-                        [src]="product.images[0]?.displayUrl || product.images[0]?.uniformresourceidentifier"
-                        [class.rotate-90]="product.images[0]?.rotateCssFallback === true"
+                    <img *ngIf="product.visibleImages?.length"
+                        [src]="product.visibleImages[0]?.uniformresourceidentifier"
                         alt="Primera imagen"
                         class="product-card__thumb" />
-                    <span class="product-card__thumb-badge" *ngIf="product.images?.length">
-                        {{ product.images.length }}
+                    <span class="product-card__thumb-badge" *ngIf="product.totalImagesCount">
+                        {{ product.totalImagesCount }}
                     </span>
                 </div>
 
@@ -85,21 +84,19 @@
                 </div>
 
                 <!-- Chips para visualizar canales seleccionados -->
-                <div *ngIf="selectedChannelIds.length > 0" class="mb-3">
-                    <div class="d-flex flex-wrap gap-2">
-                        <mat-chip 
-                            *ngFor="let channelId of selectedChannelIds" 
-                            class="channel-chip"
-                            [class.active]="activeChannelIdForView === channelId"
-                            [style.cursor]="selectedChannelIds.length > 1 ? 'pointer' : 'default'"
-                            (click)="onChipClick(channelId)">
-                            {{ getChannelNameById(channelId) }}
-                        </mat-chip>
-                    </div>
+                <div *ngIf="selectedChannelIds.length > 0" class="chips-container">
+                    <mat-chip 
+                        *ngFor="let channelId of selectedChannelIds" 
+                        class="channel-chip"
+                        [class.active]="activeChannelIdForView === channelId"
+                        [style.cursor]="selectedChannelIds.length > 1 ? 'pointer' : 'default'"
+                        (click)="onChipClick(channelId)">
+                        {{ getChannelNameById(channelId) }}
+                    </mat-chip>
                 </div>
 
                 <!-- Indicador de visualización (solo lectura) -->
-                <div *ngIf="selectedChannelIds.length > 1 && activeChannelIdForView" class="view-mode-indicator mb-3">
+                <div *ngIf="selectedChannelIds.length > 1 && activeChannelIdForView" class="view-mode-indicator">
                     <mat-icon>visibility</mat-icon>
                     <span>Visualizando: <strong>{{ getChannelNameById(activeChannelIdForView) }}</strong> (solo lectura)</span>
                 </div>

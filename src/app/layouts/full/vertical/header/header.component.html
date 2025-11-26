@@ -1,4 +1,12 @@
 <mat-toolbar class="topbar" style="background-color: white!important;">
+  <!-- Loading Overlay en pantalla completa -->
+  @if(isLoggingOut) {
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+      <mat-spinner diameter="60" color="primary"></mat-spinner>
+      <h3 style="color: white; margin-top: 20px; font-weight: 500;">Cerrando sesión...</h3>
+    </div>
+  }
+  
   <!-- --------------------------------------------------------------- -->
   <!-- Desktop Menu -->
   @if(showToggle) {
@@ -64,26 +72,26 @@
   <!-- profile Dropdown -->
   <!-- --------------------------------------------------------------- -->
   <button mat-icon-button [matMenuTriggerFor]="profilemenu" aria-label="Notifications">
-    <img src="/assets/images/profile/user-1.jpg" class="rounded-circle object-cover icon-35 profile-dd" width="35" />
+    <img [src]="profilePicture" class="rounded-circle object-cover icon-35 profile-dd" width="35" />
   </button>
-  <mat-menu #profilemenu="matMenu" class="topbar-dd cardWithShadow">
-    <ng-scrollbar class="position-relative" style="height: 647px">
-      <div class="p-x-32 p-y-16">
-        <h6 class="f-s-16 f-w-600 m-0">User Profile</h6>
+  <mat-menu #profilemenu="matMenu" class="topbar-dd cardWithShadow" style="max-width: 400px;">
+    <ng-scrollbar class="position-relative" style="height: 350px">
+      <div class="p-x-32 p-y-16" (click)="$event.stopPropagation()">
+        <h6 class="f-s-14 f-w-600 m-0">Mi Perfil</h6>
 
-        <div class="d-flex align-items-center p-b-24 b-b-1 m-t-16">
-          <img src="/assets/images/profile/user-1.jpg" class="rounded-circle" width="95" />
-          <div class="m-l-16">
-            <h6 class="f-s-14 f-w-600 m-0">{{userFirstName}}</h6>
-            <span class="f-s-14 d-block m-b-4">{{userOwnershipData}}</span>
-            <span class="d-flex align-items-center">
-              <i-tabler name="mail" class="icon-15 m-r-4"></i-tabler>
-              {{email}}
+        <div class="d-flex align-items-start p-b-24 b-b-1 m-t-16">
+          <img [src]="profilePicture" class="rounded-circle" width="70" style="flex-shrink: 0;" />
+          <div class="m-l-16" style="overflow: hidden; flex: 1; user-select: text;">
+            <h6 class="f-s-12 f-w-600 m-0" style="word-break: break-word;">{{userFirstName}}</h6>
+            <span class="f-s-11 d-block m-b-4" style="word-break: break-word; white-space: normal;">{{userOwnershipData}}</span>
+            <span class="d-flex align-items-center f-s-11" style="word-break: break-word; white-space: normal;">
+              <i-tabler name="mail" class="icon-13 m-r-4" style="flex-shrink: 0;"></i-tabler>
+              <span style="overflow-wrap: break-word;">{{email}}</span>
             </span>
-            <h6 class="f-s-14 d-block m-b-4"> ROLES:</h6>
+            <h6 class="f-s-12 d-block m-b-4 m-t-8"> ROLES:</h6>
 
             @for(role of roles; track role) {
-            <span class="f-s-14 d-block m-b-4">&nbsp;&nbsp;{{role}}</span>
+            <span class="f-s-11 d-block m-b-4" style="word-break: break-word;">&nbsp;&nbsp;{{role}}</span>
 
             }
           </div>
@@ -127,9 +135,14 @@
 
       <div class="p-y-12 p-x-32">
         <!-- <span (click)="logout()" mat-stroked-button color="primary" class="w-100">Logout</span> -->
-        <button mat-stroked-button color="primary" class="w-100" (click)="logout()">
+        <button 
+          mat-stroked-button 
+          color="primary" 
+          class="w-100" 
+          (click)="logout()" 
+          [disabled]="isLoggingOut">
           <mat-icon class="me-2">logout</mat-icon>
-          Logout
+          <span>Logout</span>
         </button>
       </div>
     </ng-scrollbar>

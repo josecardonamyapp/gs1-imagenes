@@ -19,6 +19,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { JobErrorDetailsDialogComponent } from './job-error-details-dialog/job-error-details-dialog.component';
 import { catchError } from 'rxjs/operators';
 import { createProductKey } from '../../utils/product-key';
+import { FormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
 
 const JSZip = require('jszip');
 
@@ -38,7 +40,9 @@ const JSZip = require('jszip');
     MatSelectModule,
     MatTooltipModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    FormsModule,
+    MatInputModule
   ],
   templateUrl: './job-status.component.html',
   styleUrls: ['./job-status.component.scss']
@@ -49,6 +53,8 @@ export class JobStatusComponent implements OnInit, OnDestroy {
   loading = false;
   completedLoading = false;
   private refreshInterval: any;
+  editingJobId: string | null = null;
+  tempJobName: string = '';
 
   constructor(
     private productService: ProductService,
@@ -469,7 +475,24 @@ export class JobStatusComponent implements OnInit, OnDestroy {
         break;
       case 'regenerate': {
         // Navegar a productProcessingView con los parametros del canal y los productKeys (GTIN+GLN)
-        const params = { ...(job.channel_params || {}) };
+        // channel_params puede ser un objeto único o un array de objetos (multi-canal)
+        const channelParams = job.channel_params;
+        let params: any = {};
+        let channelGln: string | null = null;
+
+        // Determinar si es array o objeto único
+        if (Array.isArray(channelParams)) {
+          // Multi-canal: usar el primer canal como referencia para el GLN
+          if (channelParams.length > 0) {
+            channelGln = channelParams[0]?.gln || null;
+          }
+          // Serializar el array como JSON para enviarlo en queryParams
+          params.channel_params = JSON.stringify(channelParams);
+        } else if (channelParams && typeof channelParams === 'object') {
+          // Canal único (compatibilidad con jobs antiguos)
+          params = { ...channelParams };
+          channelGln = channelParams.gln || null;
+        }
         
         if (Array.isArray(job.processed_files) && job.processed_files.length > 0) {
           // Extraer GTINs únicos de los archivos procesados
@@ -481,15 +504,13 @@ export class JobStatusComponent implements OnInit, OnDestroy {
             .filter((gtin: string | null, idx: number, arr: any[]) => gtin && arr.indexOf(gtin) === idx);
           
           if (gtins.length > 0) {
-            // Obtener el GLN del canal (si existe)
-            const channelGln = job.channel_params?.gln || null;
-            
             // Crear productKeys usando la utilidad createProductKey
             const productKeys = gtins.map((gtin: string) => {
               // Formato: "gtin::gln"
               return `${gtin}::${channelGln || ''}`;
             });
             
+            // Limpiar params individuales si existen
             delete params.gtin;
             delete params.gln;
             
@@ -497,6 +518,7 @@ export class JobStatusComponent implements OnInit, OnDestroy {
             queryParams['productKey'] = productKeys;
             
             console.log('Regenerating with productKeys:', productKeys);
+            console.log('Regenerating with channel_params:', channelParams);
             this.router.navigate(['/product-catalog'], { queryParams: queryParams });
             break;
           }
@@ -601,6 +623,52 @@ export class JobStatusComponent implements OnInit, OnDestroy {
     })
   }
 
+  startEditJobName(job: any): void {
+    this.editingJobId = job.job_id;
+    this.tempJobName = job.job_name || job.product_name || '';
+  }
+
+  cancelEditJobName(): void {
+    this.editingJobId = null;
+    this.tempJobName = '';
+  }
+
+  saveJobName(job: any): void {
+    if (!this.tempJobName.trim()) {
+      this.snackBar.open('El nombre no puede estar vacío', 'Cerrar', {
+        duration: 3000,
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    this.loading = true;
+    this.productService.updateJobName(job.job_id, this.tempJobName).subscribe({
+      next: (result: any) => {
+        job.product_name = this.tempJobName;
+        job.job_name = this.tempJobName;
+        this.editingJobId = null;
+        this.tempJobName = '';
+        this.snackBar.open('Nombre actualizado correctamente', 'Cerrar', {
+          duration: 2500,
+          verticalPosition: 'top'
+        });
+        // Recargar la lista de completedJobs
+        this.loadCompletedJobs();
+      },
+      error: (error: any) => {
+        console.error('Error actualizando nombre del job:', error);
+        this.loading = false;
+        this.snackBar.open('Error al actualizar el nombre', 'Cerrar', {
+          duration: 3000,
+          verticalPosition: 'top'
+        });
+      }
+    });
+  }
+
 }
+
+
 
 

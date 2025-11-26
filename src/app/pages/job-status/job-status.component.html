@@ -93,9 +93,30 @@
           <div class="title" *ngIf="job.status != 'COMPLETED'" [matTooltip]="job.total_gtins + ' GTINs Procesandose…'">
             {{ job.total_gtins + ' GTINs Procesandose...' }}
           </div>
-          <div class="title" *ngIf="job.status == 'COMPLETED'" [matTooltip]="job.product_name || (job.total_gtins + ' GTINs Procesados')">
-            {{ job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.product_name }}
+          
+          <!-- Modo visualización -->
+          <div class="title-edit-container" *ngIf="job.status == 'COMPLETED' && editingJobId !== job.job_id">
+            <div class="title" [matTooltip]="job.job_name || job.product_name || (job.total_gtins + ' GTINs Procesados')">
+              {{ job.job_name || (job.total_gtins > 1 ? job.total_gtins + ' GTINs Procesados' : job.product_name) }}
+            </div>
+            <button mat-icon-button (click)="startEditJobName(job)" class="edit-btn" matTooltip="Editar nombre">
+              <mat-icon>edit</mat-icon>
+            </button>
           </div>
+
+          <!-- Modo edición -->
+          <div class="title-edit-mode" *ngIf="editingJobId === job.job_id">
+            <mat-form-field appearance="outline" class="edit-input">
+              <input matInput [(ngModel)]="tempJobName" placeholder="Nombre del trabajo" (keyup.enter)="saveJobName(job)" (keyup.escape)="cancelEditJobName()">
+            </mat-form-field>
+            <button mat-icon-button (click)="saveJobName(job)" color="primary" matTooltip="Guardar">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button (click)="cancelEditJobName()" matTooltip="Cancelar">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
           <div class="gtin">GTIN: {{ job.total_gtins > 1 ? job.total_gtins : job.gtin }} </div>
         </div>
 

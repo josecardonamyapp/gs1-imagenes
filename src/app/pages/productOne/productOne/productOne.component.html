@@ -6,16 +6,23 @@
         <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
             <div class="preview-pane d-flex">
                 <div class="thumbnail-list me-3">
-                    <img *ngFor="let img of product.images"
+                    <img *ngFor="let img of product.images; let i = index"
                         [src]="img.displayUrl || img.uniformresourceidentifier"
                         [class.rotate-90]="img.rotateCssFallback === true"
-                        class="img-thumbnail thumbnail-img" alt="Miniatura" width="80" height="80" loading="lazy" />
+                        [class.selected-thumbnail]="i === selectedImageIndex"
+                        (click)="selectImage(i)"
+                        class="img-thumbnail thumbnail-img" 
+                        alt="Miniatura" 
+                        width="80" 
+                        height="80" 
+                        loading="lazy"
+                        style="cursor: pointer;" />
                 </div>
 
                 <div class="d-flex flex-column flex-grow-1">
                     <div class="preview-stage text-center">
                         <ng-container *ngIf="product.images && product.images.length > 0">
-                            <img [src]="product.images[0].displayUrl || product.images[0].uniformresourceidentifier" 
+                            <img [src]="getSelectedImage()?.displayUrl || getSelectedImage()?.uniformresourceidentifier" 
                                  [class.rotate-90]="isSelectedImageHorizontal()"
                                  alt="{{ product.producName }}" class="main-preview-img img-fluid" />
                         </ng-container>
@@ -76,7 +83,7 @@
                 </div>
 
                 <!-- Chips para visualizar canales seleccionados -->
-                <div *ngIf="selectedChannelIds.length > 0" class="mb-3">
+                <div *ngIf="selectedChannelIds.length > 0" class="chips-container">
                     <div class="d-flex flex-wrap gap-2">
                         <mat-chip 
                             *ngFor="let channelId of selectedChannelIds" 
@@ -280,8 +287,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
-                                <!-- <span class="label"> <span matTooltip="Estandar usa el GTIN/UPC a 14 digitos. Personalizado requiere cargar un archivo con codigos e identificadores." matTooltipPosition="above"></span> Encarpetado</span> -->
+                            <!-- <div class="col-md-4">
                                 <span class="label" matTooltip="Selecciona la forma en como deseas que se guarden las imagenes una vez procesadas" matTooltipPosition="above">Encarpetado</span>
                                 <mat-form-field appearance="outline" class="w-100 small-input">
                                     <mat-select name="channelFolderStructure" [(ngModel)]="channelForEditing.folder_structure"
@@ -291,7 +297,7 @@
                                         </mat-option>
                                     </mat-select>
                                 </mat-form-field>
-                            </div>
+                            </div> -->
                         </div>
 
                     </div>

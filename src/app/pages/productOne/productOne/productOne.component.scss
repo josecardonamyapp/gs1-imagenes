@@ -712,6 +712,8 @@
 
 .view-mode-indicator {
   padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
   background-color: #fff3e0;
   border-left: 4px solid #ff9800;
   border-radius: 4px;
@@ -730,4 +732,12 @@
   strong {
     font-weight: 600;
   }
+}
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
 }

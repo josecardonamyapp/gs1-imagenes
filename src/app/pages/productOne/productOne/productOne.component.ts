@@ -116,6 +116,9 @@ export class ProductOneComponent {
     // Propiedad para renombrado personalizado
     customRenameValue: string = '';
 
+    // Índice de la imagen seleccionada para preview
+    selectedImageIndex: number = 0;
+
     constructor(
         private route: ActivatedRoute,
         private productService: ProductService,
@@ -171,7 +174,7 @@ export class ProductOneComponent {
                         const images = Array.isArray(product.images)
                             ? product.images.filter(image => {
                                 const url = image?.uniformresourceidentifier ?? '';
-                                return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                                return typeof url === 'string' && url.trim() !== '' && /\.(jpg|jpeg|png)$/i.test(url);
                             })
                             : [];
 
@@ -487,19 +490,24 @@ export class ProductOneComponent {
             const channel = this.channels.find(ch => ch.channelID === channelId);
             if (!channel) return null;
             
+            // Si este canal es el que está siendo editado, usar los valores de channelForEditing
+            const isBeingEdited = this.channelForEditing && this.channelForEditing.channelID === channelId;
+            const sourceChannel = isBeingEdited ? this.channelForEditing : channel;
+            
             return {
-                ...channel,
-                width: Number(channel.width) || 0,
-                height: Number(channel.height) || 0,
-                dpi: Number(channel.dpi) || 0,
-                max_size_kb: Number(channel.max_size_kb) || 0,
-                rename_start_index: Number(channel.rename_start_index) || 0,
-                folder_structure: Number.isNaN(Number(channel.folder_structure))
+                ...sourceChannel,
+                width: Number(sourceChannel.width) || 0,
+                height: Number(sourceChannel.height) || 0,
+                dpi: Number(sourceChannel.dpi) || 0,
+                max_size_kb: Number(sourceChannel.max_size_kb) || 0,
+                rename_start_index: Number(sourceChannel.rename_start_index) || 0,
+                folder_structure: Number.isNaN(Number(sourceChannel.folder_structure))
                     ? (this.folderStructures[0]?.value ?? 1)
-                    : Number(channel.folder_structure),
-                background_color: channel.background_color !== 'transparent' 
-                    ? this.normalizeBackgroundColor(channel.background_color)
-                    : 'transparent'
+                    : Number(sourceChannel.folder_structure),
+                background_color: sourceChannel.background_color !== 'transparent' 
+                    ? this.normalizeBackgroundColor(sourceChannel.background_color)
+                    : 'transparent',
+                renaming_type: sourceChannel.renaming_type || 'standard'
             };
         }).filter(ch => ch !== null);
     }
@@ -824,15 +832,33 @@ export class ProductOneComponent {
     }
 
     /**
-     * Verifica si la primera imagen necesita rotación
+     * Verifica si la imagen seleccionada necesita rotación
      */
     isSelectedImageHorizontal(): boolean {
         if (!this.product?.images || this.product.images.length === 0) {
             return false;
         }
-        // Siempre usar la primera imagen
-        const img = this.product.images[0];
+        const img = this.product.images[this.selectedImageIndex];
         return img?.rotateCssFallback === true;
+    }
+
+    /**
+     * Selecciona una imagen para mostrar en el preview principal
+     */
+    selectImage(index: number): void {
+        if (this.product?.images && index >= 0 && index < this.product.images.length) {
+            this.selectedImageIndex = index;
+        }
+    }
+
+    /**
+     * Obtiene la imagen seleccionada actualmente
+     */
+    getSelectedImage(): any {
+        if (!this.product?.images || this.product.images.length === 0) {
+            return null;
+        }
+        return this.product.images[this.selectedImageIndex] || this.product.images[0];
     }
 
     /**
