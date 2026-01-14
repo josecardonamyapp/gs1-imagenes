@@ -296,7 +296,7 @@ export class ChannelViewComponent {
         return true;
     }
     private prepareChannelData(): Channel {
-        const renamingType = this.channel.renaming_type === 'custom' ? 'custom' : 'Estandar';
+        const renamingType = this.channel.renaming_type === 'custom' ? 'custom' : 'Estándar';
         return {
             ...this.channel,
             gln: parseInt(this.channel.gln?.toString() || '0'),

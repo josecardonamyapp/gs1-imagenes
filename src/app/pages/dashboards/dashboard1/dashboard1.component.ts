@@ -75,137 +75,6 @@ export class AppDashboard1Component implements OnInit {
 
   @ViewChild('toolbar') toolbarRef?: ElementRef<HTMLDivElement>;
   @ViewChild('toolbarToggle', { static: true }) toolbarToggleRef?: ElementRef<HTMLButtonElement>;
-  // tourByRoute: Record<string, any[]> = {
-  //   '/home': [
-  //     {
-  //       element: '#menu-inicio',
-  //       popover: {
-  //         title: 'Inicio',
-  //         description: 'Accede al panel principal para comenzar a gestionar tus productos y actividades.'
-  //       }
-  //     },
-  //     {
-  //       element: '#home-landing',
-  //       popover: {
-  //         title: 'Selección de opciones',
-  //         description: 'Selecciona la opción que deseas procesar.'
-  //       },
-  //       allowInteraction: true
-  //     },
-  //   ],
-  //   '/dashboards/dashboard1': [
-  //     {
-  //       element: '#input-gtin',
-  //       popover: {
-  //         title: 'Buscar productos',
-  //         description: 'Ingresa el nombre del producto o su código GTIN para realizar una búsqueda directa.'
-  //       },
-  //       allowInteraction: true
-  //     },
-  //     {
-  //       element: '#btn-seleccionar-todos',
-  //       popover: {
-  //         title: 'Seleccionar todos los productos',
-  //         description: 'Haz clic aquí para seleccionar rápidamente todos los productos mostrados.'
-  //       }
-  //     },
-  //     {
-  //       element: '#btn-buscar-gtins',
-  //       popover: {
-  //         title: 'Búsqueda por lista de GTINs',
-  //         description: 'Importa una lista con múltiples GTINs para realizar una búsqueda masiva.'
-  //       }
-  //     },
-  //     {
-  //       element: '#tarjeta-producto-1',
-  //       popover: {
-  //         title: 'Vista de producto',
-  //         description: 'Cada tarjeta muestra información clave de un producto individual.'
-  //       }
-  //     },
-  //     {
-  //       element: '#carousel-imagenes',
-  //       popover: {
-  //         title: 'Carrusel de imágenes',
-  //         description: 'Desplázate entre las imágenes disponibles del producto para visualizar sus distintas vistas.'
-  //       }
-  //     },
-  //     {
-  //       element: '#informacion-tarjeta',
-  //       popover: {
-  //         title: 'Detalles del producto',
-  //         description: 'Consulta aquí detalles adicionales como imágenes, descripciones y opciones de procesamiento.'
-  //       }
-  //     }
-  //   ],
-  //   '/channels/channel': [
-  //     {
-  //       element: '#menu-canales-de-venta',
-  //       popover: {
-  //         title: 'Gestión de Canales de Venta',
-  //         description: 'Administra tus canales de distribución desde esta sección.'
-  //       }
-  //     },
-  //     {
-  //       element: '#lista-canales',
-  //       popover: {
-  //         title: 'Listado de canales',
-  //         description: 'Visualiza todos los canales existentes configurados en la plataforma.'
-  //       }
-  //     },
-  //     {
-  //       element: '#crear-canal',
-  //       popover: {
-  //         title: 'Crear un nuevo canal',
-  //         description: 'Haz clic aquí para configurar un nuevo canal de distribución.'
-  //       }
-  //     },
-  //     {
-  //       element: '#editar-canal',
-  //       popover: {
-  //         title: 'Editar canal existente',
-  //         description: 'Modifica la configuración de un canal ya existente desde esta opción.'
-  //       }
-  //     }
-  //   ],
-  //   '/jobs': [
-  //     {
-  //       element: '#menu-mis-procesamientos',
-  //       popover: {
-  //         title: 'Mis Procesamientos',
-  //         description: 'Consulta todas las solicitudes de procesamiento realizadas hasta ahora.'
-  //       }
-  //     },
-  //     {
-  //       element: '#lista-procesamientos',
-  //       popover: {
-  //         title: 'Lista de procesamientos',
-  //         description: 'Aquí se muestra un historial detallado de todos tus trabajos procesados.'
-  //       }
-  //     },
-  //     {
-  //       element: '#actualizar-procesamientos',
-  //       popover: {
-  //         title: 'Actualizar lista',
-  //         description: 'Refresca el listado para ver el estado más reciente de tus procesamientos.'
-  //       }
-  //     },
-  //     {
-  //       element: '#procesar-productos',
-  //       popover: {
-  //         title: 'Nuevo procesamiento',
-  //         description: 'Inicia un nuevo procesamiento a partir de tu lista de productos seleccionados.'
-  //       }
-  //     }
-  //   ]
-  // };
-
-
-  // tourSequence: string[] = [
-  //   '/dashboards/dashboard1',
-  //   '/channels/channel',
-  //   '/jobs'
-  // ];
 
   constructor(
     private productService: ProductService,
@@ -243,7 +112,7 @@ export class AppDashboard1Component implements OnInit {
     try {
       const catalogs = await firstValueFrom(this.catalogService.getCatalogs(gln));
       this.catalogList = catalogs || [];
-      console.log('Catalogs fetched:', this.catalogList);
+      // console.log('Catalogs fetched:', this.catalogList);
     }
     catch (err) {
       console.error('Error fetching catalogs:', err);
@@ -281,7 +150,6 @@ export class AppDashboard1Component implements OnInit {
       
       // Usar método paginado si hay más de 250 GTINs
       const usePagination = gtins.length > 250;
-      console.log(`🔄 Consultando ${gtins.length} GTINs ${usePagination ? 'CON PAGINACIÓN' : 'sin paginación'} | Admin: ${isAdmin} | GLN enviado: ${options?.gln || 'NO'}`);
       
       const response: any = await firstValueFrom(
         usePagination 
@@ -290,12 +158,9 @@ export class AppDashboard1Component implements OnInit {
       );
       
       const normalizedProducts = this.productService.normalizeTradeItemsResponse(response);
-
-      console.log(` Productos recibidos: ${normalizedProducts.length}`);
       
       // Contar imágenes totales después del filtro FileFormatName
       const totalImagesFromSyncfonia = normalizedProducts.reduce((sum, p) => sum + (p.images?.length || 0), 0);
-      console.log(` Total imágenes válidas (FileFormatName): ${totalImagesFromSyncfonia}`);
       
       // DEBUG: Mostrar detalle de cada producto
       // normalizedProducts.forEach(p => {
@@ -364,7 +229,6 @@ export class AppDashboard1Component implements OnInit {
         });
 
         this.products = Array.from(productsByKey.values()).map(product => this.prepareProductForDisplay(product));
-        console.log('products', this.products)
 
         const requestedOrder = Array.isArray(requestedCodes) && requestedCodes.length > 0
           ? requestedCodes
@@ -376,6 +240,9 @@ export class AppDashboard1Component implements OnInit {
           list.push(product);
           productsByGtin.set(product.gtin, list);
         });
+
+        // Resetear catálogo seleccionado al cargar nuevos productos
+        this.catalogSelected = null;
 
         this.filtered = [];
         requestedOrder.forEach(code => {
@@ -525,7 +392,7 @@ export class AppDashboard1Component implements OnInit {
     if (!trimmed) {
       this.inputType = null;
       this.filtered = [];
-      this.searchText = '';          // â† refleja en el textarea
+      this.searchText = '';    
       this.searchSubject.next('');
       this.autoToggleToolbarOnResults();
       return;
@@ -544,9 +411,9 @@ export class AppDashboard1Component implements OnInit {
 
     if (this.inputType === 'number') {
       normalized = normalized
-        .replace(/[\s`r`n]+/g, ',') // saltos de lÃ­nea/espacios â†’ coma
-        .replace(/,{2,}/g, ',')     // evita ,, consecutivas
-        .replace(/^,|,$/g, '');     // sin coma al inicio/fin
+        .replace(/[\s`r`n]+/g, ',')
+        .replace(/,{2,}/g, ',')  
+        .replace(/^,|,$/g, '');   
 
       // Autocompletar a 14 dÃ­gitos
       const paddedCodes = normalized
@@ -560,8 +427,7 @@ export class AppDashboard1Component implements OnInit {
       normalized = normalized.replace(/\s+/g, ' ');
     }
 
-    // ðŸ” Reflejar el valor normalizado en el textarea y continuar flujo
-    this.searchText = normalized;       // â† actualiza el textarea
+    this.searchText = normalized;   
     this.searchSubject.next(normalized);
 
     // console.log('inputType:', this.inputType, '=>', normalized);
@@ -603,7 +469,7 @@ export class AppDashboard1Component implements OnInit {
     }
 
     this.refreshCatalogPanelData();
-    console.log('filtered', this.filtered);
+    // console.log('filtered', this.filtered);
   }
 
   clearSearch() {
@@ -773,6 +639,8 @@ export class AppDashboard1Component implements OnInit {
     this.clearAllGtins();
     this.catalogPanelVisible = false;
     this.catalogPanelData = null;
+    // Recargar la lista de catálogos para actualizar el dropdown
+    this.getCatalogs();
   }
 
   onCatalogPanelCancel(): void {
@@ -809,7 +677,15 @@ export class AppDashboard1Component implements OnInit {
 
   onCatalogSelectedChange(catalogId: string): void {
     const catalogData = this.catalogList.find(c => c.catalog_id === catalogId) || null;
+    this.catalogSelected = catalogData;
     this.filtered = catalogData && catalogData.data ? catalogData.data : [];
+    
+    // Recalcular el conteo de imágenes cuando cambia el catálogo
+    this.totalImagesCount = this.filtered.reduce((total, product) => {
+      return total + (Array.isArray(product.images) ? product.images.length : 0);
+    }, 0);
+    this.loadedImagesCount = 0;
+    
     this.autoToggleToolbarOnResults();
   }
 
@@ -889,7 +765,7 @@ export class AppDashboard1Component implements OnInit {
         productKey: productKeys
       }
     });
-    console.log('procesar', this.selectedProductKeys);
+    // console.log('procesar', this.selectedProductKeys);
   }
 
   private autoToggleToolbarOnResults(): void {
@@ -936,7 +812,7 @@ export class AppDashboard1Component implements OnInit {
     this.validatedImagesCount = 0;
     this.totalImagesToValidate = products.length;
 
-    console.log(`🔍 Iniciando validación de accesibilidad en segundo plano de ${products.length} productos (solo primera imagen)...`);
+    console.log(`Iniciando validación de accesibilidad en segundo plano de ${products.length} productos (solo primera imagen)...`);
 
     // Procesar productos en lotes pequeños para no saturar
     const batchSize = 10;
@@ -1022,7 +898,7 @@ export class AppDashboard1Component implements OnInit {
       
       // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
       const timeoutId = setTimeout(() => {
-        console.warn(`⏱️ Timeout checking EXIF orientation: ${imageUrl}`);
+        console.warn(`Timeout checking EXIF orientation: ${imageUrl}`);
         resolve(false);
       }, 5000);
 
@@ -1044,7 +920,7 @@ export class AppDashboard1Component implements OnInit {
             if (orientation) {
               console.log(` EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
             } else {
-              console.log(`ℹ No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+              console.log(`No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
             }
             
             resolve(needsRotation);

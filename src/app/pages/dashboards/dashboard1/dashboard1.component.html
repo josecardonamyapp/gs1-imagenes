@@ -144,6 +144,7 @@
     <div class="product-list" *ngIf="filtered.length > 0; else emptyState">
       <div class="product-results__toolbar">
         <div class="product-results__count">
+          <span *ngIf="catalogSelected" class="catalog-name">{{ catalogSelected.name }} - </span>
           {{ filtered.length === 1 ? '1 producto disponible' : filtered.length + ' productos disponibles' }}
         </div>
         

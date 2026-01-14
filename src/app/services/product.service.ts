@@ -79,8 +79,6 @@ export class ProductService {
     }
 
     productGetByGtin(gtins: any, options?: { gln?: string | null }): Observable<any> {
-        console.log('GTINS EN SERVICE:', gtins);
-        console.log('OPTIONS EN SERVICE:', options);
         const storedGln: string | null = localStorage.getItem('gln');
         const overrideGln = typeof options?.gln === 'string' ? options.gln : null;
         const roles = JSON.parse(localStorage.getItem('roles') || '[]');
@@ -111,12 +109,8 @@ export class ProductService {
             ]
         };
 
-        console.log(`📡 Solicitando ${filteredGtinList.length} GTINs con PageSize: ${pageSize}`);
 
         const glnToSend = overrideGln && overrideGln.trim() !== '' ? overrideGln : null;
-        console.log('GLN TO SEND EN SERVICE:', glnToSend);
-        console.log('STORED GLN:', storedGln);
-        console.log('OPTIONS GLN:', options?.gln);  
 
         // Lógica de GLN:
         // - Si NO es admin (hasExcludedRole=false): SIEMPRE usar storedGln del localStorage
@@ -125,15 +119,10 @@ export class ProductService {
         //   * Si NO viene glnToSend: NO enviar GLN (búsqueda global de cualquier proveedor)
         if (!hasExcludedRole && storedGln) {
             body.Gln = storedGln;
-            console.log(`✅ Usando storedGln (usuario normal): ${storedGln}`);
         } else if (hasExcludedRole && glnToSend) {
             body.Gln = glnToSend;
-            console.log(`✅ Usando glnToSend (admin - búsqueda específica): ${glnToSend}`);
         } else if (hasExcludedRole && !glnToSend) {
-            console.log(`ℹ️ Admin sin GLN - búsqueda global (cualquier proveedor)`);
         }
-        console.log('hasExcludedRole', hasExcludedRole);
-        console.log('📤 BODY FINAL:', JSON.stringify(body, null, 2));
 
         return this.http.post(environment.apiSyncfonia + 'products/', body, { headers });
     }
@@ -162,13 +151,11 @@ export class ProductService {
 
         // Si caben en un solo batch, usar método normal
         if (filteredGtinList.length <= BATCH_SIZE) {
-            console.log(` Consultando ${filteredGtinList.length} GTINs en un solo request`);
             return this.productGetByGtin(filteredGtinList, options);
         }
 
         // Dividir en batches
         const batches = this.splitIntoBatches(filteredGtinList, BATCH_SIZE);
-        console.log(` Dividiendo ${filteredGtinList.length} GTINs en ${batches.length} batches de máximo ${BATCH_SIZE}`);
 
         // Crear requests paralelos para cada batch
         const batchRequests = batches.map((batch, index) => {
@@ -201,8 +188,6 @@ export class ProductService {
                     response?.TradeItemList || response?.TradeItems || []
                 );
                 const totalCount = allTradeItems.length;
-
-                console.log(` Paginación completada: ${totalCount} productos totales de ${batches.length} batches`);
 
                 // Retornar respuesta consolidada con el formato esperado (usando TradeItemList)
                 return {
@@ -239,8 +224,6 @@ export class ProductService {
             ? response.TradeItemList 
             : (Array.isArray(response.TradeItems) ? response.TradeItems : []);
         
-        console.log(`📊 normalizeTradeItemsResponse - TradeItems recibidos: ${tradeItemList.length} | Formato: ${response.TradeItemList ? 'TradeItemList' : 'TradeItems'}`);
-
         // Contadores para estadísticas
         let totalImagesBeforeFilter = 0;
         let totalImagesAfterFilter = 0;
@@ -259,8 +242,6 @@ export class ProductService {
         // Log de estadísticas de filtrado por FileFormatName
         const filteredCount = totalImagesBeforeFilter - totalImagesAfterFilter;
         if (totalImagesAfterFilter > 0) {
-            console.log(` Validación FileFormatName completada:`);
-            console.log(`    Total imágenes válidas: ${totalImagesAfterFilter}`);
             if (filteredCount > 0) {
                 console.log(`    Imágenes filtradas (formato inválido): ${filteredCount}`);
             }
@@ -270,7 +251,6 @@ export class ProductService {
     }
 
     productGetChannels(gln?: string | number) {
-        console.log('GLN recibido en service:', gln);
         const endpoint = environment.api + 'transformation-channels';
         if (gln === undefined || gln === null) {
             return this.http.get(endpoint);
@@ -325,7 +305,6 @@ export class ProductService {
 
     private mapTradeItem(tradeItem: any): SyncfoniaProduct | null {
         if (!tradeItem || typeof tradeItem !== 'object') {
-            console.log(` TradeItem inválido o no es objeto`);
             return null;
         }
 
@@ -333,7 +312,6 @@ export class ProductService {
         // console.log(` mapTradeItem - GTIN: "${gtin}"`);
         
         if (!gtin || gtin.trim() === '') {
-            console.warn(` GTIN vacío o nulo - TradeItem keys:`, Object.keys(tradeItem));
             return null;
         }
         
@@ -433,7 +411,6 @@ export class ProductService {
         const validFormats = ['JPEG', 'JPG', 'PNG', 'IMAGE/JPEG', 'IMAGE/PNG', 'IMAGE/JPG'];
         
         if (!normalizedFormat || !validFormats.includes(normalizedFormat)) {
-            console.log(` Imagen excluida - FileFormatName no válido: "${fileFormatName}" | URL: ${uri}`);
             return null; // Excluir imagen sin formato válido
         }
 

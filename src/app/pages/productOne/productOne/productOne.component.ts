@@ -596,7 +596,6 @@ export class ProductOneComponent {
             params.custom_rename_value = this.customRenameValue.trim();
         }
 
-        console.log('Processing image with channel:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 //(result)
@@ -671,7 +670,6 @@ export class ProductOneComponent {
             params.custom_rename_value = this.customRenameValue.trim();
         }
 
-        console.log('Processing image with no background:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 //(result)
@@ -752,7 +750,6 @@ export class ProductOneComponent {
             params.custom_rename_value = this.customRenameValue.trim();
         }
 
-        console.log('Processing image with AI background:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 this.isGenerating = false;
@@ -878,7 +875,7 @@ export class ProductOneComponent {
 
             // Timeout: si tarda más de 5 segundos, asumir que no necesita rotación
             const timeoutId = setTimeout(() => {
-                console.warn(`⏱️ Timeout checking EXIF orientation: ${imageUrl}`);
+                console.warn(`Timeout checking EXIF orientation: ${imageUrl}`);
                 resolve(false);
             }, 5000);
 
@@ -898,22 +895,22 @@ export class ProductOneComponent {
                         const needsRotation = orientation === 6 || orientation === 8;
                         
                         if (orientation) {
-                            console.log(`� EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                            console.log(`EXIF Orientation: ${orientation}, Needs rotation: ${needsRotation} - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
                         } else {
-                            console.log(`ℹ️ No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
+                            console.log(`No EXIF orientation data, assuming correct orientation - ${imageUrl.substring(imageUrl.lastIndexOf('/') + 1)}`);
                         }
                         
                         resolve(needsRotation);
                     });
                 } catch (error) {
-                    console.warn(`⚠️ Error reading EXIF data: ${imageUrl}`, error);
+                    console.warn(`Error reading EXIF data: ${imageUrl}`, error);
                     resolve(false); // Si falla la lectura EXIF, no rotar
                 }
             };
 
             img.onerror = () => {
                 clearTimeout(timeoutId);
-                console.warn(`❌ Error loading image for EXIF check: ${imageUrl}`);
+                console.warn(`Error loading image for EXIF check: ${imageUrl}`);
                 resolve(false); // Si falla, no rotar
             };
 

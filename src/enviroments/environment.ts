@@ -41,8 +41,8 @@
    identityPoolId: 'us-east-1:3ba2c1be-376a-4599-9c0c-810463f9bb9d',
    cognitoDomain: 'gs1-imagenes-prod.auth.us-east-1.amazoncognito.com',
   //  cognitoRedirectSignIn: 'https://d2llewd7ov3p5q.cloudfront.net',
-   cognitoRedirectSignIn: 'https://d2llewd7ov3p5q.cloudfront.net',
-   cognitoRedirectSignOut: 'https://d2llewd7ov3p5q.cloudfront.net',
+   cognitoRedirectSignIn: 'https://imageai.app.syncfonia.net',
+   cognitoRedirectSignOut: 'https://imageai.app.syncfonia.net',
    cognitoResponseType: 'code',
    apicadenas: 'http://apisync.syncfonia.com/',
    api:"https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/",
@@ -50,7 +50,7 @@
    syncfoniaToken: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4',
    auth0Domain: 'prod-gs1mx.us.auth0.com',
    auth0ClientId: 'RB3srb6dbiU0kCSGr0iCuzhA069JfUHH',
-   domainUrl: "https://d2llewd7ov3p5q.cloudfront.net"
+   domainUrl: "https://imageai.app.syncfonia.net"
  }
 
  // prod
@@ -60,10 +60,12 @@
 //    cognitoAppClientId: '1vssagkagt57pfu7t9mg4em22l',
 //    identityPoolId: 'us-east-1:3ba2c1be-376a-4599-9c0c-810463f9bb9d',
 //    cognitoDomain: 'gs1-imagenes-prod.auth.us-east-1.amazoncognito.com',
-//    cognitoRedirectSignIn: 'http:',
+//    cognitoRedirectSignIn: 'http://localhost:8200/',
 //    cognitoRedirectSignOut: 'http://localhost:8200/',
 //    cognitoResponseType: 'code',
 //    apicadenas: 'http://apisync.syncfonia.com/',
 //    api:"https://oz0338cueg.execute-api.us-east-1.amazonaws.com/prod/",
-//    domainUrl: "http://localhost:8200/"
+//    domainUrl: "http://localhost:8200/",
+//    apiSyncfonia: 'https://api.syncfonia.com/api/v1/',
+//    syncfoniaToken: 'Bearer 166|hxrkw03cCV5yUg92dZl2BwsoPXljeftAVgjm2xb4',
 //  }

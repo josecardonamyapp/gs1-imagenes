@@ -226,7 +226,6 @@ export class productProcessingViewComponent {
                 this.selectedGtin = [];
             }
 
-            console.log('params', params);
         });
 
         this.initializeUserAccess();
@@ -282,7 +281,7 @@ export class productProcessingViewComponent {
         glnOverride: string | null
     ): Promise<void> {
         try {
-            // ✅ Usar paginación automática (divide en batches de 250 si es necesario)
+            // Usar paginación automática (divide en batches de 250 si es necesario)
             const response = await firstValueFrom(
                 this.productService.productGetByGtinPaginated(gtinList, glnOverride ? { gln: glnOverride } : undefined)
             );
@@ -305,7 +304,7 @@ export class productProcessingViewComponent {
                     continue;
                 }
 
-                // ✅ Simplificado: Solo copiar las imágenes sin procesamiento EXIF
+                // Simplificado: Solo copiar las imágenes sin procesamiento EXIF
                 // La orientación se maneja automáticamente via CSS (image-orientation: from-image)
                 const preparedImages: any[] = rawImages.map((image: any) => ({
                     ...image
@@ -319,8 +318,8 @@ export class productProcessingViewComponent {
                     gtin: product.gtin,
                     producName: product.producName,
                     images: preparedImages,
-                    totalImagesCount: preparedImages.length,  // 🆕 Para mostrar badge
-                    visibleImages: preparedImages.slice(0, 1),  // 🆕 Solo primera imagen para display
+                    totalImagesCount: preparedImages.length,  // Para mostrar badge
+                    visibleImages: preparedImages.slice(0, 1),  // Solo primera imagen para display
                     currentIndex: 0,
                     image360Path: (product as any).image360Path ?? null,
                     brandName: product.brandName ?? '',
@@ -338,7 +337,7 @@ export class productProcessingViewComponent {
         }
     }
 
-    // ℹ️ EXIF orientation detection REMOVED
+    // EXIF orientation detection REMOVED
     // Now handled automatically via CSS: image-orientation: from-image
     // This eliminates 1000+ HTTP requests on load and improves performance
 
@@ -359,9 +358,7 @@ export class productProcessingViewComponent {
             // Si hay múltiples canales, limpiar el canal de edición
             this.channelForEditing = {} as Channel;
             this.disabledFormChannel = true;
-        }
-        
-        console.log('Selected channels:', this.selectedChannelIds);
+        }        
     }
 
     onChipClick(channelId: number): void {
@@ -560,6 +557,10 @@ export class productProcessingViewComponent {
             return '#FFFFFF';
         }
 
+        if (String(color).trim().toLowerCase() === 'transparent') {
+            return 'transparent';
+        }
+
         const parts = color.split(',').map(part => parseInt(part.trim(), 10));
         if (parts.length !== 3 || parts.some(part => Number.isNaN(part))) {
             return '#FFFFFF';
@@ -685,7 +686,6 @@ export class productProcessingViewComponent {
             }
         });
 
-        console.log(`${productList.length} productos listos para procesar`);
         this.processImg(productList);
     }
 
@@ -722,8 +722,6 @@ export class productProcessingViewComponent {
         if (this.channelForEditing.renaming_type === 'custom' && this.customRenameData.length > 0) {
             params.custom_rename_data = this.customRenameData;
         }
-
-        console.log('Processing image with params:', params);
 
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
@@ -923,7 +921,6 @@ export class productProcessingViewComponent {
             params.custom_rename_data = this.customRenameData;
         }
 
-        console.log('Processing image with AI background:', params);
         this.productService.productProcessImg(params).subscribe({
             next: (result: any) => {
                 this.isGenerating = false;
@@ -1066,9 +1063,7 @@ export class productProcessingViewComponent {
                 
                 // Convertir a JSON
                 const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
-                
-                console.log('📄 Datos crudos del Excel:', jsonData);
-                
+                                
                 // Validar y mapear las columnas esperadas
                 this.customRenameData = jsonData.map((row: any) => {
                     // Obtener el GTIN y convertirlo a string limpio
@@ -1081,25 +1076,20 @@ export class productProcessingViewComponent {
                     if (typeof rawGtin === 'number') {
                         gtin = Math.floor(rawGtin).toString();
                     }
-                    
-                    console.log('🔍 GTIN parseado:', { raw: rawGtin, tipo: typeof rawGtin, limpio: gtin });
-                    
+                                        
                     return {
                         gtin: gtin,
                         renameId: row['ID de Renombre'] || row['ID_de_Renombre'] || row['renameId'] || '',
                         applyToFolder: row['Aplicar Renombre a Carpeta'] || row['Aplicar_Renombre_a_Carpeta'] || row['applyToFolder'] || false
                     };
                 }).filter(item => item.gtin); // Filtrar filas sin GTIN
-                
-                console.log('📋 GTINs en la plantilla:', this.customRenameData.map(item => item.gtin));
-                
+                                
                 // Validar que todos los productos visibles en pantalla tengan su renombrado en la plantilla
                 const validationResult = this.validateTemplateHasAllProducts();
                 
                 if (!validationResult.isValid) {
-                    console.error('Productos faltantes en la plantilla:', validationResult.missingGtins);
                     this.showErrorMessage(
-                        `⚠️ Faltan ${validationResult.missingGtins.length} producto(s) en la plantilla: ${validationResult.missingGtins.join(', ')}`
+                        `Faltan ${validationResult.missingGtins.length} producto(s) en la plantilla: ${validationResult.missingGtins.join(', ')}`
                     );
                     this.customRenameData = [];
                     this.customRenameFile = null;
@@ -1107,10 +1097,8 @@ export class productProcessingViewComponent {
                     return;
                 }
                 
-                console.log('Excel parseado correctamente:', this.customRenameData);
-                this.showErrorMessage(`✅ Archivo cargado: ${this.customRenameData.length} registros válidos`);
+                this.showErrorMessage(`Archivo cargado: ${this.customRenameData.length} registros válidos`);
             } catch (error) {
-                console.error('Error al parsear el archivo Excel:', error);
                 this.showErrorMessage('Error al leer el archivo. Verifique que sea un archivo Excel válido.');
                 this.customRenameData = [];
             }
@@ -1130,18 +1118,13 @@ export class productProcessingViewComponent {
     private validateTemplateHasAllProducts(): { isValid: boolean; missingGtins: string[] } {
         // Obtener todos los GTINs de los productos visibles en pantalla
         const visibleGtins = this.products.map(product => String(product.gtin).trim()).filter(gtin => gtin);
-        
-        console.log('🖥️ GTINs en pantalla:', visibleGtins);
-        
+                
         // Obtener los GTINs que están en la plantilla (ya normalizados en parseExcelFile)
         const templateGtins = new Set(this.customRenameData.map(item => String(item.gtin).trim()));
-        
-        console.log('📋 GTINs en plantilla (Set):', Array.from(templateGtins));
-        
+                
         // Encontrar GTINs que están en pantalla pero no en la plantilla
         const missingGtins = visibleGtins.filter(gtin => {
             const found = templateGtins.has(gtin);
-            console.log(`🔎 Buscando "${gtin}" en plantilla: ${found ? '✅ Encontrado' : '❌ No encontrado'}`);
             return !found;
         });
         

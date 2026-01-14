@@ -234,21 +234,49 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
         this.pollingError = false;
         this.applyJobPayload(result);
 
-        const upperStatus = (this.status || '').toUpperCase();
-        console.log(`Job ${jobId} status: ${upperStatus}`);
+        let upperStatus = (this.status || '').toUpperCase();
 
-        // 👇 Aquí se detecta cuando el job terminó (completado o con errores)
-        if (upperStatus === 'COMPLETED' || upperStatus === 'COMPLETED_WITH_ERRORS') {
-          // ✅ Eliminar el jobId del localStorage
+        // Detectar si el procesamiento terminó aunque el status sea PROCESSING
+        // Validar por progress_percentage === 100
+        const progress = result.progress || {};
+        const progressPercentage = progress.progress_percentage ?? 0;
+        const processedImages = progress.processed_images ?? 0;
+        const failedImages = progress.failed_images ?? 0;
+
+        if (upperStatus === 'PROCESSING' && progressPercentage === 100) {
+          // Determinar el estado real basado en los resultados
+          if (failedImages > 0 && processedImages === 0) {
+            // Todas las imágenes fallaron
+            this.status = 'FAILED';
+            this.statusMessage = 'El procesamiento falló para todas las imágenes';
+            upperStatus = 'FAILED';
+          } else if (failedImages > 0 && processedImages > 0) {
+            // Algunas exitosas, algunas fallidas
+            this.status = 'COMPLETED_WITH_ERRORS';
+            this.statusMessage = `Procesamiento completado: ${processedImages} exitosas, ${failedImages} fallidas`;
+            upperStatus = 'COMPLETED_WITH_ERRORS';
+          } else if (processedImages > 0) {
+            // Todas exitosas
+            this.status = 'COMPLETED';
+            this.statusMessage = 'Procesamiento completado exitosamente';
+            upperStatus = 'COMPLETED';
+          }
+        }
+
+        // Aquí se detecta cuando el job terminó (completado, con errores o fallido)
+        // También detectado por progress_percentage === 100
+        if (upperStatus === 'COMPLETED' || upperStatus === 'COMPLETED_WITH_ERRORS' || upperStatus === 'FAILED' || progressPercentage === 100) {
+          // Eliminar el jobId del localStorage
           const jobs = JSON.parse(localStorage.getItem('processing_jobs') || '[]');
           const updatedJobs = jobs.filter((id: string) => id !== jobId);
           localStorage.setItem('processing_jobs', JSON.stringify(updatedJobs));
         }
 
-        if (TERMINAL_STATUSES.includes((this.status || '').toUpperCase())) {
+        // Detener polling y redirigir cuando el procesamiento terminó
+        if (TERMINAL_STATUSES.includes(upperStatus) || progressPercentage === 100) {
           this.stopPolling();
           this.elapsedStopped = true;
-          this.startRedirectCountdown();
+          this.startRedirectCountdown(); // Inicia countdown de 5 seg para redirigir a /jobs
         }
       });
   }
@@ -261,12 +289,7 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
   }
 
   private startRedirectCountdown(): void {
-    // Solo iniciar countdown si completó exitosamente o con errores
-    const upperStatus = (this.status || '').toUpperCase();
-    if (upperStatus !== 'COMPLETED' && upperStatus !== 'COMPLETED_WITH_ERRORS') {
-      return;
-    }
-
+    // Iniciar countdown para todos los estados terminales (completado, con errores o fallido)
     this.redirectCountdown = 5;
 
     this.countdownIntervalId = setInterval(() => {
@@ -324,7 +347,7 @@ export class JobConfirmationComponent implements OnInit, OnDestroy {
   }
 
   private updateProgressMetrics(progress: any, job: any): void {
-    // � Usar los valores directamente del API sin cálculos
+    // Usar los valores directamente del API sin cálculos
     if (typeof progress?.total_images === 'number') {
       this.totalImages = Math.max(0, progress.total_images);
     }
